@@ -1,5 +1,6 @@
 /** 归档页的数据派生 —— 都从真实文章集合算出来，不用设计稿里的假数字 */
 
+import type { ImageMetadata } from 'astro'
 import { getCollection } from 'astro:content'
 import { postStats } from '~/utils/post'
 
@@ -14,6 +15,7 @@ export interface ArchivePost {
   minutes: number
   words: number
   wordsLabel: string
+  cover?: ImageMetadata | undefined
 }
 
 /**
@@ -38,6 +40,7 @@ export async function loadPosts(): Promise<ArchivePost[]> {
         minutes: stats.minutes,
         words: stats.words,
         wordsLabel: stats.wordsLabel,
+        cover: post.data.cover,
       }
     })
 }

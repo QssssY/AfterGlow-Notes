@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
   readMinutes: number
   /** 设计稿写法：1.2k 字 */
   words: string
+  /** 真实封面图；没有时退回设计稿的渐变底 + 图标 */
+  cover?: ImageMetadata | undefined
   coverIcon?: string
 }
 
@@ -24,6 +28,7 @@ const {
   href,
   readMinutes,
   words,
+  cover,
   coverIcon = 'feather',
 } = Astro.props
 
@@ -79,6 +84,12 @@ const indexLabel = typeof index === 'number' ? pad(index) : index
   <span
     class="hidden h-[162px] w-[236px] shrink-0 flex-row items-center justify-center overflow-hidden rounded-[22px] bg-[linear-gradient(-124.467deg,#F4EBDC_14.645%,#DCEFF4_85.355%)] xl:flex"
   >
-    <Icon name={`lucide:${coverIcon}`} class="size-[52px] shrink-0 text-ink opacity-[0.24]" />
+    {
+      cover ? (
+        <Image src={cover} alt="" width={472} height={324} class="size-full object-cover" />
+      ) : (
+        <Icon name={`lucide:${coverIcon}`} class="size-[52px] shrink-0 text-ink opacity-[0.24]" />
+      )
+    }
   </span>
 </a>
