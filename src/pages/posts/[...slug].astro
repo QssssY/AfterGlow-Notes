@@ -42,7 +42,15 @@ const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href
 const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}`
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description} rail={false} topPad={72}>
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  ogSlug={post.id}
+  ogType="article"
+  publishedAt={post.data.date}
+  rail={false}
+  topPad={72}
+>
   <ReadingProgress />
 
   <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
@@ -61,7 +69,9 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
         <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">返回文章列表</span>
       </a>
 
+      <!-- data-pagefind-* 告诉索引器只收正文，并把标题/日期存进搜索结果 -->
       <article
+        data-pagefind-body
         class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[22px] rounded-[34px] p-[20px] xl:p-[36px]"
       >
         {
@@ -92,12 +102,19 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
             )
           }
 
-          <h1 class="font-display w-full text-[28px]/[40px] font-normal text-ink xl:text-[38px]/[51px]">
+          <h1
+            data-pagefind-meta="title"
+            class="font-display w-full text-[28px]/[40px] font-normal text-ink xl:text-[38px]/[51px]"
+          >
             {post.data.title}
           </h1>
 
           <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
-            <time datetime={date.toISOString()} class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+            <time
+              datetime={date.toISOString()}
+              data-pagefind-meta={`date:${dateLabel}`}
+              class="text-[12px] font-normal whitespace-nowrap text-ink-muted"
+            >
               {dateLabel}
             </time>
             <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
@@ -112,6 +129,9 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
         </header>
 
         <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+        {/* 摘要不在正文里，但它是很自然的搜索目标 —— 单独喂给索引器 */}
+        {post.data.description && <span class="sr-only">{post.data.description}</span>}
 
         <div class="article-body"><Content /></div>
 

@@ -1,0 +1,151 @@
+---
+import { Icon } from 'astro-icon/components'
+
+/**
+ * 搜索覆盖层 —— 设计稿没有搜索结果的帧，沿用它的卡片语言。
+ * 索引由 pagefind 在构建后扫描 dist 生成（见 package.json 的 build 脚本），
+ * 所以 dev 模式下搜不到东西是正常的，要 pnpm build && pnpm preview 才有。
+ */
+---
+
+<div
+  data-search-overlay
+  hidden
+  class="fixed inset-0 z-50 flex items-start justify-center bg-[#5B423F26] px-[24px] pt-[10vh] backdrop-blur-[3px]"
+>
+  <div class="glass flex w-full max-w-[640px] flex-col overflow-hidden rounded-[28px]">
+    <div class="flex shrink-0 flex-row items-center gap-[10px] border-b border-hairline px-[20px] py-[16px]">
+      <Icon name="lucide:search" class="size-[17px] shrink-0 text-ink-muted" />
+      <input
+        data-search-input
+        type="search"
+        placeholder="搜索文章…"
+        autocomplete="off"
+        class="flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted"
+      />
+      <button
+        type="button"
+        data-search-close
+        aria-label="关闭搜索"
+        class="flex size-[26px] shrink-0 items-center justify-center rounded-[8px] text-ink-muted hover:bg-chip"
+      >
+        <Icon name="lucide:x" class="size-[15px]" />
+      </button>
+    </div>
+
+    <div data-search-results class="max-h-[56vh] overflow-y-auto px-[12px] py-[12px]">
+      <p class="px-[8px] py-[10px] text-[13px] text-ink-muted">输入关键词开始搜索</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const overlay = document.querySelector<HTMLElement>('[data-search-overlay]')
+  const input = document.querySelector<HTMLInputElement>('[data-search-input]')
+  const results = document.querySelector<HTMLElement>('[data-search-results]')
+
+  if (overlay && input && results) {
+    let pagefind: { search: (q: string) => Promise<{ results: { data: () => Promise<PageData> }[] }> }
+    type PageData = {
+      url: string
+      meta?: { title?: string; date?: string }
+      excerpt: string
+    }
+
+    const note = (text: string) => {
+      results.innerHTML = ''
+      const p = document.createElement('p')
+      p.className = 'px-[8px] py-[10px] text-[13px] text-ink-muted'
+      p.textContent = text
+      results.append(p)
+    }
+
+    async function load() {
+      if (pagefind) return pagefind
+      try {
+        /*
+         * 用 new Function 拿到原生 import，绕开 Vite。
+         * pagefind 的索引是 astro build 之后才由 pagefind CLI 生成的，
+         * 而 Vite 会把普通的 `import(x)` 包进它的预加载 helper
+         * （编译成 `r(() => import(x), __VITE_PRELOAD__)`）——
+         * 那个占位符对运行时才确定的 URL 解析不了，直接抛错。
+         * `/* @vite-ignore *\/` 只能压掉警告，阻止不了这层包裹。
+         */
+        const nativeImport = new Function('u', 'return import(u)') as (
+          u: string,
+        ) => Promise<typeof pagefind>
+        pagefind = await nativeImport('/pagefind/pagefind.js')
+        return pagefind
+      } catch {
+        note('搜索索引尚未生成 —— 需要 pnpm build 后在 preview 里使用。')
+        return undefined
+      }
+    }
+
+    const open = async () => {
+      overlay.hidden = false
+      document.body.style.overflow = 'hidden'
+      input.focus()
+      await load()
+    }
+
+    const close = () => {
+      overlay.hidden = true
+      document.body.style.overflow = ''
+    }
+
+    let timer: number
+    input.addEventListener('input', () => {
+      clearTimeout(timer)
+      timer = window.setTimeout(async () => {
+        const query = input.value.trim()
+        if (!query) return note('输入关键词开始搜索')
+
+        const api = await load()
+        if (!api) return
+
+        const found = await api.search(query)
+        if (found.results.length === 0) return note(`没有匹配「${query}」的文章`)
+
+        const pages = await Promise.all(found.results.slice(0, 8).map((r) => r.data()))
+        results.innerHTML = ''
+        for (const page of pages) {
+          const link = document.createElement('a')
+          link.href = page.url
+          link.className =
+            'flex flex-col gap-[5px] rounded-[16px] px-[12px] py-[11px] hover:bg-card-solid'
+          const title = document.createElement('span')
+          title.className = 'text-[14px] font-medium text-ink'
+          title.textContent = page.meta?.title ?? page.url
+          const excerpt = document.createElement('span')
+          excerpt.className = 'text-[12.5px]/[20px] text-ink-soft'
+          excerpt.innerHTML = page.excerpt
+          link.append(title, excerpt)
+          if (page.meta?.date) {
+            const date = document.createElement('span')
+            date.className = 'text-[11px] text-ink-muted'
+            date.textContent = page.meta.date
+            link.append(date)
+          }
+          results.append(link)
+        }
+      }, 180)
+    })
+
+    for (const trigger of document.querySelectorAll('[data-search-open]')) {
+      trigger.addEventListener('click', open)
+    }
+    document.querySelector('[data-search-close]')?.addEventListener('click', close)
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close()
+    })
+    addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !overlay.hidden) close()
+      // Ctrl/Cmd + K 唤起
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        overlay.hidden ? open() : close()
+      }
+    })
+  }
+</script>

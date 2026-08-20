@@ -195,6 +195,19 @@
     scroll-behavior: smooth;
   }
 
+  /* 视觉隐藏但保留给屏幕阅读器和 pagefind 索引 */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   body {
     background-color: var(--cream);
     color: var(--ink);

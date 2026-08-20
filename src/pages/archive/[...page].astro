@@ -7,6 +7,7 @@ import ArchivePanel from '~/components/blog/ArchivePanel.astro'
 import BannerChronicle from '~/components/blog/BannerChronicle.astro'
 import ListHeader from '~/components/blog/ListHeader.astro'
 import Pagination from '~/components/blog/Pagination.astro'
+import SearchOverlay from '~/components/blog/SearchOverlay.astro'
 import StatsPanel from '~/components/blog/StatsPanel.astro'
 import SubscribePanel from '~/components/blog/SubscribePanel.astro'
 import TagsPanel from '~/components/blog/TagsPanel.astro'
@@ -79,6 +80,7 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
                 href={newest.href}
                 readMinutes={newest.minutes}
                 words={newest.wordsLabel}
+                cover={newest.cover}
               />
             </section>
 
@@ -113,4 +115,6 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
 
   <!-- 移动端不显示 Footer：设计稿里由底部 Tab Bar 取代 -->
   <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+
+  <SearchOverlay />
 </BaseLayout>

@@ -41,11 +41,13 @@ const ACTIVE = '年'
     }
   </div>
 
-  <!-- 搜索还没接 pagefind，先按设计稿做静态外观 -->
-  <div
-    class="hairline-box box-border hidden h-fit w-[236px] shrink-0 flex-row items-center gap-[8px] rounded-[12px] px-[12px] py-[9px] sm:flex"
+  <button
+    type="button"
+    data-search-open
+    class="hairline-box box-border hidden h-fit w-[236px] shrink-0 cursor-pointer flex-row items-center gap-[8px] rounded-[12px] px-[12px] py-[9px] text-left sm:flex"
   >
     <Icon name="lucide:search" class="size-[15px] shrink-0 text-ink-muted" />
     <span class="flex-1 text-[13px] font-normal text-ink-muted">搜索 {total} 篇文章…</span>
-  </div>
+    <kbd class="shrink-0 rounded-[5px] bg-chip px-[5px] py-[1px] text-[10px] text-ink-muted">⌘K</kbd>
+  </button>
 </div>

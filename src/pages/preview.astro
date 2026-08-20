@@ -13,7 +13,8 @@ const label = 'text-[11.5px] font-bold tracking-[1.8px] text-ink-muted'
 ---
 
 <BaseLayout title="组件画廊" rail={false} tabBar={false}>
-  <main class="flex flex-col gap-[48px]">
+  <!-- data-pagefind-ignore：组件画廊不是内容，不该出现在搜索结果里 -->
+  <main data-pagefind-ignore class="flex flex-col gap-[48px]">
     <div class="flex flex-col gap-[14px]">
       <span class={label}>NAV ITEM · TQ3Oj</span>
       <NavItem label="近期文章" icon="notebook-text" active />
