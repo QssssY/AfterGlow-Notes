@@ -1,0 +1,333 @@
+@import 'tailwindcss';
+
+/* 字体 —— 全部自托管，构建时零联网（fonts.google.com 在本机不可达）。
+ *
+ * 拉丁：fontsource 的整块文件，每个只有 13KB，不需要裁。
+ * 中文：不能直接用 fontsource 的分片版 —— 101 条 @font-face ×4 字重 = 514KB raw /
+ *       90KB brotli 的阻塞样式表，比字体本身更伤首屏。改成构建期子集化：
+ *       scripts/subset-cjk.mjs 扫源码收集实际用到的汉字，把每字重 1.1MB 裁到约 57KB，
+ *       产物在 src/generated/（gitignore），由下面最后一条 @import 引入。 */
+@import '@fontsource/averia-gruesa-libre/400.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import '@fontsource/noto-sans-sc/latin-400.css';
+@import '@fontsource/noto-sans-sc/latin-500.css';
+@import '@fontsource/noto-sans-sc/latin-700.css';
+@import '../generated/fonts.css';
+
+/* 暗色模式走 class 策略，由 <html class="dark"> 控制 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────
+ * 设计 token —— 全部取自 blog.pen 的 `mode: light/dark` 变量轴
+ * 随主题变的值定义在 :root / .dark，@theme inline 只做引用，
+ * 这样 bg-cream / text-ink 这类工具类在两个模式下自动切换。
+ * ───────────────────────────────────────────────────────────── */
+
+:root {
+  --cream: #f7f1e7;
+  --card: #ffffff99;
+  --card-solid: #ffffffe0;
+  --card-border: #ffffffcc;
+  --hairline: #5b423f1a;
+  --chip: #ffffff80;
+  --ink: #5b423f;
+  --ink-soft: #7a6555;
+  --ink-muted: #6e5b4c;
+  --brand: #d9812b;
+  --brand-ink: #a85b12;
+  --fire-warm: #c9741f;
+  --fire-tint: #d9812b1f;
+  --glow-fire: #d9812bb3;
+  --leaf: #2a7a66;
+  --leaf-deep: #1f5e4e;
+  --avatar-bg: #e8ddd0;
+  --dot-idle: #d9d2c8;
+  --code-bg: #2e2724;
+  --shadow-soft: #00000014;
+  --sheen: #ffffff3d;
+  --btn-dark: #070707;
+}
+
+.dark {
+  --cream: #141210;
+  --card: #ffffff12;
+  --card-solid: #ffffff1f;
+  --card-border: #ffffff1f;
+  --hairline: #ffffff1a;
+  --chip: #ffffff0f;
+  --ink: #f1e8dd;
+  --ink-soft: #c3b3a2;
+  --ink-muted: #a2917f;
+  --brand: #f2a94e;
+  --brand-ink: #f2a94e;
+  --fire-warm: #f5c07a;
+  --fire-tint: #f2a94e24;
+  --glow-fire: #f2a94eb3;
+  --leaf: #5bc4a8;
+  --leaf-deep: #8fdcc6;
+  --avatar-bg: #3a322c;
+  --dot-idle: #4a403a;
+  --code-bg: #0d0b0a;
+  --shadow-soft: #00000059;
+  --sheen: #ffffff14;
+  --btn-dark: #2a2521;
+}
+
+@theme inline {
+  /* 颜色 —— 随主题切换 */
+  --color-cream: var(--cream);
+  --color-card: var(--card);
+  --color-card-solid: var(--card-solid);
+  --color-card-border: var(--card-border);
+  --color-hairline: var(--hairline);
+  --color-chip: var(--chip);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-fire-warm: var(--fire-warm);
+  --color-fire-tint: var(--fire-tint);
+  --color-glow-fire: var(--glow-fire);
+  --color-leaf: var(--leaf);
+  --color-leaf-deep: var(--leaf-deep);
+  --color-avatar-bg: var(--avatar-bg);
+  --color-dot-idle: var(--dot-idle);
+  --color-code-bg: var(--code-bg);
+  --color-sheen: var(--sheen);
+  --color-btn-dark: var(--btn-dark);
+
+  /* 颜色 —— 不随主题变 */
+  --color-gold: #eec25e;
+  --color-on-brand: #241c18;
+  --color-code-fg: #f0e6da;
+  --color-code-dim: #a2988e;
+
+  /* 圆角 —— 设计稿里走变量的 5 档 + radius-m */
+  --radius-chip: 12px;
+  --radius-btn: 14px;
+  --radius-m: 16px;
+  --radius-row: 22px;
+  --radius-panel: 28px;
+  --radius-card: 36px;
+  --radius-pill: 999px;
+
+  /* 字族 —— 由 @fontsource 自托管（见文件顶部的 @import） */
+  --font-display: 'Averia Gruesa Libre', ui-serif, cursive;
+  --font-body: 'Noto Sans SC', ui-sans-serif, system-ui, 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 复用配方 —— 设计稿里高频重复的阴影/模糊组合
+ * 描边用 outline + 负 offset 复刻 Pencil 的「内描边」：不占布局、不改内容盒尺寸。
+ * backdrop blur 是 4px：Pencil 的 background_blur radius 8 对应 CSS blur(4px)。
+ * ───────────────────────────────────────────────────────────── */
+
+/* 玻璃卡片：Sidebar / Social Button / Project Card 等，全站 40 处 */
+@utility glass {
+  background-color: var(--card);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 24px 44px -16px var(--shadow-soft),
+    0 0 20px 0 var(--sheen);
+}
+
+/* 玻璃行：Post Row 用，投影比 glass 浅一档 */
+@utility glass-row {
+  background-color: var(--card);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 14px 28px -12px var(--shadow-soft),
+    0 0 18px 0 var(--sheen);
+}
+
+/* 玻璃面板：Projects Section 的项目行用，投影介于 glass 和 glass-row 之间 */
+@utility glass-panel {
+  background-color: var(--card);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 16px 32px -14px var(--shadow-soft),
+    0 0 18px 0 var(--sheen);
+}
+
+/* 选中态：激活的 Nav Item —— 只有实心底 + 描边，无投影无模糊 */
+@utility glass-solid {
+  background-color: var(--card-solid);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+}
+
+/* 细描边容器：RSS 按钮 / 分段控件外框 */
+@utility hairline-box {
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+}
+
+/* Aurora 背景层：每页一个。
+ * 设计稿里这层只有 blur(70) 没有填充，内容是我按品牌色补的：
+ * 橙(brand) + 墨绿(leaf) + 金(gold) 三团柔光，落点参考三栏重心。
+ * 尺寸用 -inset-[240px] 复刻设计稿的 1920×1808 @ (-240,-240)。 */
+@utility aurora {
+  filter: blur(70px);
+  background:
+    radial-gradient(38% 26% at 20% 16%, var(--brand) 0%, transparent 68%),
+    radial-gradient(30% 22% at 80% 10%, var(--leaf) 0%, transparent 68%),
+    radial-gradient(44% 30% at 66% 58%, var(--color-gold) 0%, transparent 70%),
+    radial-gradient(34% 24% at 12% 76%, var(--fire-warm) 0%, transparent 70%);
+  opacity: 0.16;
+}
+
+.dark .aurora {
+  opacity: 0.1;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    /* 设计稿里绝大多数文本的 lineHeight 是缺省值（字体自带，约 1.4），
+     * 而 Tailwind preflight 会把 html 设成 1.5 —— 不改的话全站文字都比设计稿松。
+     * 需要显式行高的地方用 text-[15px]/[26px] 这种写法单独覆盖。 */
+    line-height: normal;
+  }
+
+  /* rehype-autolink-headings 生成的锚点 */
+  .heading-anchor {
+    color: var(--ink-muted);
+    margin-left: 0.4em;
+    opacity: 0;
+    transition: opacity 150ms;
+  }
+  :is(h1, h2, h3, h4, h5, h6):hover .heading-anchor {
+    opacity: 1;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 文章正文排版 —— 取自 blog.pen「Post 文章详情」的 Prose 区块。
+ * 没用 @tailwindcss/typography：设计稿的数值很具体，覆盖插件默认值
+ * 比自己写更麻烦，而且插件会额外产出约 30KB CSS。
+ * ───────────────────────────────────────────────────────────── */
+.article-body {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.article-body > * {
+  width: 100%;
+  margin: 0;
+}
+
+.article-body :is(h2, h3, h4) {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--ink);
+  scroll-margin-top: 88px;
+}
+.article-body h2 {
+  font-size: 22px;
+  line-height: 33px;
+}
+/* 设计稿只给了 H2 一档，H3/H4 按比例下推 */
+.article-body h3 {
+  font-size: 18px;
+  line-height: 28px;
+}
+.article-body h4 {
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.article-body p,
+.article-body li {
+  font-size: 15px;
+  line-height: 29px;
+  color: var(--ink);
+}
+
+.article-body :is(ul, ol) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 1.4em;
+}
+.article-body ul {
+  list-style: disc;
+}
+.article-body ol {
+  list-style: decimal;
+}
+.article-body li::marker {
+  color: var(--ink-muted);
+}
+
+/* 引用块：3×28 金色竖条 + 16px/29px 斜体 */
+.article-body blockquote {
+  display: flex;
+  gap: 16px;
+  padding: 4px 0;
+}
+.article-body blockquote::before {
+  content: '';
+  flex: none;
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+  background-color: var(--color-gold);
+}
+.article-body blockquote > * {
+  margin: 0;
+  font-size: 16px;
+  line-height: 29px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.article-body a {
+  color: var(--brand-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-body strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 行内代码（代码块由 expressive-code 接管） */
+.article-body :not(pre) > code {
+  border-radius: 6px;
+  background-color: var(--fire-tint);
+  padding: 0.15em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--brand-ink);
+}
+
+.article-body img {
+  border-radius: 18px;
+}
+
+.article-body hr {
+  height: 1px;
+  border: 0;
+  background-color: var(--hairline);
+}
