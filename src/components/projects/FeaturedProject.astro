@@ -1,0 +1,61 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  badge: string
+  title: string
+  desc: string
+  meta: readonly string[]
+  href?: string | undefined
+  /** 设计稿这里是 Unsplash 占位图，等提供真实截图 */
+  thumb?: ImageMetadata | undefined
+}
+
+const { badge, title, desc, meta, href, thumb } = Astro.props
+const external = href?.startsWith('http')
+---
+
+<!-- Featured · blog.pen Projects -->
+<a
+  href={href ?? '#'}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener noreferrer' : undefined}
+  class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[24px] rounded-[32px] p-[20px] xl:flex-row xl:items-center"
+>
+  {
+    thumb ? (
+      <Image
+        src={thumb}
+        alt=""
+        class="h-[212px] w-full shrink-0 rounded-[22px] object-cover xl:w-[360px]"
+      />
+    ) : (
+      <span class="h-[212px] w-full shrink-0 rounded-[22px] bg-avatar-bg xl:w-[360px]" />
+    )
+  }
+
+  <span class="flex h-fit w-full flex-col items-start gap-[12px] xl:flex-1">
+    <span class="flex h-fit w-fit shrink-0 flex-row rounded-[12px] bg-[#EEC25E33] px-[11px] py-[5px]">
+      <span class="text-[11px] font-medium whitespace-nowrap text-[#9A7523]">{badge}</span>
+    </span>
+
+    <span class="font-display text-[26px]/[34px] font-normal whitespace-nowrap text-ink">{title}</span>
+
+    <span class="w-full text-[14px]/[25px] font-normal text-ink">{desc}</span>
+
+    <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
+      {
+        meta.map((item, i) => (
+          <>
+            {i > 0 && <span class="size-[4px] shrink-0 rounded-full bg-ink-muted" />}
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{item}</span>
+          </>
+        ))
+      }
+      <span class="h-[1px] flex-1"></span>
+      <Icon name="lucide:arrow-up-right" class="size-[20px] shrink-0 text-ink-soft" />
+    </span>
+  </span>
+</a>

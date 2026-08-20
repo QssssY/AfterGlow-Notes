@@ -1,0 +1,32 @@
+---
+interface Props {
+  title: string
+  subtitle: string
+  stats: readonly { value: string; label: string }[]
+}
+
+const { title, subtitle, stats } = Astro.props
+---
+
+<!-- Page Head · blog.pen Projects -->
+<div
+  class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[20px] rounded-[30px] px-[30px] py-[26px] xl:flex-row xl:items-center"
+>
+  <div class="flex h-fit w-full flex-col items-start gap-[8px] xl:flex-1">
+    <span class="font-display text-[28px]/[36px] font-normal whitespace-nowrap text-ink">{title}</span>
+    <span class="w-full text-[13px]/[22px] font-normal text-ink-soft">{subtitle}</span>
+  </div>
+
+  <div class="flex flex-row items-end gap-[20px] xl:contents">
+    {
+      stats.map((stat) => (
+        <div class="flex h-fit w-fit shrink-0 flex-col items-end gap-[4px]">
+          <span class="font-display text-[24px]/[24px] font-normal whitespace-nowrap text-ink">
+            {stat.value}
+          </span>
+          <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{stat.label}</span>
+        </div>
+      ))
+    }
+  </div>
+</div>

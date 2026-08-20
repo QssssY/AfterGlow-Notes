@@ -1,0 +1,47 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  stats: readonly { value: string; label: string }[]
+  contacts: readonly { icon: string; value: string; href: string }[]
+}
+
+const { stats, contacts } = Astro.props
+---
+
+<!-- Side Stack · blog.pen About / Row 1 -->
+<div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:w-[320px]">
+  <!-- Stats Card -->
+  <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[16px] rounded-[30px] p-[26px]">
+    <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">站点数据</span>
+    {
+      stats.map((stat, i) => (
+        <>
+          {i > 0 && <span class="h-[1px] w-full shrink-0 bg-hairline" />}
+          <span class="flex h-fit w-full shrink-0 flex-row items-end gap-[8px]">
+            <span class="font-display flex-1 text-[22px]/[22px] font-normal text-ink">
+              {stat.value}
+            </span>
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{stat.label}</span>
+          </span>
+        </>
+      ))
+    }
+  </div>
+
+  <!-- Contact Card -->
+  <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[30px] p-[26px]">
+    <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">写信给我</span>
+    {
+      contacts.map((contact) => (
+        <a
+          href={contact.href}
+          class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]"
+        >
+          <Icon name={`lucide:${contact.icon}`} class="size-[17px] shrink-0 text-ink-muted" />
+          <span class="flex-1 text-[13px] font-normal text-ink">{contact.value}</span>
+        </a>
+      ))
+    }
+  </div>
+</div>

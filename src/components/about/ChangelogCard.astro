@@ -1,0 +1,57 @@
+---
+interface Entry {
+  title: string
+  date: string
+  desc: string
+  /** 当前版本：左侧竖线与圆点用品牌橙，并显示「当前」角标 */
+  current?: boolean
+  badge?: string
+}
+
+interface Props {
+  entries: readonly Entry[]
+}
+
+const { entries } = Astro.props
+---
+
+<!-- Changelog Card · blog.pen About
+     圆点用 2px 的 cream 描边把左侧竖线「打穿」，所以描边色必须跟随页面底色。 -->
+<div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start rounded-[30px] px-[30px] py-[28px]">
+  <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">站点更新日志</span>
+
+  {
+    entries.map((entry) => (
+      <div
+        class:list={[
+          'relative flex h-fit w-full shrink-0 flex-col items-start gap-[6px] border-l-[1.5px] py-[16px] pl-[22px]',
+          entry.current ? 'border-brand' : 'border-hairline',
+        ]}
+      >
+        <span
+          class:list={[
+            'absolute top-[20px] left-[-4.5px] z-0 size-[9px] rounded-full outline-2 -outline-offset-1 outline-cream',
+            entry.current ? 'bg-brand' : 'bg-dot-idle',
+          ]}
+        />
+
+        <span class="relative z-[1] flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+          <span class="text-[15px] font-medium whitespace-nowrap text-ink">{entry.title}</span>
+          {entry.badge && (
+            <span class="flex h-fit w-fit shrink-0 flex-row rounded-[10px] bg-fire-tint px-[8px] py-[3px]">
+              <span class="text-[10px] font-medium whitespace-nowrap text-brand-ink">
+                {entry.badge}
+              </span>
+            </span>
+          )}
+          <span class="h-[1px] flex-1" />
+          <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{entry.date}</span>
+        </span>
+
+        <span class="relative z-[2] w-full text-[13px]/[23px] font-normal text-ink-soft">
+          {entry.desc}
+        </span>
+      </div>
+    ))
+  }
+</div>

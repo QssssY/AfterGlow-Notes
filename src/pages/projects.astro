@@ -1,0 +1,82 @@
+---
+import Footer from '~/components/Footer.astro'
+import ProjectCard from '~/components/ProjectCard.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import FeaturedProject from '~/components/projects/FeaturedProject.astro'
+import FilterBar from '~/components/projects/FilterBar.astro'
+import PageHead from '~/components/projects/PageHead.astro'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+
+// 设计稿 Projects 页自带的数据。没有并入 src/config.ts —— 那里的 `projects` 是 Home
+// 「在做的事」区用的三条，star 数与本页不同（如 live2d-web：Home ★312 / 本页 ★242），
+// 设计稿本身就不一致，所以各页先按自己的稿子走。
+const stacks = ['全部', 'TypeScript', 'Rust', 'Astro', '归档'] as const
+
+const featured = {
+  badge: '正在打磨',
+  title: 'pen-canvas',
+  desc: '一块语义化的设计画布：节点只描述意图，呈现方式交给渲染器。目前能跑通多方案并置与版本回溯，交互语义还在设计中。',
+  meta: ['TypeScript', '★ 311', '更新于 2 天前'],
+  href: '#',
+}
+
+const projects = [
+  { title: 'curve-arrow', desc: '生成平滑手绘风箭头的小工具，一行配置即可嵌入。', stack: 'TypeScript', stars: 128 },
+  { title: 'live2d-web', desc: '轻量 Live2D 播放器，去掉了官方 SDK 的历史包袱。', stack: 'TypeScript', stars: 242 },
+  { title: 'spline-lite', desc: '清新风格的三维场景渲染器，主打小体积。', stack: 'Three.js', stars: 96 },
+  { title: 'blog-kit', desc: '无服务器博客脚手架，写完 Markdown 直接上线。', stack: 'Astro', stars: 57 },
+  { title: 'auto-tool', desc: '把日常重复劳动交给脚本，省下来的时间用来发呆。', stack: 'Python', stars: 44 },
+  { title: 'mono-note', desc: '桌面便签，只有一个窗口和一种字体。', stack: 'Electron', stars: 31 },
+] as const
+
+// 设计稿是两行定宽三列；移动端按 Home 的规则收成单列
+const rows = [projects.slice(0, 3), projects.slice(3, 6)]
+---
+
+<BaseLayout title="我的项目" rail={false} topPad={72}>
+  <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
+    <div class="hidden w-[280px] shrink-0 xl:block">
+      <Sidebar />
+    </div>
+
+    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
+      <FilterBar stacks={stacks} />
+      <PageHead
+        title="我的项目"
+        subtitle="一些自己在用、也顺手开源出来的小东西。多数很小，但都解决过我真实的麻烦。"
+        stats={[
+          { value: '12', label: '开源仓库' },
+          { value: '868', label: '累计 Star' },
+        ]}
+      />
+      <FeaturedProject
+        badge={featured.badge}
+        title={featured.title}
+        desc={featured.desc}
+        meta={featured.meta}
+        href={featured.href}
+      />
+
+      {
+        rows.map((row) => (
+          <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[24px] xl:flex-row">
+            {row.map((project) => (
+              <ProjectCard
+                title={project.title}
+                desc={project.desc}
+                stack={project.stack}
+                stars={project.stars}
+                href="#"
+                full
+              />
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block">
+    <Footer license="项目代码以 MIT 授权开源 · 萤火录" />
+  </div>
+</BaseLayout>

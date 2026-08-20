@@ -1,0 +1,58 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Friend {
+  name: string
+  desc: string
+  icon: string
+  href: string
+}
+
+interface Props {
+  note: string
+  friends: readonly Friend[]
+}
+
+const { note, friends } = Astro.props
+
+// 设计稿是两行各两位；移动端收成单列
+const rows = [friends.slice(0, 2), friends.slice(2)]
+---
+
+<!-- Friends Panel · blog.pen About -->
+<div class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[28px] p-[20px]">
+  <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px] xl:h-[22px]">
+    <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      友 链 FRIENDS
+    </span>
+    <span class="text-[12px] font-normal text-ink-muted">{note}</span>
+  </div>
+
+  {
+    rows.map(
+      (row) =>
+        row.length > 0 && (
+          <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[12px] xl:flex-row">
+            {row.map((friend) => (
+              <a
+                href={friend.href}
+                class="box-border flex h-fit w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[14px] py-[12px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
+              >
+                <span class="flex size-[38px] shrink-0 flex-row items-center justify-center rounded-full bg-[linear-gradient(-135deg,#E3D2B4_14.645%,#C9E0D8_85.355%)]">
+                  <Icon
+                    name={`lucide:${friend.icon}`}
+                    class="size-[16px] shrink-0 text-ink opacity-[0.55]"
+                  />
+                </span>
+                <span class="flex h-fit flex-1 flex-col items-start gap-[3px]">
+                  <span class="text-[14px] font-bold whitespace-nowrap text-ink">{friend.name}</span>
+                  <span class="w-full text-[12.5px] font-normal text-ink-soft">{friend.desc}</span>
+                </span>
+                <Icon name="lucide:arrow-up-right" class="size-[14px] shrink-0 text-ink-muted" />
+              </a>
+            ))}
+          </div>
+        ),
+    )
+  }
+</div>

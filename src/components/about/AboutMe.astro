@@ -1,0 +1,44 @@
+---
+import { Image } from 'astro:assets'
+import avatar from '../../../images/generated-1787211902736.png'
+import { site } from '~/config'
+
+interface Props {
+  role: string
+  paragraphs: readonly string[]
+  chips: readonly string[]
+}
+
+const { role, paragraphs, chips } = Astro.props
+---
+
+<!-- About Me · blog.pen About / Row 1 -->
+<div class="glass box-border flex h-fit w-full flex-col items-start gap-[16px] rounded-[30px] p-[28px] xl:flex-1">
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[14px]">
+    <Image
+      src={avatar}
+      alt={site.author}
+      width={112}
+      height={112}
+      class="size-[56px] shrink-0 rounded-full object-cover"
+    />
+    <div class="flex h-fit flex-1 flex-col items-start gap-[4px]">
+      <span class="font-display text-[20px]/[24px] font-normal whitespace-nowrap text-ink">
+        {site.author}
+      </span>
+      <span class="text-[12px] font-normal text-ink-muted">{role}</span>
+    </div>
+  </div>
+
+  {paragraphs.map((text) => <p class="w-full text-[14px]/[27px] font-normal text-ink">{text}</p>)}
+
+  <div class="flex h-fit w-full shrink-0 flex-row flex-wrap items-center gap-[8px]">
+    {
+      chips.map((chip) => (
+        <span class="flex h-fit w-fit shrink-0 flex-row rounded-[13px] bg-chip px-[12px] py-[6px] outline-1 -outline-offset-[0.5px] outline-card-border">
+          <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">{chip}</span>
+        </span>
+      ))
+    }
+  </div>
+</div>

@@ -1,0 +1,92 @@
+---
+import Footer from '~/components/Footer.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import AboutMe from '~/components/about/AboutMe.astro'
+import ChangelogCard from '~/components/about/ChangelogCard.astro'
+import FriendsPanel from '~/components/about/FriendsPanel.astro'
+import SideStack from '~/components/about/SideStack.astro'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+
+// 设计稿 About 页自带的数据，暂放页面文件里（见 report：建议之后并入 src/config.ts）
+const paragraphs = [
+  '白天写业务代码，晚上折腾三维和画布。喜欢那种「先做出来看看」的工作方式，所以这里大部分文章都是过程记录，而不是结论。',
+  '不太擅长长期计划，但擅长在半途发现更有意思的岔路。如果你也在做类似的事，欢迎写信来聊。',
+]
+
+const chips = ['TypeScript', 'Three.js', 'Astro', 'Blender', 'Python']
+
+const stats = [
+  { value: '69', label: '篇文章' },
+  { value: '12', label: '个项目' },
+  { value: '20,118', label: '次喜欢' },
+]
+
+const contacts = [
+  { icon: 'mail', value: 'hi@qingchuan.ink', href: 'mailto:hi@qingchuan.ink' },
+  { icon: 'github', value: 'github.com/qingchuan', href: 'https://github.com/qingchuan' },
+  { icon: 'rss', value: 'qingchuan.ink/rss.xml', href: '/rss.xml' },
+]
+
+const changelog = [
+  {
+    title: '重写为语义化画布',
+    date: '2026.08',
+    desc: '把文章、项目和实验都放进同一套节点描述里，界面开始能自己生长。',
+    current: true,
+    badge: '当前',
+  },
+  {
+    title: '加入 Live2D 与音乐卡片',
+    date: '2025.02',
+    desc: '首页变成了一块桌面，可以随手摆放喜欢的小组件。',
+  },
+  {
+    title: '迁移到 Astro',
+    date: '2024.06',
+    desc: '抛弃了自己写的构建脚本，换来干净的部署流程和更快的首屏。',
+  },
+  {
+    title: '第一次部署',
+    date: '2023.10',
+    desc: '一个只有三篇文章的静态页面，托管在免费额度上。',
+  },
+]
+
+const friends = [
+  { name: '于青', desc: '写编译器，也写诗', icon: 'terminal', href: '#' },
+  { name: '拾光', desc: '摄影 + 慢速旅行日志', icon: 'camera', href: '#' },
+  { name: '纸鹤', desc: '独立开发者 · macOS 工具', icon: 'app-window', href: '#' },
+  { name: '林间', desc: '读书笔记与译文', icon: 'book-open', href: '#' },
+]
+---
+
+<BaseLayout title="关于网站" rail={false} topPad={72}>
+  <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
+    <div class="hidden w-[280px] shrink-0 xl:block">
+      <Sidebar />
+    </div>
+
+    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
+      <!-- Page Head -->
+      <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[10px] rounded-[30px] px-[30px] py-[28px]">
+        <span class="font-display text-[28px]/[36px] font-normal text-ink">关于这个站点</span>
+        <span class="w-full text-[13px]/[22px] font-normal text-ink-soft">
+          一个用来记录、研究并延伸我所遇见、观察和思考的地方。没有排期，也没有 KPI。
+        </span>
+      </div>
+
+      <!-- Row 1 -->
+      <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:flex-row">
+        <AboutMe role="前端 / 图形 / 偶尔做点没用的东西" paragraphs={paragraphs} chips={chips} />
+        <SideStack stats={stats} contacts={contacts} />
+      </div>
+
+      <ChangelogCard entries={changelog} />
+      <FriendsPanel note="欢迎交换 · 邮件里说一声就好" friends={friends} />
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block">
+    <Footer license="本站由 Astro 构建 · 托管在 Vercel · 萤火录" />
+  </div>
+</BaseLayout>

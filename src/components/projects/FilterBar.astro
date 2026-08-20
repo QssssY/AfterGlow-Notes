@@ -1,0 +1,59 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  stacks: readonly string[]
+  /** 当前选中的技术栈标签 */
+  active?: string
+}
+
+const { stacks, active = stacks[0] } = Astro.props
+---
+
+<!-- Filter Bar · blog.pen Projects
+     这里的 pill 不是 FilterPill 组件实例：设计稿用的是独立尺寸
+     （p-[7px_12px] + 12.5px/bold + 描边），和组件定义的 p-[6px_13px] 不同。 -->
+<div class="flex h-[38px] w-full shrink-0 flex-row items-center justify-between gap-[12px]">
+  <div class="flex h-fit w-fit shrink-0 flex-row items-center gap-[7px] overflow-x-auto xl:overflow-visible">
+    {
+      stacks.map((stack) => (
+        <button
+          type="button"
+          class:list={[
+            'box-border flex h-fit w-fit shrink-0 flex-row items-center rounded-[12px] px-[12px] py-[7px] text-[12.5px] font-bold whitespace-nowrap outline-1 -outline-offset-[0.5px]',
+            stack === active
+              ? 'bg-fire-tint text-brand-ink outline-brand'
+              : 'bg-chip text-ink-soft outline-hairline',
+          ]}
+        >
+          {stack}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="hidden h-fit w-fit shrink-0 flex-row items-center gap-[6px] xl:flex">
+    {
+      (
+        [
+          ['layout-grid', true],
+          ['list', false],
+        ] as const
+      ).map(([icon, on]) => (
+        <button
+          type="button"
+          aria-label={icon === 'list' ? '列表视图' : '网格视图'}
+          class:list={[
+            'flex size-[34px] shrink-0 flex-row items-center justify-center rounded-[12px] outline-1 -outline-offset-[0.5px]',
+            on ? 'bg-fire-tint outline-brand' : 'bg-chip outline-hairline',
+          ]}
+        >
+          <Icon
+            name={`lucide:${icon}`}
+            class:list={['size-[16px] shrink-0', on ? 'text-brand-ink' : 'text-ink-muted']}
+          />
+        </button>
+      ))
+    }
+  </div>
+</div>
