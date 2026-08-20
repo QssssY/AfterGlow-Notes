@@ -29,4 +29,7 @@ Thumbs.db
 *.pen.bak
 
 # 从 blog.pen 导出的参考 HTML（实现组件时的对照物，不是源码）
+# 必须忽略：Tailwind 4 的自动内容探测会扫到导出里的 bg-[url('images/...')]，
+# 生成指向不存在图片的 CSS，构建时报一堆 "didn't resolve at build time"
 design-export/
+.design/

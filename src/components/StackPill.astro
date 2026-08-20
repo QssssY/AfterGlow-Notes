@@ -1,0 +1,27 @@
+---
+/**
+ * Projects 与 Share 两页筛选行共用的胶囊。
+ * 不是 FilterPill 组件的实例：设计稿里这两页是在实例上覆盖出的另一套尺寸
+ * （p-[7px_12px] + 12.5px/bold + 1px 描边），FilterPill 本体是 p-[6px_13px] + 12px/medium。
+ */
+interface Props {
+  label: string
+  active?: boolean
+  href?: string | undefined
+}
+
+const { label, active = false, href } = Astro.props
+
+const Tag = href ? 'a' : 'button'
+---
+
+<Tag
+  href={href}
+  type={href ? undefined : 'button'}
+  class:list={[
+    'box-border flex h-fit w-fit shrink-0 flex-row items-center rounded-[12px] px-[12px] py-[7px] text-[12.5px] font-bold whitespace-nowrap outline-1 -outline-offset-[0.5px]',
+    active ? 'bg-fire-tint text-brand-ink outline-brand' : 'bg-chip text-ink-soft outline-hairline',
+  ]}
+>
+  {label}
+</Tag>
