@@ -1,0 +1,32 @@
+# 构建产物
+dist/
+.astro/
+
+# 子集化字体产物（由 scripts/subset-cjk.mjs 生成，dev/build 时自动重建）
+src/generated/
+
+# 依赖
+node_modules/
+
+# 日志
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Pencil 备份
+*.pen.bak
+
+# 从 blog.pen 导出的参考 HTML（实现组件时的对照物，不是源码）
+design-export/
