@@ -1,0 +1,39 @@
+---
+import { Icon } from 'astro-icon/components'
+import Panel from './Panel.astro'
+---
+
+<!--
+  Subscribe Panel · blog.pen 归档页左栏
+  设计稿只画了静态外观；这里做成真表单，但 action 还没有后端，
+  提交先交给用户自己接（Buttondown / Listmonk 之类）。
+-->
+<Panel caption="订 阅 SUBSCRIBE">
+  <p class="w-full text-[12px]/[19px] font-normal text-ink-soft">
+    新文章发布时收到通知，不含广告。
+  </p>
+
+  <form class="flex w-full shrink-0 flex-col gap-[12px]" data-subscribe>
+    <label
+      class="hairline-box box-border flex h-[36px] w-full shrink-0 flex-row items-center gap-[8px] rounded-[12px] px-[12px]"
+    >
+      <Icon name="lucide:mail" class="size-[14px] shrink-0 text-ink-muted" />
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="你的邮箱"
+        class="w-full min-w-0 bg-transparent text-[12.5px] font-normal text-ink placeholder:text-ink-muted focus:outline-none"
+      />
+    </label>
+
+    <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+      <button
+        type="submit"
+        class="flex h-[34px] flex-1 flex-row items-center justify-center rounded-[12px] bg-brand text-[12.5px] font-bold text-on-brand outline-1 -outline-offset-[0.5px] outline-brand"
+      >
+        订阅
+      </button>
+    </div>
+  </form>
+</Panel>

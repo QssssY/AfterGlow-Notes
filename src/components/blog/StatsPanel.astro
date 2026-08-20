@@ -1,0 +1,36 @@
+---
+import Panel from './Panel.astro'
+
+interface Props {
+  total: number
+  wordsLabel: string
+  /** 设计稿写的是 3.2k；没有真实订阅数来源，先由调用方传入 */
+  subscribers: string
+}
+
+const { total, wordsLabel, subscribers } = Astro.props
+
+const stats = [
+  { value: String(total), label: '文章' },
+  { value: wordsLabel, label: '字数' },
+  { value: subscribers, label: '订阅' },
+]
+---
+
+<Panel caption="数 据 STATS">
+  <div class="flex h-[44px] w-full shrink-0 flex-row items-center">
+    {
+      stats.map((stat, i) => (
+        <>
+          {i > 0 && <span class="h-[24px] w-[1px] shrink-0 bg-hairline" />}
+          <span class="flex h-fit flex-1 flex-col items-center gap-[2px]">
+            <span class="text-[15px] font-bold whitespace-nowrap text-ink">{stat.value}</span>
+            <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">
+              {stat.label}
+            </span>
+          </span>
+        </>
+      ))
+    }
+  </div>
+</Panel>

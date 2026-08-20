@@ -1,0 +1,119 @@
+---
+import { Icon } from 'astro-icon/components'
+import { site } from '~/config'
+
+interface Props {
+  /** 主标题，归档页是「编年」，标签页传 #标签名 */
+  title?: string
+  /** 副标题整句 */
+  subtitle: string
+  /** 「最新」浮标指向的文章 */
+  latest?: { title: string; href: string } | undefined
+}
+
+const { title = '编年', subtitle, latest } = Astro.props
+
+/**
+ * 26 只萤火虫 —— 坐标取自 blog.pen（相对 Banner 的 1344×250 盒子）。
+ * x 转成百分比：在 1440 视口下与设计稿完全一致，窄屏时也不会全挤到左边。
+ * 辉光半径的规律是 size*2+8。
+ */
+const FIREFLIES: [x: number, y: number, size: number, opacity: number][] = [
+  [429, 118, 4, 0.844],
+  [728, 177, 5, 0.808],
+  [1337, 58, 2, 0.447],
+  [117, 89, 6, 0.365],
+  [916, 186, 2, 0.755],
+  [123, 131, 5, 0.598],
+  [1200, 32, 3, 0.751],
+  [75, 149, 3, 0.719],
+  [1103, 170, 5, 0.721],
+  [481, 47, 2, 0.679],
+  [429, 162, 4, 0.506],
+  [766, 56, 5, 0.581],
+  [580, 74, 4, 0.77],
+  [499, 149, 4, 0.643],
+  [786, 63, 4, 0.393],
+  [723, 102, 4, 0.498],
+  [144, 159, 4, 0.451],
+  [1145, 129, 2, 0.659],
+  [363, 106, 6, 0.547],
+  [924, 62, 5, 0.446],
+  [40, 71, 4, 0.738],
+  [602, 86, 5, 0.605],
+  [420, 172, 3, 0.491],
+  [117, 178, 4, 0.694],
+  [266, 169, 4, 0.494],
+  [632, 159, 3, 0.532],
+]
+
+const BANNER_W = 1344
+---
+
+<!--
+  Banner 编年 · blog.pen J6oDRw
+  注意：这个 Banner 没有填充，只有 1.5px 描边 —— Aurora 从后面透出来。
+-->
+<section
+  class="relative box-border flex w-full flex-col items-start justify-end overflow-hidden rounded-[28px] outline-[1.5px] -outline-offset-[0.75px] outline-card-border max-xl:px-[20px] max-xl:pt-[28px] max-xl:pb-[22px] xl:h-[250px] xl:pr-[40px] xl:pb-[34px] xl:pl-[40px]"
+>
+  {
+    FIREFLIES.map(([x, y, size, opacity]) => (
+      <span
+        aria-hidden="true"
+        class="pointer-events-none absolute z-0 rounded-full bg-brand"
+        style={`left:${((x / BANNER_W) * 100).toFixed(3)}%;top:${y}px;width:${size}px;height:${size}px;opacity:${opacity};box-shadow:0 0 ${size * 2 + 8}px 0 var(--glow-fire)`}
+      />
+    ))
+  }
+
+  <span
+    class="relative z-10 text-[12.5px] font-bold tracking-[2.6px] whitespace-nowrap text-leaf-deep"
+  >
+    {site.title} · {site.titleEn}
+  </span>
+
+  <span aria-hidden="true" class="relative z-10 h-[10px] w-[10px] shrink-0 opacity-0"></span>
+
+  <h1
+    class="font-display relative z-10 whitespace-nowrap text-ink max-xl:text-[38px] xl:text-[60px]/[66px]"
+  >
+    {title}
+  </h1>
+
+  <p class="relative z-10 max-w-[620px] text-[15px]/[24px] font-normal text-ink-soft">
+    {subtitle}
+  </p>
+
+  <!-- Banner 内部的竖排站名（和页面级的 VerticalRail 参数不同：25px、opacity 0.72、gap 9） -->
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute top-[36px] right-[12px] z-10 hidden w-fit flex-col items-center gap-[9px] xl:flex"
+  >
+    <span class="h-[34px] w-[1px] shrink-0 bg-ink opacity-[0.28]"></span>
+    {
+      [...site.title].map((char) => (
+        <span class="font-display text-[25px] whitespace-nowrap text-ink opacity-[0.72]">
+          {char}
+        </span>
+      ))
+    }
+    <span class="size-[5px] shrink-0 rounded-full bg-brand shadow-[0_0_8px_0_var(--glow-fire)]"></span>
+  </div>
+
+  {
+    latest && (
+      <a
+        href={latest.href}
+        class="absolute top-[180px] right-[179px] z-10 hidden h-fit w-fit flex-row items-center gap-[9px] rounded-[12px] bg-card-solid px-[14px] py-[10px] shadow-[0_6px_16px_-6px_var(--shadow-soft)] outline-[1.5px] -outline-offset-[0.75px] outline-card-border xl:flex"
+      >
+        <span class="size-[6px] shrink-0 rounded-full bg-brand shadow-[0_0_8px_0_var(--glow-fire)]" />
+        <span class="text-[12px] font-bold tracking-[1.2px] whitespace-nowrap text-leaf-deep">
+          最新
+        </span>
+        <span class="text-[12.5px] font-normal whitespace-nowrap text-ink">{latest.title}</span>
+        <Icon name="lucide:arrow-up-right" class="size-[14px] shrink-0 text-ink-muted" />
+      </a>
+    )
+  }
+</section>

@@ -1,0 +1,18 @@
+---
+interface Props {
+  /** 形如「数 据 STATS」 */
+  caption: string
+}
+
+const { caption } = Astro.props
+---
+
+<!-- 左栏面板外壳 · blog.pen 归档页的 4 个面板共用这套参数 -->
+<section
+  class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[28px] p-[18px]"
+>
+  <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+    {caption}
+  </span>
+  <slot />
+</section>

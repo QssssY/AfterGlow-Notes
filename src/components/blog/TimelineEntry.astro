@@ -1,0 +1,52 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  date: string
+  title: string
+  href: string
+  readMinutes: number
+  tags?: readonly string[]
+  /**
+   * 最新一篇的高亮态（设计稿里 13 行只有第一行是这样）：
+   * 圆点变成 5×14 的品牌色长条，标题也是品牌色。
+   */
+  highlight?: boolean
+}
+
+const { date, title, href, readMinutes, tags = [], highlight = false } = Astro.props
+---
+
+<a href={href} class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[12px]">
+  <span class="w-[44px] shrink-0 text-[13px] font-medium text-ink-soft">{date}</span>
+
+  <span class="flex h-[16px] w-[8px] shrink-0 flex-row items-center justify-center">
+    <span
+      class:list={[
+        'w-[5px] shrink-0 rounded-full',
+        highlight ? 'h-[14px] bg-brand' : 'h-[5px] bg-ink-muted',
+      ]}></span>
+  </span>
+
+  <span
+    class:list={['flex-1 text-[14px] font-medium', highlight ? 'text-brand' : 'text-ink']}
+    >{title}</span
+  >
+
+  <span class="flex h-[19px] w-fit shrink-0 flex-row items-center gap-[5px]">
+    <Icon name="lucide:clock-3" class="size-[12px] shrink-0 text-ink-muted" />
+    <span class="w-[44px] shrink-0 text-right text-[12px] font-normal text-ink-muted">
+      {readMinutes} 分钟
+    </span>
+  </span>
+
+  {
+    tags.length > 0 && (
+      <span class="hidden h-fit w-fit shrink-0 flex-row items-center gap-[10px] md:flex">
+        {tags.slice(0, 2).map((tag) => (
+          <span class="text-[13px] font-normal whitespace-nowrap text-ink-muted">#{tag}</span>
+        ))}
+      </span>
+    )
+  }
+</a>

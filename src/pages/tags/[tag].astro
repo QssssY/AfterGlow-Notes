@@ -1,0 +1,69 @@
+---
+import type { GetStaticPaths } from 'astro'
+import { Icon } from 'astro-icon/components'
+import Footer from '~/components/Footer.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import BannerChronicle from '~/components/blog/BannerChronicle.astro'
+import TagsPanel from '~/components/blog/TagsPanel.astro'
+import TimelineCard from '~/components/blog/TimelineCard.astro'
+import { compactCount, groupByYear, loadPosts, tagCounts } from '~/components/blog/data'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+
+/**
+ * 设计稿没有标签页的帧 —— 沿用归档页的语言（Banner + 左栏面板 + 年份时间轴），
+ * 只把主标题换成 #标签、去掉统计与订阅面板。
+ * 注意 loadPosts 必须来自独立模块：Astro 会把 getStaticPaths 抽出去。
+ */
+export const getStaticPaths = (async () => {
+  const posts = await loadPosts()
+  const tags = new Set<string>()
+  for (const post of posts) {
+    for (const tag of post.tags) tags.add(tag)
+  }
+
+  return [...tags].map((tag) => ({
+    params: { tag },
+    props: { tag, posts: posts.filter((post) => post.tags.includes(tag)) },
+  }))
+}) satisfies GetStaticPaths
+
+const { tag, posts } = Astro.props
+
+const all = await loadPosts()
+const words = posts.reduce((sum, post) => sum + post.words, 0)
+const groups = groupByYear(posts)
+---
+
+<BaseLayout
+  title={`#${tag}`}
+  description={`标签「${tag}」下的 ${posts.length} 篇文章`}
+  rail={false}
+  topPad={72}
+>
+  <BannerChronicle
+    title={`#${tag}`}
+    subtitle={`这个标签下共 ${posts.length} 篇，约 ${compactCount(words)}字`}
+  />
+
+  <div class="mt-[30px] flex w-full flex-row items-start gap-[48px]">
+    <div class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+      <Sidebar />
+      <TagsPanel tags={tagCounts(all)} />
+    </div>
+
+    <div class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[24px]">
+      <a
+        href="/archive"
+        class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[14px] px-[14px] py-[8px]"
+      >
+        <Icon name="lucide:arrow-left" class="size-[16px] shrink-0 text-ink-soft" />
+        <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">返回全部文章</span>
+      </a>
+
+      <TimelineCard groups={groups} />
+    </div>
+  </div>
+
+  <!-- 移动端不显示 Footer：由底部 Tab Bar 取代 -->
+  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+</BaseLayout>

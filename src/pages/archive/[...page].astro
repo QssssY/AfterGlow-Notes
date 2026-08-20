@@ -1,0 +1,116 @@
+---
+import type { GetStaticPaths } from 'astro'
+import Footer from '~/components/Footer.astro'
+import PostRow from '~/components/PostRow.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import ArchivePanel from '~/components/blog/ArchivePanel.astro'
+import BannerChronicle from '~/components/blog/BannerChronicle.astro'
+import ListHeader from '~/components/blog/ListHeader.astro'
+import Pagination from '~/components/blog/Pagination.astro'
+import StatsPanel from '~/components/blog/StatsPanel.astro'
+import SubscribePanel from '~/components/blog/SubscribePanel.astro'
+import TagsPanel from '~/components/blog/TagsPanel.astro'
+import TimelineCard from '~/components/blog/TimelineCard.astro'
+import FeaturedCard from '~/components/mobile/FeaturedCard.astro'
+import { compactCount, groupByYear, loadPosts, tagCounts, yearBars } from '~/components/blog/data'
+import { Icon } from 'astro-icon/components'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+
+/** 设计稿写的是 3.2k 订阅；没有真实数据源，等接了邮件服务再换掉 */
+const SUBSCRIBERS = '—'
+
+// pageSize 写字面量：getStaticPaths 被 Astro 抽成独立模块，取不到这里的常量
+export const getStaticPaths = (async ({ paginate }) => {
+  return paginate(await loadPosts(), { pageSize: 10 })
+}) satisfies GetStaticPaths
+
+const { page } = Astro.props
+
+// 左栏面板要的是全站聚合，不是当前页切片
+const all = await loadPosts()
+const total = all.length
+const totalWords = all.reduce((sum, post) => sum + post.words, 0)
+const newest = all[0]
+
+const groups = groupByYear(page.data)
+const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
+---
+
+<BaseLayout title="编年" description={`按时间倒叙的写作记录 —— 共 ${total} 篇`} rail={false} topPad={72}>
+  <BannerChronicle
+    subtitle={`按时间倒叙的写作记录 —— 共 ${total} 篇，约 ${compactCount(totalWords)}字`}
+    latest={newest ? { title: newest.title, href: newest.href } : undefined}
+  />
+
+  <div class="mt-[30px] flex w-full flex-row items-start gap-[48px]">
+    <div class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+      <Sidebar />
+      <StatsPanel total={total} wordsLabel={compactCount(totalWords)} subscribers={SUBSCRIBERS} />
+      <ArchivePanel years={yearBars(all)} />
+      <TagsPanel tags={tagCounts(all)} />
+      <SubscribePanel />
+    </div>
+
+    <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px]">
+      <ListHeader total={total} />
+
+      {
+        page.currentPage === 1 && newest && (
+          <>
+            {/* 桌面：设计稿的 Caption Row + Post Row */}
+            <section class="hidden h-fit w-full shrink-0 flex-col items-start gap-[14px] xl:flex">
+              <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between">
+                <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+                  精 选 FEATURED
+                </span>
+                <a href="/archive" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+                  <span class="text-[12.5px] font-medium whitespace-nowrap text-brand-ink">
+                    全部 {total} 篇
+                  </span>
+                  <Icon name="lucide:arrow-right" class="size-[13px] shrink-0 text-brand-ink" />
+                </a>
+              </div>
+              <PostRow
+                index={total}
+                date={newest.date}
+                category={newest.category}
+                title={newest.title}
+                excerpt={newest.excerpt}
+                href={newest.href}
+                readMinutes={newest.minutes}
+                words={newest.wordsLabel}
+              />
+            </section>
+
+            {/*
+              移动端：Post Row 的封面是固定 236px 且 shrink-0，在 390 下会横向溢出。
+              改用移动端首页那张 Featured Card —— 它本来就是为 390 设计的。
+            */}
+            <div class="w-full xl:hidden">
+              <FeaturedCard
+                date={newest.date}
+                category={newest.category}
+                title={newest.title}
+                href={newest.href}
+                minutes={newest.minutes}
+                wordsLabel={newest.wordsLabel}
+              />
+            </div>
+          </>
+        )
+      }
+
+      <TimelineCard groups={groups} highlightId={page.currentPage === 1 ? newest?.id : undefined} />
+
+      <Pagination
+        current={page.currentPage}
+        totalPages={page.lastPage}
+        total={total}
+        hrefFor={hrefFor}
+      />
+    </div>
+  </div>
+
+  <!-- 移动端不显示 Footer：设计稿里由底部 Tab Bar 取代 -->
+  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+</BaseLayout>

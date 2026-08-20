@@ -1,0 +1,51 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  /** 文章总数，用于搜索框占位文案 */
+  total: number
+}
+
+const { total } = Astro.props
+
+/**
+ * 设计稿的分组切换是「日 / 周 / 月 / 年 / 分类」，其中「年」为激活态。
+ * 目前时间轴就是按年分组的，所以这里只把它作为当前状态展示 ——
+ * 另外四种分组还没实现，故意不做成可点按钮，避免给出无效的交互暗示。
+ */
+const GROUPS = ['日', '周', '月', '年', '分类'] as const
+const ACTIVE = '年'
+---
+
+<div class="flex h-[40px] w-full shrink-0 flex-row items-center justify-between gap-[12px]">
+  <div
+    role="group"
+    aria-label="时间分组"
+    class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[4px] rounded-[16px] p-[4px]"
+  >
+    {
+      GROUPS.map((group) => {
+        const active = group === ACTIVE
+        return (
+          <span
+            aria-current={active ? 'true' : undefined}
+            class:list={[
+              'box-border flex h-fit w-fit shrink-0 flex-row rounded-[12px] px-[13px] py-[6px] text-[12px] whitespace-nowrap',
+              active ? 'bg-brand font-semibold text-on-brand' : 'font-medium text-ink-soft',
+            ]}
+          >
+            {group}
+          </span>
+        )
+      })
+    }
+  </div>
+
+  <!-- 搜索还没接 pagefind，先按设计稿做静态外观 -->
+  <div
+    class="hairline-box box-border hidden h-fit w-[236px] shrink-0 flex-row items-center gap-[8px] rounded-[12px] px-[12px] py-[9px] sm:flex"
+  >
+    <Icon name="lucide:search" class="size-[15px] shrink-0 text-ink-muted" />
+    <span class="flex-1 text-[13px] font-normal text-ink-muted">搜索 {total} 篇文章…</span>
+  </div>
+</div>

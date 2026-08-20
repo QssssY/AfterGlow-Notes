@@ -1,0 +1,48 @@
+---
+import type { ArchivePost } from './data'
+import { monthDay } from './data'
+import TimelineEntry from './TimelineEntry.astro'
+
+interface Props {
+  groups: { year: number; posts: ArchivePost[] }[]
+  /** 高亮的文章 id（最新一篇），只在第一页出现 */
+  highlightId?: string | undefined
+}
+
+const { groups, highlightId } = Astro.props
+---
+
+<!-- Timeline Card · blog.pen 归档页内容区 -->
+<div
+  class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[2px] rounded-[32px] max-xl:px-[18px] max-xl:py-[20px] xl:px-[28px] xl:py-[26px]"
+>
+  {
+    groups.map((group, i) => (
+      <>
+        {i > 0 && <span class="h-[1px] w-full shrink-0 bg-hairline" />}
+
+        <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[8px]">
+          <span class="text-[16px] font-medium whitespace-nowrap text-ink">{group.year}年</span>
+          <span class="size-[7px] shrink-0 rounded-full bg-dot-idle" />
+          <span class="flex-1 text-[13px] font-normal text-ink-soft">
+            {group.posts.length} 篇文章
+          </span>
+          <a href="/rss.xml" class="text-[12px] font-normal whitespace-nowrap text-brand-ink">
+            RSS
+          </a>
+        </div>
+
+        {group.posts.map((post) => (
+          <TimelineEntry
+            date={monthDay(post.date)}
+            title={post.title}
+            href={post.href}
+            readMinutes={post.minutes}
+            tags={post.tags}
+            highlight={post.id === highlightId}
+          />
+        ))}
+      </>
+    ))
+  }
+</div>
