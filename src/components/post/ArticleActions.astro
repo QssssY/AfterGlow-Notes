@@ -1,0 +1,77 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  /**
+   * 点赞数。设计稿画了「喜欢 · 328」，但真实计数需要后端服务，
+   * 所以不传时整个按钮不渲染 —— 不编假数字。
+   */
+  likes?: number | undefined
+  updated?: Date | undefined
+}
+
+const { likes, updated } = Astro.props
+
+function relative(date: Date) {
+  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000)
+  if (days <= 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 30) return `${days} 天前`
+  if (days < 365) return `${Math.floor(days / 30)} 个月前`
+  return `${Math.floor(days / 365)} 年前`
+}
+---
+
+<!-- Actions · blog.pen Post 文章详情 / Article Card -->
+<div class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
+  <!-- 设计稿只画了静态计数；真正的点赞需要后端计数服务 -->
+  {
+    likes !== undefined && (
+      <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[22px] bg-[#F5C0CB33] px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-[#F5C0CB66]">
+        <Icon name="lucide:heart" class="size-[18px] shrink-0 text-[#E08A9C]" />
+        <span class="text-[13px] font-medium whitespace-nowrap text-[#C2707F]">喜欢 · {likes}</span>
+      </span>
+    )
+  }
+
+  <button
+    type="button"
+    data-copy-link
+    class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[22px] bg-chip px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-card-border"
+  >
+    <Icon name="lucide:link" class="size-[16px] shrink-0 text-ink-soft" />
+    <span data-copy-label class="text-[13px] font-normal whitespace-nowrap text-ink-soft">
+      复制链接
+    </span>
+  </button>
+
+  <span class="h-[1px] flex-1"></span>
+
+  {
+    updated && (
+      <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+        最后更新于 {relative(updated)}
+      </span>
+    )
+  }
+</div>
+
+<script>
+  for (const button of document.querySelectorAll<HTMLElement>('[data-copy-link]')) {
+    const label = button.querySelector<HTMLElement>('[data-copy-label]')
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href)
+        if (label) {
+          const original = label.textContent
+          label.textContent = '已复制'
+          setTimeout(() => {
+            label.textContent = original
+          }, 1600)
+        }
+      } catch {
+        // 剪贴板不可用（非 HTTPS 或用户拒绝）时静默失败，不打断阅读
+      }
+    })
+  }
+</script>

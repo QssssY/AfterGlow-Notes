@@ -1,0 +1,135 @@
+---
+import { Image } from 'astro:assets'
+import { getCollection, render } from 'astro:content'
+import { Icon } from 'astro-icon/components'
+import Footer from '~/components/Footer.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import ArticleActions from '~/components/post/ArticleActions.astro'
+import LicenseBlock from '~/components/post/LicenseBlock.astro'
+import PrevNext from '~/components/post/PrevNext.astro'
+import ReadingProgress from '~/components/post/ReadingProgress.astro'
+import TocCard from '~/components/post/TocCard.astro'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import { postStats } from '~/utils/post'
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+  )
+
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      // 数组是时间倒序：下一项更旧 = 上一篇，上一项更新 = 下一篇
+      older: posts[i + 1],
+      newer: posts[i - 1],
+    },
+  }))
+}
+
+const { post, older, newer } = Astro.props
+const { Content, headings } = await render(post)
+const stats = postStats(post.body ?? '')
+
+const date = post.data.date
+const dateLabel = `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`
+
+const entry = (p: typeof post | undefined) =>
+  p ? { title: p.data.title, href: `/posts/${p.id}` } : undefined
+
+const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href
+const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}`
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} rail={false} topPad={72}>
+  <ReadingProgress />
+
+  <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
+    <!-- 左栏：桌面是 Sidebar + 目录；移动端只留目录（侧栏由底部 TabBar 代替） -->
+    <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:w-[280px]">
+      <div class="hidden w-full xl:block"><Sidebar /></div>
+      <TocCard headings={headings} />
+    </div>
+
+    <div class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1">
+      <a
+        href="/archive"
+        class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[14px] px-[14px] py-[8px]"
+      >
+        <Icon name="lucide:arrow-left" class="size-[16px] shrink-0 text-ink-soft" />
+        <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">返回文章列表</span>
+      </a>
+
+      <article
+        class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[22px] rounded-[34px] p-[20px] xl:p-[36px]"
+      >
+        {
+          post.data.cover && (
+            <Image
+              src={post.data.cover}
+              alt=""
+              class="h-[300px] w-full shrink-0 rounded-[22px] object-cover"
+            />
+          )
+        }
+
+        <header class="flex h-fit w-full shrink-0 flex-col items-start gap-[12px]">
+          {
+            post.data.tags.length > 0 && (
+              <div class="flex h-fit w-fit shrink-0 flex-row flex-wrap items-center gap-[8px]">
+                {post.data.tags.map((tag) => (
+                  <a
+                    href={`/tags/${tag}`}
+                    class="flex h-fit w-fit shrink-0 flex-row rounded-[12px] bg-fire-tint px-[11px] py-[5px]"
+                  >
+                    <span class="text-[12px] font-medium whitespace-nowrap text-brand-ink">
+                      #{tag}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )
+          }
+
+          <h1 class="font-display w-full text-[28px]/[40px] font-normal text-ink xl:text-[38px]/[51px]">
+            {post.data.title}
+          </h1>
+
+          <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+            <time datetime={date.toISOString()} class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+              {dateLabel}
+            </time>
+            <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+              阅读约 {stats.minutes} 分钟
+            </span>
+            <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+              {stats.wordsLabel}
+            </span>
+          </div>
+        </header>
+
+        <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+        <div class="article-body"><Content /></div>
+
+        <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+        <ArticleActions updated={post.data.updated} />
+      </article>
+
+      <LicenseBlock
+        permalink={permalink}
+        shareUrl={shareUrl}
+        title={post.data.title}
+        updated={post.data.updated}
+      />
+
+      <PrevNext prev={entry(older)} next={entry(newer)} />
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+</BaseLayout>

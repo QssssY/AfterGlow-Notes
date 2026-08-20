@@ -1,0 +1,62 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  /** 展示用的文章链接，如 qingchuan.ink/48 */
+  permalink: string
+  shareUrl: string
+  title: string
+  updated?: Date | undefined
+}
+
+const { permalink, shareUrl, title, updated } = Astro.props
+
+const pad = (n: number) => String(n).padStart(2, '0')
+const stamp = updated
+  ? ` · 最后修改于 ${updated.getFullYear()} · ${pad(updated.getMonth() + 1)} · ${pad(updated.getDate())}`
+  : ''
+
+const shares = [
+  { icon: 'link', label: '复制链接', href: shareUrl },
+  {
+    icon: 'twitter',
+    label: '分享到 X',
+    href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`,
+  },
+  {
+    icon: 'mail',
+    label: '邮件分享',
+    href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`,
+  },
+]
+---
+
+<!-- License Block · blog.pen Post 文章详情 -->
+<div class="glass-panel box-border flex h-fit w-full shrink-0 flex-row items-center gap-[16px] rounded-[22px] px-[18px] py-[16px]">
+  <span class="flex size-[40px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
+    <Icon name="lucide:creative-commons" class="size-[19px] shrink-0 text-brand-ink" />
+  </span>
+
+  <span class="flex h-fit flex-1 flex-col items-start gap-[4px]">
+    <span class="text-[13.5px] font-bold whitespace-nowrap text-ink">本文采用 CC BY-NC 4.0 授权</span>
+    <span class="w-full text-[12.5px] font-normal text-ink-soft">
+      转载请注明出处 · {permalink}{stamp}
+    </span>
+  </span>
+
+  <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px]">
+    {
+      shares.map((share) => (
+        <a
+          href={share.href}
+          aria-label={share.label}
+          target={share.icon === 'link' ? undefined : '_blank'}
+          rel={share.icon === 'link' ? undefined : 'noopener noreferrer'}
+          class="flex h-[34px] w-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-chip outline-1 -outline-offset-[0.5px] outline-hairline"
+        >
+          <Icon name={`lucide:${share.icon}`} class="size-[15px] shrink-0 text-ink-soft" />
+        </a>
+      ))
+    }
+  </span>
+</div>

@@ -1,0 +1,26 @@
+---
+// Reading Progress · blog.pen Post 文章详情（设计稿是 1440×3 固定在页面顶端）
+---
+
+<div class="fixed top-0 left-0 z-50 h-[3px] w-full overflow-hidden bg-hairline">
+  <div
+    data-reading-bar
+    class="h-[3px] w-0 bg-brand shadow-[0_0_8px_0_var(--glow-fire)]"
+  >
+  </div>
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-reading-bar]')
+
+  if (bar) {
+    const update = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      const pct = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0
+      bar.style.width = `${pct}%`
+    }
+    addEventListener('scroll', update, { passive: true })
+    addEventListener('resize', update)
+    update()
+  }
+</script>
