@@ -1,0 +1,68 @@
+---
+import Footer from '~/components/Footer.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import StatsPageHead from '~/components/StatsPageHead.astro'
+import ApplyPanel from '~/components/blogroll/ApplyPanel.astro'
+import BlogCard from '~/components/blogroll/BlogCard.astro'
+import { blogroll } from '~/config'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+
+// 设计稿写的是 18 个 / 9 年；按真实数据算
+const total = blogroll.length
+const oldest = new Date().getFullYear() - Math.min(...blogroll.map((blog) => blog.since))
+
+// 设计稿是两行定宽三列；移动端按 Home 的规则收成单列
+const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
+---
+
+<BaseLayout
+  title="优秀博客"
+  description="长期在读的个人站点。都还在更新，而且写得比我好。"
+  rail={false}
+  topPad={72}
+>
+  <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
+    <div class="hidden w-[280px] shrink-0 xl:block">
+      <Sidebar />
+    </div>
+
+    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
+      <StatsPageHead
+        title="优秀博客"
+        subtitle="长期在读的个人站点。都还在更新，而且写得比我好。"
+        stats={[
+          { value: String(total), label: '个友链' },
+          { value: String(oldest), label: '年最久' },
+        ]}
+      />
+
+      <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px]">
+        {
+          rows.map((row) => (
+            <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[24px] xl:flex-row">
+              {row.map((blog) => (
+                <BlogCard
+                  name={blog.name}
+                  initial={blog.initial}
+                  href={blog.href}
+                  domain={blog.domain}
+                  desc={blog.desc}
+                  tags={blog.tags}
+                  from={blog.from}
+                  to={blog.to}
+                  initialColor={blog.initialColor}
+                />
+              ))}
+            </div>
+          ))
+        }
+
+        <ApplyPanel />
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block">
+    <Footer license="友链长期开放，欢迎自荐 · 萤火录" />
+  </div>
+</BaseLayout>

@@ -78,6 +78,150 @@ export const reading = [
   { title: '《人月神话》', author: 'Fred Brooks', progress: 34, accent: 'gold' },
 ] as const
 
+/**
+ * 推荐分享 —— tone 决定图标砖的配色（fire = 橙底橙字，leaf = 玻璃底绿字）。
+ * 设计稿里它不跟着 category 走（Fontshare 是工具却用 leaf），所以按条存。
+ */
+export const shareItems = [
+  {
+    title: 'Ray.so — 把代码片段导出成好看的图',
+    desc: '分享代码到社交平台时不用再截屏幕，配色和窗口留白都可调，导出的 PNG 直接能用在文章里。',
+    href: 'https://ray.so',
+    domain: 'ray.so',
+    icon: 'code',
+    tone: 'fire',
+    category: '工具',
+  },
+  {
+    title: 'Warp — 带块级输出的现代终端',
+    desc: '命令和输出被拆成可折叠的块，翻历史记录时不必再和滚动条搏斗，补全提示也比默认 shell 聪明。',
+    href: 'https://www.warp.dev',
+    domain: 'warp.dev',
+    icon: 'terminal',
+    tone: 'fire',
+    category: '工具',
+  },
+  {
+    title: 'Fontshare — 可商用的免费字体库',
+    desc: '每套字重都完整，页面直接给出配对建议，做项目找标题字时比在 Google Fonts 里翻要省事。',
+    href: 'https://www.fontshare.com',
+    domain: 'fontshare.com',
+    icon: 'type',
+    tone: 'leaf',
+    category: '工具',
+  },
+  {
+    title: '中文文案排版指北',
+    desc: '中英混排的空格、全半角标点、数字用法都有明确规则，团队里争论「该不该加空格」时可以直接引用。',
+    href: 'https://github.com/sparanoid/chinese-copywriting-guidelines',
+    domain: 'github.com',
+    icon: 'file-text',
+    tone: 'leaf',
+    category: '文章',
+  },
+  {
+    title: 'CoRecursive — 代码背后的故事',
+    desc: '每期让一个项目的作者讲当初为什么那样设计，比读文档更能理解技术选型背后的取舍，通勤时听正好。',
+    href: 'https://corecursive.com',
+    domain: 'corecursive.com',
+    icon: 'mic',
+    tone: 'fire',
+    category: '播客',
+  },
+  {
+    title: 'The Book of Shaders — 从零学片元着色器',
+    desc: '从 GLSL 基础讲到噪声与图案生成，每章的示例都能在浏览器里改代码实时看效果，入门图形学最少弯路。',
+    href: 'https://thebookofshaders.com',
+    domain: 'thebookofshaders.com',
+    icon: 'palette',
+    tone: 'leaf',
+    category: '教程',
+  },
+] as const
+
+/** Share 页 Filter Bar 的档位，顺序照设计稿 */
+export const shareFilters = ['全部', '工具', '文章', '播客', '教程'] as const
+
+/**
+ * 优秀博客 —— 头像是首字 + 渐变底。渐变的角度和色标位置全站统一，
+ * 只有两端颜色和文字色按条手调，所以只存 from / to / initialColor。
+ * since 用来算 Page Head 的「年最久」。
+ */
+export const blogroll = [
+  {
+    name: '云谏',
+    initial: '云',
+    href: 'https://yunjian.dev',
+    domain: 'yunjian.dev',
+    desc: '把 Vite、Rollup 的源码读薄，顺手记下每一个踩过的构建坑。',
+    tags: ['前端工程', '构建'],
+    from: '#D9812B',
+    to: '#EEC25E',
+    initialColor: '#241C18',
+    since: 2019,
+  },
+  {
+    name: '阿岐',
+    initial: '岐',
+    href: 'https://aqi.works',
+    domain: 'aqi.works',
+    desc: 'WebGL 与 shader 笔记，每篇都配一个能拖着玩的实时 demo。',
+    tags: ['图形', 'Shader'],
+    from: '#1F5E4E',
+    to: '#2A7A66',
+    initialColor: '#F0E6DA',
+    since: 2021,
+  },
+  {
+    name: '林陌',
+    initial: '陌',
+    href: 'https://linmo.studio',
+    domain: 'linmo.studio',
+    desc: '中文排版的细节控，讲字距、行高与网格背后的取舍。',
+    tags: ['设计', '排版'],
+    from: '#A85B12',
+    to: '#C9741F',
+    initialColor: '#F0E6DA',
+    since: 2020,
+  },
+  {
+    name: '陈拾',
+    initial: '拾',
+    href: 'https://chenshi.me',
+    domain: 'chenshi.me',
+    desc: '一年只更十几篇，写搬家、旧书和深夜的末班地铁。',
+    tags: ['随笔', '生活'],
+    from: '#070707',
+    to: '#2E2724',
+    initialColor: '#F0E6DA',
+    since: 2017,
+  },
+  {
+    name: '温亦',
+    initial: '亦',
+    href: 'https://wenyi.cc',
+    domain: 'wenyi.cc',
+    desc: 'TypeScript 类型体操与编辑器插件，写得又长又耐心。',
+    tags: ['类型系统', '工具链'],
+    from: '#EEC25E',
+    to: '#C9741F',
+    initialColor: '#241C18',
+    since: 2022,
+  },
+  {
+    name: '岑野',
+    initial: '野',
+    href: 'https://cenye.xyz',
+    domain: 'cenye.xyz',
+    desc: '生成艺术日更，记录从 Processing 迁到 GLSL 的全过程。',
+    tags: ['生成艺术', '创作'],
+    from: '#2A7A66',
+    to: '#EEC25E',
+    initialColor: '#241C18',
+    since: 2023,
+  },
+] as const
+
 /** Projects Section */
 export const projects = [
   {

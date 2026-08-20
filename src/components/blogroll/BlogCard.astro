@@ -1,0 +1,68 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  name: string
+  initial: string
+  href: string
+  domain: string
+  desc: string
+  tags: readonly string[]
+  /** 头像渐变的两端色；角度与色标位置全站一致 */
+  from: string
+  to: string
+  initialColor: string
+}
+
+const { name, initial, href, domain, desc, tags, from, to, initialColor } = Astro.props
+---
+
+<!-- Blog Card · blog.pen r9Dt3 -->
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="glass group box-border flex h-fit w-full flex-col items-start gap-[14px] rounded-[28px] p-[20px] xl:flex-1"
+>
+  <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
+    <span
+      class="flex size-[44px] shrink-0 flex-row items-center justify-center rounded-[14px] outline-1 -outline-offset-[0.5px] outline-sheen"
+      style={`background-image:linear-gradient(-135deg,${from} 14.645%,${to} 85.355%)`}
+    >
+      <span class="font-display text-[19px]/[19px] font-normal" style={`color:${initialColor}`}>
+        {initial}
+      </span>
+    </span>
+
+    <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[3px]">
+      <span class="w-full truncate text-[15px]/[20px] font-medium text-ink">{name}</span>
+      <span class="w-full truncate font-mono text-[11.5px]/[15px] font-normal text-ink-muted">
+        {domain}
+      </span>
+    </span>
+  </span>
+
+  <span class="w-full text-[13px]/[21px] font-normal text-ink-soft">{desc}</span>
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <span class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[8px]">
+    <span class="flex h-fit min-w-0 shrink flex-row items-center gap-[6px]">
+      {
+        tags.map((tag) => (
+          <span class="hairline-box flex h-fit w-fit shrink-0 flex-row rounded-[12px] px-[9px] py-[4px] text-[11px]/[15px] font-normal whitespace-nowrap text-ink-muted">
+            {tag}
+          </span>
+        ))
+      }
+    </span>
+
+    <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[4px]">
+      <span class="text-[12px]/[17px] font-normal whitespace-nowrap text-brand-ink">访问</span>
+      <Icon
+        name="lucide:arrow-up-right"
+        class="size-[14px] shrink-0 text-brand-ink transition-transform group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
+      />
+    </span>
+  </span>
+</a>

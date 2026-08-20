@@ -1,0 +1,59 @@
+---
+import { Icon } from 'astro-icon/components'
+
+/**
+ * 申请友链 · blog.pen Blogroll SAL0U
+ * 和左栏的 Panel 不是同一套：这里是 glass-panel 阴影 + radius 28 + p 20。
+ * 设计稿只画了静态外观；做成真表单，但还没有后端，action 留给以后接。
+ */
+const fields = [
+  { name: 'name', icon: 'type', placeholder: '站点名称', type: 'text' },
+  { name: 'url', icon: 'link', placeholder: 'https://', type: 'url' },
+  { name: 'desc', icon: 'pen-line', placeholder: '一句话简介', type: 'text' },
+] as const
+---
+
+<div
+  class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[28px] p-[20px]"
+>
+  <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[6px]">
+    <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      申 请 友 链 EXCHANGE
+    </span>
+    <p class="w-full text-[13px]/[21px] font-normal text-ink-soft">
+      个人站点、原创内容、能正常访问就行。填完我会去读几篇再回链，通常一周内答复。
+    </p>
+  </div>
+
+  <form class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[10px] xl:flex-row xl:items-center">
+    {
+      fields.map((field) => (
+        <label
+          class="hairline-box box-border flex h-[38px] w-full flex-row items-center gap-[8px] rounded-[12px] px-[12px] xl:flex-1"
+        >
+          <Icon name={`lucide:${field.icon}`} class="size-[14px] shrink-0 text-ink-muted" />
+          <input
+            type={field.type}
+            name={field.name}
+            required
+            placeholder={field.placeholder}
+            class="w-full min-w-0 bg-transparent text-[12.5px] font-normal text-ink placeholder:text-ink-muted focus:outline-none"
+          />
+        </label>
+      ))
+    }
+
+    <button
+      type="submit"
+      class="flex h-[38px] w-full shrink-0 flex-row items-center justify-center gap-[7px] rounded-[12px] bg-brand px-[18px] outline-1 -outline-offset-[0.5px] outline-brand xl:w-fit"
+    >
+      <span class="text-[12.5px] font-bold whitespace-nowrap text-on-brand">提交申请</span>
+      <Icon name="lucide:arrow-right" class="size-[14px] shrink-0 text-on-brand" />
+    </button>
+  </form>
+
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <Icon name="lucide:link" class="size-[13px] shrink-0 text-ink-muted" />
+    <span class="text-[11.5px] font-normal text-ink-muted">也可以直接发邮件，附上站点地址即可。</span>
+  </div>
+</div>

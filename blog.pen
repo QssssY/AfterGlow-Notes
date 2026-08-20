@@ -3,50 +3,6 @@
   "children": [
     {
       "type": "frame",
-      "id": "Y3fypr",
-      "x": 0,
-      "y": 0,
-      "name": "Welcome to pen.dev",
-      "clip": true,
-      "width": 1000,
-      "height": 1458,
-      "layout": "none",
-      "children": [
-        {
-          "type": "text",
-          "id": "p5iwM",
-          "x": 38,
-          "y": 297,
-          "name": "Start here",
-          "fill": "#ff8303ff",
-          "textGrowth": "fixed-width-height",
-          "width": 923,
-          "height": 139,
-          "content": "Ask agent to design",
-          "lineHeight": 1.399999976158142,
-          "textAlign": "center",
-          "fontFamily": "Noto Sans",
-          "fontSize": 100,
-          "fontWeight": "500",
-          "letterSpacing": -4
-        }
-      ]
-    },
-    {
-      "type": "path",
-      "id": "pSGLk",
-      "x": 317,
-      "y": 689,
-      "geometry": "M7 0l0 14m7-7l-7 7-7-7",
-      "width": 366,
-      "height": 366,
-      "stroke": "#ff8302ff",
-      "strokeWidth": 50,
-      "strokeLinejoin": "round",
-      "strokeLinecap": "round"
-    },
-    {
-      "type": "frame",
       "id": "TQ3Oj",
       "x": 1200,
       "y": 0,
@@ -233,7 +189,7 @@
                   "fill": {
                     "type": "image",
                     "enabled": true,
-                    "url": "./images/generated-1787210923171.png",
+                    "url": "images/generated-1787210923171.png",
                     "mode": "fill"
                   },
                   "cornerRadius": 17,
@@ -1838,7 +1794,7 @@
                       "fill": {
                         "type": "image",
                         "enabled": true,
-                        "url": "./images/generated-1787211089413.png",
+                        "url": "images/generated-1787211089413.png",
                         "mode": "fill"
                       },
                       "cornerRadius": 60,
@@ -6004,7 +5960,8 @@
                           "width": "fill_container",
                           "content": "从图层到语义",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -6040,7 +5997,8 @@
                           "width": "fill_container",
                           "content": "一次失败的尝试",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -6070,7 +6028,8 @@
                           "width": "fill_container",
                           "content": "渲染与交互的边界",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -6100,7 +6059,8 @@
                           "width": "fill_container",
                           "content": "接下来做什么",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -8281,8 +8241,8 @@
     {
       "type": "frame",
       "id": "tAKJK",
-      "x": 7440,
-      "y": 700,
+      "x": 7481,
+      "y": 862,
       "name": "About 关于网站",
       "clip": true,
       "width": 1440,
@@ -8519,7 +8479,7 @@
                               "fill": {
                                 "type": "image",
                                 "enabled": true,
-                                "url": "./images/generated-1787211902736.png",
+                                "url": "images/generated-1787211902736.png",
                                 "mode": "fill"
                               },
                               "cornerRadius": 28
@@ -10191,7 +10151,7 @@
                       "fill": {
                         "type": "image",
                         "enabled": true,
-                        "url": "./images/generated-1787212258862.png",
+                        "url": "images/generated-1787212258862.png",
                         "mode": "fill"
                       },
                       "cornerRadius": 15
@@ -10260,7 +10220,7 @@
                   "fill": {
                     "type": "image",
                     "enabled": true,
-                    "url": "./images/generated-1787212262935.png",
+                    "url": "images/generated-1787212262935.png",
                     "mode": "fill"
                   },
                   "cornerRadius": 44,
@@ -11214,7 +11174,8 @@
                   "fill": "$text-primary",
                   "content": "项目",
                   "fontFamily": "$font-body",
-                  "fontSize": 10
+                  "fontSize": 10,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -11251,7 +11212,8 @@
                   "fill": "$text-primary",
                   "content": "关于",
                   "fontFamily": "$font-body",
-                  "fontSize": 10
+                  "fontSize": 10,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -11288,7 +11250,8 @@
                   "fill": "$text-primary",
                   "content": "分享",
                   "fontFamily": "$font-body",
-                  "fontSize": 10
+                  "fontSize": 10,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -11325,7 +11288,8 @@
                   "fill": "$text-primary",
                   "content": "友链",
                   "fontFamily": "$font-body",
-                  "fontSize": 10
+                  "fontSize": 10,
+                  "fontWeight": "normal"
                 }
               ]
             }
@@ -11793,7 +11757,8 @@
                           "width": "fill_container",
                           "content": "从图层到语义",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -11829,7 +11794,8 @@
                           "width": "fill_container",
                           "content": "一次失败的尝试",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -11859,7 +11825,8 @@
                           "width": "fill_container",
                           "content": "渲染与交互的边界",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     },
@@ -11889,7 +11856,8 @@
                           "width": "fill_container",
                           "content": "接下来做什么",
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -15943,6 +15911,2042 @@
               "fontFamily": "$font-body",
               "fontSize": 11.5,
               "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "JinhX",
+      "x": 11150,
+      "y": 700,
+      "name": "Share 推荐分享",
+      "clip": true,
+      "width": 1440,
+      "height": 1025,
+      "fill": "$bg-cream",
+      "layout": "none",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "DNQaE",
+          "x": -240,
+          "y": -240,
+          "name": "Aurora Backdrop",
+          "width": 1920,
+          "height": 1505,
+          "effect": {
+            "type": "blur",
+            "radius": 70
+          }
+        },
+        {
+          "type": "frame",
+          "id": "lKkFy",
+          "x": 48,
+          "y": 72,
+          "name": "Body",
+          "width": 1344,
+          "gap": 48,
+          "children": [
+            {
+              "type": "frame",
+              "id": "Ete9i",
+              "name": "Left Column",
+              "width": 280,
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "Dhijf",
+                  "type": "ref",
+                  "ref": "I23TnW",
+                  "name": "Sidebar",
+                  "width": "fill_container",
+                  "descendants": {
+                    "D45LWv": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "D45LWv/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "D45LWv/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "qXu8J": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "qXu8J/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "qXu8J/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "BXLlZ": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "BXLlZ/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "BXLlZ/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "zIgPK": {
+                      "fill": "$card-fill-solid",
+                      "stroke": "$card-border"
+                    },
+                    "zIgPK/z5PWm": {
+                      "fill": "$brand"
+                    },
+                    "zIgPK/LqYgf": {
+                      "fill": "$text-primary",
+                      "fontWeight": "500"
+                    },
+                    "KaFfK": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "KaFfK/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "KaFfK/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "HXQtF",
+              "name": "Content",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Fr1Bo",
+                  "name": "Page Head",
+                  "width": "fill_container",
+                  "fill": "$card-fill",
+                  "cornerRadius": 30,
+                  "stroke": "$card-border",
+                  "strokeWidth": 1.5,
+                  "effect": [
+                    {
+                      "type": "background_blur",
+                      "radius": 8
+                    },
+                    {
+                      "type": "shadow",
+                      "shadowType": "outer",
+                      "color": "$shadow-soft",
+                      "offset": {
+                        "x": 0,
+                        "y": 24
+                      },
+                      "blur": 44,
+                      "spread": -16
+                    },
+                    {
+                      "type": "shadow",
+                      "shadowType": "outer",
+                      "color": "$sheen",
+                      "blur": 20
+                    }
+                  ],
+                  "gap": 30,
+                  "padding": [
+                    26,
+                    30
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Mhtch",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "kKDsz",
+                          "name": "Title",
+                          "fill": "$text-primary",
+                          "content": "推荐分享",
+                          "lineHeight": 1.2,
+                          "fontFamily": "$font-display",
+                          "fontSize": 30,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "uA8SY",
+                          "name": "Subtitle",
+                          "fill": "$text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "值得反复打开的工具、文章和播客。只收自己真正用过的，不做榜单。",
+                          "lineHeight": 1.6,
+                          "fontFamily": "$font-body",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "WBoOo",
+                      "name": "Stats",
+                      "gap": 26,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "nfVrp",
+                          "name": "Stat 条收录",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "osEHS",
+                              "name": "Value",
+                              "fill": "$ink",
+                              "content": "32",
+                              "fontFamily": "$font-body",
+                              "fontSize": 15,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "TUpIN",
+                              "name": "Label",
+                              "fill": "$text-muted",
+                              "content": "条收录",
+                              "fontFamily": "$font-body",
+                              "fontSize": 11.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "B7ZFMd",
+                          "name": "Divider",
+                          "fill": "$hairline",
+                          "width": 1,
+                          "height": 28
+                        },
+                        {
+                          "type": "frame",
+                          "id": "BQCZ4",
+                          "name": "Stat 个分类",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "iyiTu",
+                              "name": "Value",
+                              "fill": "$ink",
+                              "content": "4",
+                              "fontFamily": "$font-body",
+                              "fontSize": 15,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "pjkQv",
+                              "name": "Label",
+                              "fill": "$text-muted",
+                              "content": "个分类",
+                              "fontFamily": "$font-body",
+                              "fontSize": 11.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "E52rZS",
+                  "name": "Share List Slot",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WCexR",
+                      "name": "Filter Bar",
+                      "width": "fill_container",
+                      "height": 38,
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "x8hqUj",
+                          "name": "Stacks",
+                          "gap": 7,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "h2cRxV",
+                              "type": "ref",
+                              "ref": "RJEix",
+                              "name": "Pill 全部",
+                              "fill": "$fire-tint",
+                              "cornerRadius": "$radius-chip",
+                              "stroke": "$accent-fire",
+                              "strokeWidth": 1,
+                              "padding": [
+                                7,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "descendants": {
+                                "BCuLo": {
+                                  "content": "全部",
+                                  "fill": "$fire-ink",
+                                  "fontSize": 12.5,
+                                  "fontWeight": "700"
+                                }
+                              }
+                            },
+                            {
+                              "id": "Ak6wD",
+                              "type": "ref",
+                              "ref": "RJEix",
+                              "name": "Pill 工具",
+                              "fill": "$chip-fill",
+                              "cornerRadius": "$radius-chip",
+                              "stroke": "$hairline",
+                              "strokeWidth": 1,
+                              "padding": [
+                                7,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "descendants": {
+                                "BCuLo": {
+                                  "content": "工具",
+                                  "fill": "$text-secondary",
+                                  "fontSize": 12.5,
+                                  "fontWeight": "700"
+                                }
+                              }
+                            },
+                            {
+                              "id": "fqqEE",
+                              "type": "ref",
+                              "ref": "RJEix",
+                              "name": "Pill 文章",
+                              "fill": "$chip-fill",
+                              "cornerRadius": "$radius-chip",
+                              "stroke": "$hairline",
+                              "strokeWidth": 1,
+                              "padding": [
+                                7,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "descendants": {
+                                "BCuLo": {
+                                  "content": "文章",
+                                  "fill": "$text-secondary",
+                                  "fontSize": 12.5,
+                                  "fontWeight": "700"
+                                }
+                              }
+                            },
+                            {
+                              "id": "Tk5cX",
+                              "type": "ref",
+                              "ref": "RJEix",
+                              "name": "Pill 播客",
+                              "fill": "$chip-fill",
+                              "cornerRadius": "$radius-chip",
+                              "stroke": "$hairline",
+                              "strokeWidth": 1,
+                              "padding": [
+                                7,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "descendants": {
+                                "BCuLo": {
+                                  "content": "播客",
+                                  "fill": "$text-secondary",
+                                  "fontSize": 12.5,
+                                  "fontWeight": "700"
+                                }
+                              }
+                            },
+                            {
+                              "id": "DmySI",
+                              "type": "ref",
+                              "ref": "RJEix",
+                              "name": "Pill 教程",
+                              "fill": "$chip-fill",
+                              "cornerRadius": "$radius-chip",
+                              "stroke": "$hairline",
+                              "strokeWidth": 1,
+                              "padding": [
+                                7,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "descendants": {
+                                "BCuLo": {
+                                  "content": "教程",
+                                  "fill": "$text-secondary",
+                                  "fontSize": 12.5,
+                                  "fontWeight": "700"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Y1I7d",
+                          "name": "Count",
+                          "gap": 7,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "BPcsp",
+                              "name": "Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "bookmark",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "I8AOi",
+                              "name": "Label",
+                              "fill": "$text-muted",
+                              "content": "共 6 条收藏",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "s9OZ0y",
+                      "name": "Share List",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 14,
+                      "children": [
+                        {
+                          "id": "lpLSd",
+                          "type": "ref",
+                          "ref": "FaObM",
+                          "name": "Ray.so",
+                          "width": "fill_container",
+                          "descendants": {
+                            "M7Hig": {
+                              "fill": "$fire-tint"
+                            },
+                            "EgVV1": {
+                              "icon": "code",
+                              "fill": "$fire-ink"
+                            },
+                            "lWBUH": {
+                              "content": "Ray.so — 把代码片段导出成好看的图"
+                            },
+                            "aiNq1": {
+                              "content": "分享代码到社交平台时不用再截屏幕，配色和窗口留白都可调，导出的 PNG 直接能用在文章里。"
+                            },
+                            "T2v8J": {
+                              "content": "ray.so"
+                            }
+                          }
+                        },
+                        {
+                          "id": "eHIq0",
+                          "type": "ref",
+                          "ref": "FaObM",
+                          "name": "Warp",
+                          "width": "fill_container",
+                          "descendants": {
+                            "M7Hig": {
+                              "fill": "$fire-tint"
+                            },
+                            "EgVV1": {
+                              "icon": "terminal",
+                              "fill": "$fire-ink"
+                            },
+                            "lWBUH": {
+                              "content": "Warp — 带块级输出的现代终端"
+                            },
+                            "aiNq1": {
+                              "content": "命令和输出被拆成可折叠的块，翻历史记录时不必再和滚动条搏斗，补全提示也比默认 shell 聪明。"
+                            },
+                            "T2v8J": {
+                              "content": "warp.dev"
+                            }
+                          }
+                        },
+                        {
+                          "id": "MX4Jy",
+                          "type": "ref",
+                          "ref": "FaObM",
+                          "name": "Fontshare",
+                          "width": "fill_container",
+                          "descendants": {
+                            "M7Hig": {
+                              "fill": "$chip-fill"
+                            },
+                            "EgVV1": {
+                              "icon": "type",
+                              "fill": "$leaf-deep"
+                            },
+                            "lWBUH": {
+                              "content": "Fontshare — 可商用的免费字体库"
+                            },
+                            "aiNq1": {
+                              "content": "每套字重都完整，页面直接给出配对建议，做项目找标题字时比在 Google Fonts 里翻要省事。"
+                            },
+                            "T2v8J": {
+                              "content": "fontshare.com"
+                            }
+                          }
+                        },
+                        {
+                          "id": "jLW65",
+                          "type": "ref",
+                          "ref": "FaObM",
+                          "name": "中文排版指北",
+                          "width": "fill_container",
+                          "descendants": {
+                            "M7Hig": {
+                              "fill": "$chip-fill"
+                            },
+                            "EgVV1": {
+                              "icon": "file-text",
+                              "fill": "$leaf-deep"
+                            },
+                            "lWBUH": {
+                              "content": "中文文案排版指北"
+                            },
+                            "aiNq1": {
+                              "content": "中英混排的空格、全半角标点、数字用法都有明确规则，团队里争论「该不该加空格」时可以直接引用。"
+                            },
+                            "T2v8J": {
+                              "content": "github.com"
+                            }
+                          }
+                        },
+                        {
+                          "id": "leui7",
+                          "type": "ref",
+                          "ref": "FaObM",
+                          "name": "CoRecursive",
+                          "width": "fill_container",
+                          "descendants": {
+                            "M7Hig": {
+                              "fill": "$fire-tint"
+                            },
+                            "EgVV1": {
+                              "icon": "mic",
+                              "fill": "$fire-ink"
+                            },
+                            "lWBUH": {
+                              "content": "CoRecursive — 代码背后的故事"
+                            },
+                            "aiNq1": {
+                              "content": "每期让一个项目的作者讲当初为什么那样设计，比读文档更能理解技术选型背后的取舍，通勤时听正好。"
+                            },
+                            "T2v8J": {
+                              "content": "corecursive.com"
+                            }
+                          }
+                        },
+                        {
+                          "id": "r7EIM",
+                          "type": "ref",
+                          "ref": "FaObM",
+                          "name": "The Book of Shaders",
+                          "width": "fill_container",
+                          "descendants": {
+                            "M7Hig": {
+                              "fill": "$chip-fill"
+                            },
+                            "EgVV1": {
+                              "icon": "palette",
+                              "fill": "$leaf-deep"
+                            },
+                            "lWBUH": {
+                              "content": "The Book of Shaders — 从零学片元着色器"
+                            },
+                            "aiNq1": {
+                              "content": "从 GLSL 基础讲到噪声与图案生成，每章的示例都能在浏览器里改代码实时看效果，入门图形学最少弯路。"
+                            },
+                            "T2v8J": {
+                              "content": "thebookofshaders.com"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ggOaJ",
+          "layoutPosition": "absolute",
+          "x": 48,
+          "y": 890,
+          "name": "Footer",
+          "width": 1344,
+          "layout": "vertical",
+          "gap": 12,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "Y4rmhB",
+              "name": "Hairline",
+              "fill": "$hairline",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "l6Jw13",
+              "name": "Dot Row",
+              "height": 8,
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "Y1KEP",
+                  "name": "Dot 1",
+                  "fill": "$hairline",
+                  "width": 4,
+                  "height": 4
+                },
+                {
+                  "type": "ellipse",
+                  "id": "A6sak",
+                  "name": "Dot 2",
+                  "fill": "$accent-fire",
+                  "width": 6,
+                  "height": 6
+                },
+                {
+                  "type": "ellipse",
+                  "id": "GeV7K",
+                  "name": "Dot 3",
+                  "fill": "$hairline",
+                  "width": 4,
+                  "height": 4
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "jcTNn",
+              "name": "Copy",
+              "fill": "$text-muted",
+              "content": "© 2026 清川  ·  由 Astro 与一点耐心构建",
+              "fontFamily": "$font-body",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Y9xDkH",
+              "name": "License",
+              "opacity": 0.8,
+              "fill": "$text-muted",
+              "content": "外链内容版权归原作者所有  ·  萤火录",
+              "fontFamily": "$font-body",
+              "fontSize": 11.5,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "SAL0U",
+      "x": 12750,
+      "y": 700,
+      "name": "Blogroll 优秀博客",
+      "clip": true,
+      "width": 1440,
+      "height": 1390,
+      "fill": "$bg-cream",
+      "layout": "none",
+      "children": [
+        {
+          "type": "rectangle",
+          "id": "VkQqV",
+          "x": -240,
+          "y": -240,
+          "name": "Aurora Backdrop",
+          "width": 1920,
+          "height": 1870,
+          "effect": {
+            "type": "blur",
+            "radius": 70
+          }
+        },
+        {
+          "type": "frame",
+          "id": "s9Nv5",
+          "x": 48,
+          "y": 72,
+          "name": "Body",
+          "width": 1344,
+          "gap": 48,
+          "children": [
+            {
+              "type": "frame",
+              "id": "bYjQG",
+              "name": "Left Column",
+              "width": 280,
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "id": "EIbph",
+                  "type": "ref",
+                  "ref": "I23TnW",
+                  "name": "Sidebar",
+                  "width": "fill_container",
+                  "descendants": {
+                    "D45LWv": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "D45LWv/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "D45LWv/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "qXu8J": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "qXu8J/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "qXu8J/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "BXLlZ": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "BXLlZ/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "BXLlZ/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "zIgPK": {
+                      "fill": "#FFFFFF00",
+                      "stroke": "#FFFFFF00"
+                    },
+                    "zIgPK/z5PWm": {
+                      "fill": "$text-secondary"
+                    },
+                    "zIgPK/LqYgf": {
+                      "fill": "$text-secondary",
+                      "fontWeight": "400"
+                    },
+                    "KaFfK": {
+                      "fill": "$card-fill-solid",
+                      "stroke": "$card-border"
+                    },
+                    "KaFfK/z5PWm": {
+                      "fill": "$brand"
+                    },
+                    "KaFfK/LqYgf": {
+                      "fill": "$text-primary",
+                      "fontWeight": "500"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "alb3l",
+              "name": "Content",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "giXuN",
+                  "name": "Page Head",
+                  "width": "fill_container",
+                  "fill": "$card-fill",
+                  "cornerRadius": 30,
+                  "stroke": "$card-border",
+                  "strokeWidth": 1.5,
+                  "effect": [
+                    {
+                      "type": "background_blur",
+                      "radius": 8
+                    },
+                    {
+                      "type": "shadow",
+                      "shadowType": "outer",
+                      "color": "$shadow-soft",
+                      "offset": {
+                        "x": 0,
+                        "y": 24
+                      },
+                      "blur": 44,
+                      "spread": -16
+                    },
+                    {
+                      "type": "shadow",
+                      "shadowType": "outer",
+                      "color": "$sheen",
+                      "blur": 20
+                    }
+                  ],
+                  "gap": 30,
+                  "padding": [
+                    26,
+                    30
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "phuQq",
+                      "name": "Text",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "V31hJ",
+                          "name": "Title",
+                          "fill": "$text-primary",
+                          "content": "优秀博客",
+                          "lineHeight": 1.2,
+                          "fontFamily": "$font-display",
+                          "fontSize": 30,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LLPnP",
+                          "name": "Subtitle",
+                          "fill": "$text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "长期在读的个人站点。都还在更新，而且写得比我好。",
+                          "lineHeight": 1.6,
+                          "fontFamily": "$font-body",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Bb2Zq",
+                      "name": "Stats",
+                      "gap": 26,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "l7miN",
+                          "name": "Stat 个友链",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "u9fLnU",
+                              "name": "Value",
+                              "fill": "$ink",
+                              "content": "18",
+                              "fontFamily": "$font-body",
+                              "fontSize": 15,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "riqnJ",
+                              "name": "Label",
+                              "fill": "$text-muted",
+                              "content": "个友链",
+                              "fontFamily": "$font-body",
+                              "fontSize": 11.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "P1kUm4",
+                          "name": "Divider",
+                          "fill": "$hairline",
+                          "width": 1,
+                          "height": 28
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qlToZ",
+                          "name": "Stat 年最久",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "I03AMC",
+                              "name": "Value",
+                              "fill": "$ink",
+                              "content": "9",
+                              "fontFamily": "$font-body",
+                              "fontSize": 15,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Lghlg",
+                              "name": "Label",
+                              "fill": "$text-muted",
+                              "content": "年最久",
+                              "fontFamily": "$font-body",
+                              "fontSize": 11.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "POnIt",
+                  "name": "Blogroll Grid Slot",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "DC0DZ",
+                      "name": "Blog Grid Row 1",
+                      "width": "fill_container",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "id": "LvLDO",
+                          "type": "ref",
+                          "ref": "r9Dt3",
+                          "name": "Blog 云谏",
+                          "width": "fill_container",
+                          "descendants": {
+                            "EBe5h": {
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "$accent-fire",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "$gold",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            "o1eCe": {
+                              "content": "云",
+                              "fill": "$on-brand"
+                            },
+                            "usPOm": {
+                              "content": "云谏"
+                            },
+                            "RQrwu": {
+                              "content": "yunjian.dev"
+                            },
+                            "ssJ4H": {
+                              "content": "把 Vite、Rollup 的源码读薄，顺手记下每一个踩过的构建坑。"
+                            },
+                            "RcwvC": {
+                              "content": "前端工程"
+                            },
+                            "K3FQ3N": {
+                              "content": "构建"
+                            }
+                          }
+                        },
+                        {
+                          "id": "BIonr",
+                          "type": "ref",
+                          "ref": "r9Dt3",
+                          "name": "Blog 阿岐",
+                          "width": "fill_container",
+                          "descendants": {
+                            "EBe5h": {
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "$leaf-deep",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "$accent-leaf",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            "o1eCe": {
+                              "content": "岐",
+                              "fill": "$code-fg"
+                            },
+                            "usPOm": {
+                              "content": "阿岐"
+                            },
+                            "RQrwu": {
+                              "content": "aqi.works"
+                            },
+                            "ssJ4H": {
+                              "content": "WebGL 与 shader 笔记，每篇都配一个能拖着玩的实时 demo。"
+                            },
+                            "RcwvC": {
+                              "content": "图形"
+                            },
+                            "K3FQ3N": {
+                              "content": "Shader"
+                            }
+                          }
+                        },
+                        {
+                          "id": "c3Jutc",
+                          "type": "ref",
+                          "ref": "r9Dt3",
+                          "name": "Blog 林陌",
+                          "width": "fill_container",
+                          "descendants": {
+                            "EBe5h": {
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "$brand-ink",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "$fire-warm",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            "o1eCe": {
+                              "content": "陌",
+                              "fill": "$code-fg"
+                            },
+                            "usPOm": {
+                              "content": "林陌"
+                            },
+                            "RQrwu": {
+                              "content": "linmo.studio"
+                            },
+                            "ssJ4H": {
+                              "content": "中文排版的细节控，讲字距、行高与网格背后的取舍。"
+                            },
+                            "RcwvC": {
+                              "content": "设计"
+                            },
+                            "K3FQ3N": {
+                              "content": "排版"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "I41pJ",
+                      "name": "Blog Grid Row 2",
+                      "width": "fill_container",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "id": "AW9pF",
+                          "type": "ref",
+                          "ref": "r9Dt3",
+                          "name": "Blog 陈拾",
+                          "width": "fill_container",
+                          "descendants": {
+                            "EBe5h": {
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "$btn-dark",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "$code-bg",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            "o1eCe": {
+                              "content": "拾",
+                              "fill": "$code-fg"
+                            },
+                            "usPOm": {
+                              "content": "陈拾"
+                            },
+                            "RQrwu": {
+                              "content": "chenshi.me"
+                            },
+                            "ssJ4H": {
+                              "content": "一年只更十几篇，写搬家、旧书和深夜的末班地铁。"
+                            },
+                            "RcwvC": {
+                              "content": "随笔"
+                            },
+                            "K3FQ3N": {
+                              "content": "生活"
+                            }
+                          }
+                        },
+                        {
+                          "id": "garsH",
+                          "type": "ref",
+                          "ref": "r9Dt3",
+                          "name": "Blog 温亦",
+                          "width": "fill_container",
+                          "descendants": {
+                            "EBe5h": {
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "$gold",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "$fire-warm",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            "o1eCe": {
+                              "content": "亦",
+                              "fill": "$on-brand"
+                            },
+                            "usPOm": {
+                              "content": "温亦"
+                            },
+                            "RQrwu": {
+                              "content": "wenyi.cc"
+                            },
+                            "ssJ4H": {
+                              "content": "TypeScript 类型体操与编辑器插件，写得又长又耐心。"
+                            },
+                            "RcwvC": {
+                              "content": "类型系统"
+                            },
+                            "K3FQ3N": {
+                              "content": "工具链"
+                            }
+                          }
+                        },
+                        {
+                          "id": "ebzRc",
+                          "type": "ref",
+                          "ref": "r9Dt3",
+                          "name": "Blog 岑野",
+                          "width": "fill_container",
+                          "descendants": {
+                            "EBe5h": {
+                              "fill": {
+                                "type": "gradient",
+                                "gradientType": "linear",
+                                "enabled": true,
+                                "rotation": 135,
+                                "size": {
+                                  "height": 1
+                                },
+                                "colors": [
+                                  {
+                                    "color": "$accent-leaf",
+                                    "position": 0
+                                  },
+                                  {
+                                    "color": "$gold",
+                                    "position": 1
+                                  }
+                                ]
+                              }
+                            },
+                            "o1eCe": {
+                              "content": "野",
+                              "fill": "$on-brand"
+                            },
+                            "usPOm": {
+                              "content": "岑野"
+                            },
+                            "RQrwu": {
+                              "content": "cenye.xyz"
+                            },
+                            "ssJ4H": {
+                              "content": "生成艺术日更，记录从 Processing 迁到 GLSL 的全过程。"
+                            },
+                            "RcwvC": {
+                              "content": "生成艺术"
+                            },
+                            "K3FQ3N": {
+                              "content": "创作"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "R2qF3I",
+                  "name": "Apply Panel",
+                  "width": "fill_container",
+                  "fill": "$card-fill",
+                  "cornerRadius": "$radius-panel",
+                  "stroke": "$card-border",
+                  "strokeWidth": 1.5,
+                  "effect": [
+                    {
+                      "type": "background_blur",
+                      "radius": 8
+                    },
+                    {
+                      "type": "shadow",
+                      "shadowType": "outer",
+                      "color": "$shadow-soft",
+                      "offset": {
+                        "x": 0,
+                        "y": 16
+                      },
+                      "blur": 32,
+                      "spread": -14
+                    },
+                    {
+                      "type": "shadow",
+                      "shadowType": "outer",
+                      "color": "$sheen",
+                      "blur": 18
+                    }
+                  ],
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "U2pfF",
+                      "name": "Head",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "xVvm4",
+                          "name": "Head Left",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "s69HCh",
+                              "name": "Caption",
+                              "fill": "$text-muted",
+                              "content": "申 请 友 链  EXCHANGE",
+                              "fontFamily": "$font-body",
+                              "fontSize": 11.5,
+                              "fontWeight": "700",
+                              "letterSpacing": 1.8
+                            },
+                            {
+                              "type": "text",
+                              "id": "u4os9",
+                              "name": "Blurb",
+                              "fill": "$text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "个人站点、原创内容、能正常访问就行。填完我会去读几篇再回链，通常一周内答复。",
+                              "lineHeight": 1.6,
+                              "fontFamily": "$font-body",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "eCxt3",
+                      "name": "Field Row",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "dXrp0",
+                          "name": "Field 站点名称",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$chip-fill",
+                          "cornerRadius": "$radius-chip",
+                          "stroke": "$hairline",
+                          "strokeWidth": 1,
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "taQ40",
+                              "name": "Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "type",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "eQx68",
+                              "name": "Placeholder",
+                              "fill": "$text-muted",
+                              "content": "站点名称",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qstFI",
+                          "name": "Field https://",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$chip-fill",
+                          "cornerRadius": "$radius-chip",
+                          "stroke": "$hairline",
+                          "strokeWidth": 1,
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "CEiTr",
+                              "name": "Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "link",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "PjXwO",
+                              "name": "Placeholder",
+                              "fill": "$text-muted",
+                              "content": "https://",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "eWgY5",
+                          "name": "Field 一句话简介",
+                          "width": "fill_container",
+                          "height": 38,
+                          "fill": "$chip-fill",
+                          "cornerRadius": "$radius-chip",
+                          "stroke": "$hairline",
+                          "strokeWidth": 1,
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            12
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "uugTK",
+                              "name": "Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "pen-line",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "a5eE8",
+                              "name": "Placeholder",
+                              "fill": "$text-muted",
+                              "content": "一句话简介",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12.5,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oAzT2",
+                          "name": "Btn Submit",
+                          "height": 38,
+                          "fill": "$brand",
+                          "cornerRadius": "$radius-chip",
+                          "stroke": "$brand",
+                          "strokeWidth": 1,
+                          "gap": 7,
+                          "padding": [
+                            0,
+                            18
+                          ],
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "oSrsc",
+                              "name": "Label",
+                              "fill": "$on-brand",
+                              "content": "提交申请",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12.5,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "icon",
+                              "id": "B8UQI5",
+                              "name": "Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "arrow-right",
+                              "library": "lucide",
+                              "fill": "$on-brand"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "K2bq4",
+                      "name": "Note Row",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "CvSjh",
+                          "name": "Icon",
+                          "width": 13,
+                          "height": 13,
+                          "icon": "link",
+                          "library": "lucide",
+                          "fill": "$text-muted"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ohreG",
+                          "name": "Note",
+                          "fill": "$text-muted",
+                          "content": "也可以直接发邮件，附上站点地址即可。",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11.5,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Fs1AX",
+          "layoutPosition": "absolute",
+          "x": 48,
+          "y": 1255,
+          "name": "Footer",
+          "width": 1344,
+          "layout": "vertical",
+          "gap": 12,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "FCMRb",
+              "name": "Hairline",
+              "fill": "$hairline",
+              "width": "fill_container",
+              "height": 1
+            },
+            {
+              "type": "frame",
+              "id": "ulLx8",
+              "name": "Dot Row",
+              "height": 8,
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "ellipse",
+                  "id": "F98DKk",
+                  "name": "Dot 1",
+                  "fill": "$hairline",
+                  "width": 4,
+                  "height": 4
+                },
+                {
+                  "type": "ellipse",
+                  "id": "ijq58",
+                  "name": "Dot 2",
+                  "fill": "$accent-fire",
+                  "width": 6,
+                  "height": 6
+                },
+                {
+                  "type": "ellipse",
+                  "id": "W4Az4M",
+                  "name": "Dot 3",
+                  "fill": "$hairline",
+                  "width": 4,
+                  "height": 4
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "e636hD",
+              "name": "Copy",
+              "fill": "$text-muted",
+              "content": "© 2026 清川  ·  由 Astro 与一点耐心构建",
+              "fontFamily": "$font-body",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "KDKP1",
+              "name": "License",
+              "opacity": 0.8,
+              "fill": "$text-muted",
+              "content": "友链长期开放，欢迎自荐  ·  萤火录",
+              "fontFamily": "$font-body",
+              "fontSize": 11.5,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "r9Dt3",
+      "x": 3400,
+      "y": 0,
+      "name": "Blog Card",
+      "reusable": true,
+      "width": 322,
+      "fill": "$card-fill",
+      "cornerRadius": 28,
+      "stroke": "$card-border",
+      "strokeWidth": 1.5,
+      "effect": [
+        {
+          "type": "background_blur",
+          "radius": 8
+        },
+        {
+          "type": "shadow",
+          "shadowType": "outer",
+          "color": "$shadow-soft",
+          "offset": {
+            "x": 0,
+            "y": 24
+          },
+          "blur": 44,
+          "spread": -16
+        },
+        {
+          "type": "shadow",
+          "shadowType": "outer",
+          "color": "$sheen",
+          "blur": 20
+        }
+      ],
+      "layout": "vertical",
+      "gap": 14,
+      "padding": 20,
+      "children": [
+        {
+          "type": "frame",
+          "id": "u6ZIi",
+          "name": "Head Row",
+          "width": "fill_container",
+          "gap": 12,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "EBe5h",
+              "name": "Avatar",
+              "width": 44,
+              "height": 44,
+              "fill": {
+                "type": "gradient",
+                "gradientType": "linear",
+                "enabled": true,
+                "rotation": 135,
+                "size": {
+                  "height": 1
+                },
+                "colors": [
+                  {
+                    "color": "$accent-fire",
+                    "position": 0
+                  },
+                  {
+                    "color": "$gold",
+                    "position": 1
+                  }
+                ]
+              },
+              "cornerRadius": 14,
+              "stroke": "$sheen",
+              "strokeWidth": 1,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "o1eCe",
+                  "name": "Initial",
+                  "fill": "$on-brand",
+                  "content": "云",
+                  "lineHeight": 1,
+                  "fontFamily": "$font-display",
+                  "fontSize": 19,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "o3NG1",
+              "name": "Ident",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "usPOm",
+                  "name": "Name",
+                  "fill": "$text-primary",
+                  "content": "云谏",
+                  "lineHeight": 1.3,
+                  "fontFamily": "$font-body",
+                  "fontSize": 15,
+                  "fontWeight": "500"
+                },
+                {
+                  "type": "text",
+                  "id": "RQrwu",
+                  "name": "Domain",
+                  "fill": "$text-muted",
+                  "content": "yunjian.dev",
+                  "lineHeight": 1.3,
+                  "fontFamily": "$--font-primary",
+                  "fontSize": 11.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "ssJ4H",
+          "name": "Desc",
+          "fill": "$text-secondary",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "写构建工具与渲染性能，源码剖析不含水分。",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-body",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "rectangle",
+          "id": "BOvfS",
+          "name": "Divider",
+          "fill": "$hairline",
+          "width": "fill_container",
+          "height": 1
+        },
+        {
+          "type": "frame",
+          "id": "Qmrz4",
+          "name": "Footer",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "HEm7u",
+              "name": "Tags",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "eDEg0",
+                  "name": "Chip 1",
+                  "fill": "$chip-fill",
+                  "cornerRadius": "$radius-chip",
+                  "stroke": "$hairline",
+                  "strokeWidth": 1,
+                  "padding": [
+                    4,
+                    9
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RcwvC",
+                      "name": "Label",
+                      "fill": "$text-muted",
+                      "content": "前端工程",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "q53ad",
+                  "name": "Chip 2",
+                  "fill": "$chip-fill",
+                  "cornerRadius": "$radius-chip",
+                  "stroke": "$hairline",
+                  "strokeWidth": 1,
+                  "padding": [
+                    4,
+                    9
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "K3FQ3N",
+                      "name": "Label",
+                      "fill": "$text-muted",
+                      "content": "构建",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "i1Q9s",
+              "name": "Visit",
+              "gap": 4,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "UAYmZ",
+                  "name": "Label",
+                  "fill": "$fire-ink",
+                  "content": "访问",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font-body",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "icon",
+                  "id": "W5S6Rv",
+                  "name": "Arrow",
+                  "width": 14,
+                  "height": 14,
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
+                  "fill": "$fire-ink"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "FaObM",
+      "x": 0,
+      "y": -706,
+      "name": "Share Item",
+      "reusable": true,
+      "width": 1016,
+      "fill": "$card-fill",
+      "cornerRadius": "$radius-row",
+      "stroke": "$card-border",
+      "strokeWidth": 1.5,
+      "effect": [
+        {
+          "type": "background_blur",
+          "radius": 8
+        },
+        {
+          "type": "shadow",
+          "shadowType": "outer",
+          "color": "$shadow-soft",
+          "offset": {
+            "x": 0,
+            "y": 14
+          },
+          "blur": 28,
+          "spread": -12
+        },
+        {
+          "type": "shadow",
+          "shadowType": "outer",
+          "color": "$sheen",
+          "blur": 18
+        }
+      ],
+      "gap": 18,
+      "padding": 16,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "M7Hig",
+          "name": "Icon Tile",
+          "width": 52,
+          "height": 52,
+          "fill": "$fire-tint",
+          "cornerRadius": "$radius-chip",
+          "stroke": "$hairline",
+          "strokeWidth": 1,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon",
+              "id": "EgVV1",
+              "name": "Glyph",
+              "width": 22,
+              "height": 22,
+              "icon": "wrench",
+              "library": "lucide",
+              "fill": "$fire-ink"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "I465Hv",
+          "name": "Body",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 7,
+          "children": [
+            {
+              "type": "text",
+              "id": "lWBUH",
+              "name": "Title",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "标题占位",
+              "lineHeight": 1.4,
+              "fontFamily": "$font-body",
+              "fontSize": 17,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "aiNq1",
+              "name": "Desc",
+              "fill": "$text-secondary",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "描述占位",
+              "lineHeight": 1.65,
+              "fontFamily": "$font-body",
+              "fontSize": 13.5,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PLG6P",
+          "name": "Source",
+          "gap": 9,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "T2v8J",
+              "name": "Domain",
+              "fill": "$text-muted",
+              "content": "example.com",
+              "fontFamily": "$font-body",
+              "fontSize": 12.5,
+              "fontWeight": "500"
+            },
+            {
+              "type": "frame",
+              "id": "YHnmi",
+              "name": "Arrow Tile",
+              "width": 32,
+              "height": 32,
+              "fill": "$chip-fill",
+              "cornerRadius": "$radius-chip",
+              "stroke": "$hairline",
+              "strokeWidth": 1,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "XJg9i",
+                  "name": "Arrow",
+                  "width": 15,
+                  "height": 15,
+                  "icon": "arrow-up-right",
+                  "library": "lucide",
+                  "fill": "$text-muted"
+                }
+              ]
             }
           ]
         }

@@ -1,0 +1,56 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  title: string
+  desc: string
+  href: string
+  domain: string
+  icon: string
+  /** fire = 橙底橙字，leaf = 玻璃底绿字。设计稿里按条手挑，不跟 category 走 */
+  tone: 'fire' | 'leaf'
+}
+
+const { title, desc, href, domain, icon, tone } = Astro.props
+---
+
+<!-- Share Item · blog.pen FaObM -->
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="glass-row group box-border flex w-full flex-row items-center gap-[18px] rounded-[22px] p-[16px]"
+>
+  <span
+    class:list={[
+      'flex size-[52px] shrink-0 flex-row items-center justify-center rounded-[12px] outline-1 -outline-offset-[0.5px] outline-hairline',
+      tone === 'fire' ? 'bg-fire-tint' : 'bg-chip',
+    ]}
+  >
+    <Icon
+      name={`lucide:${icon}`}
+      class:list={['size-[22px] shrink-0', tone === 'fire' ? 'text-brand-ink' : 'text-leaf-deep']}
+    />
+  </span>
+
+  <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[7px]">
+    <span class="w-full text-[17px]/[24px] font-bold text-ink">{title}</span>
+    <span class="w-full text-[13.5px]/[22px] font-normal text-ink-soft">{desc}</span>
+    <!-- 窄屏没有右侧 Source 块，域名降级到正文里 -->
+    <span class="text-[12.5px] font-medium whitespace-nowrap text-ink-muted xl:hidden">
+      {domain}
+    </span>
+  </span>
+
+  <span class="hidden h-fit w-fit shrink-0 flex-row items-center gap-[9px] xl:flex">
+    <span class="text-[12.5px] font-medium whitespace-nowrap text-ink-muted">{domain}</span>
+    <span
+      class="flex size-[32px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-chip outline-1 -outline-offset-[0.5px] outline-hairline transition-colors group-hover:bg-fire-tint"
+    >
+      <Icon
+        name="lucide:arrow-up-right"
+        class="size-[15px] shrink-0 text-ink-muted transition-colors group-hover:text-brand-ink"
+      />
+    </span>
+  </span>
+</a>
