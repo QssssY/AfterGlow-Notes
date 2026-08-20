@@ -1,0 +1,86 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+import { greeting, site } from '~/config'
+
+interface Props {
+  avatar: ImageMetadata
+  /** 移动端：头像 88、圆角 28、字号 19/27、bio 12/20（桌面 120、36、24/34、13/22） */
+  compact?: boolean
+}
+
+const { avatar, compact = false } = Astro.props
+const size = compact ? 88 : 120
+---
+
+<!-- Greeting Card · blog.pen Home / Column B（移动端同名帧） -->
+<div
+  class:list={[
+    'glass box-border flex h-fit w-full shrink-0 flex-col items-center',
+    compact ? 'gap-[14px] rounded-[28px] px-[20px] py-[26px]' : 'gap-[18px] rounded-[36px] px-[24px] py-[32px]',
+  ]}
+>
+  <Image
+    src={avatar}
+    alt={site.author}
+    width={size * 2}
+    height={size * 2}
+    class:list={[
+      'shrink-0 rounded-full object-cover',
+      compact
+        ? 'shadow-[0_12px_24px_-4px_var(--color-dot-idle)]'
+        : 'shadow-[0_16px_32px_-5px_var(--color-dot-idle)]',
+    ]}
+    style={`width:${size}px;height:${size}px`}
+  />
+
+  <div
+    class:list={[
+      'flex h-fit w-full shrink-0 flex-col items-center gap-[2px]',
+      compact ? 'text-[19px]' : 'text-[24px]',
+    ]}
+  >
+    <span data-greeting class="font-display w-full text-center font-normal text-ink"
+      >Good Afternoon</span
+    >
+
+    <span
+      class:list={[
+        'flex h-fit w-fit shrink-0 flex-row items-center',
+        compact ? 'gap-[7px]' : 'gap-[8px]',
+      ]}
+    >
+      <span class="font-display font-normal whitespace-nowrap text-ink">我是</span>
+      <span
+        class:list={[
+          'font-display bg-[linear-gradient(0deg,var(--brand-ink)_15%,var(--fire-warm)_100%)] bg-clip-text font-normal whitespace-nowrap text-transparent',
+          compact ? 'text-[27px]' : 'text-[34px]',
+        ]}>{site.author}</span
+      >
+      <span class="font-display font-normal whitespace-nowrap text-ink">，</span>
+    </span>
+
+    <span class="font-display w-full text-center font-normal text-ink">Nice to meet you!</span>
+  </div>
+
+  <span
+    class:list={[
+      'w-full text-center font-normal text-ink-soft',
+      compact ? 'text-[12px]/[20px]' : 'text-[13px]/[22px]',
+    ]}>{greeting.bio}</span
+  >
+</div>
+
+<script>
+  // 静态站点在构建时就定型了，问候语必须在客户端按访客本地时间算
+  const hour = new Date().getHours()
+  const text =
+    hour < 5
+      ? 'Good Night'
+      : hour < 12
+        ? 'Good Morning'
+        : hour < 18
+          ? 'Good Afternoon'
+          : 'Good Evening'
+  for (const el of document.querySelectorAll('[data-greeting]')) el.textContent = text
+</script>

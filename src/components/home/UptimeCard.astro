@@ -1,0 +1,18 @@
+---
+import { uptime } from '~/config'
+import { daysSince } from '~/utils/post'
+
+const days = daysSince(uptime.since)
+---
+
+<!-- Uptime Card · blog.pen Home / Left Column -->
+<div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[10px] rounded-[26px] p-[20px]">
+  <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">本站已运行</span>
+
+  <span class="flex h-fit w-fit shrink-0 flex-row items-end gap-[6px]">
+    <span class="font-display text-[26px]/[26px] font-normal whitespace-nowrap text-ink">{days}</span>
+    <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">天</span>
+  </span>
+
+  <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{uptime.sinceLabel}</span>
+</div>

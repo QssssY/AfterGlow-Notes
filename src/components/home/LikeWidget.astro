@@ -1,0 +1,24 @@
+---
+import { Icon } from 'astro-icon/components'
+import { likes } from '~/config'
+---
+
+<!--
+  Like Slot · blog.pen Home / Widget Row
+  设计稿只画了静态计数；真正的点赞需要后端计数服务，这里先只做展示。
+-->
+<div class="relative size-[104px] shrink-0">
+  <span
+    class="glass absolute top-[16px] left-0 flex size-[76px] flex-row items-center justify-center rounded-[38px]"
+  >
+    <Icon name="lucide:heart" class="size-[30px] shrink-0 text-[#F5C0CB]" />
+  </span>
+
+  <span
+    class="absolute top-[6px] left-[56px] flex h-fit w-fit flex-row items-center justify-center rounded-[12px] bg-fire-tint px-[8px] py-[4px]"
+  >
+    <span class="text-[11px] font-bold whitespace-nowrap text-brand-ink">
+      {likes.toLocaleString('en-US')}
+    </span>
+  </span>
+</div>

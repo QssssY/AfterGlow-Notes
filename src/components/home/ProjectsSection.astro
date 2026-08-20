@@ -1,0 +1,43 @@
+---
+import { Icon } from 'astro-icon/components'
+import { projects } from '~/config'
+---
+
+<!-- Projects Section · blog.pen Home -->
+<section class="flex h-fit w-full flex-col items-start gap-[14px]">
+  <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between">
+    <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      在 做 的 事 PROJECTS
+    </span>
+    <a href="/projects" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+      <span class="text-[12.5px] font-medium whitespace-nowrap text-brand-ink">全部项目</span>
+      <Icon name="lucide:arrow-right" class="size-[13px] shrink-0 text-brand-ink" />
+    </a>
+  </div>
+
+  {
+    projects.map((project) => (
+      <a
+        href={project.href}
+        class="glass-panel box-border flex h-fit w-full shrink-0 flex-row items-center gap-[14px] rounded-[22px] px-[16px] py-[14px]"
+      >
+        <span class="flex size-[38px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
+          <Icon name={`lucide:${project.icon}`} class="size-[17px] shrink-0 text-brand-ink" />
+        </span>
+
+        <span class="flex h-fit flex-1 flex-col items-start gap-[3px]">
+          <span class="text-[14.5px] font-bold whitespace-nowrap text-ink">{project.name}</span>
+          <span class="w-full text-[12.5px] font-normal text-ink-soft">{project.desc}</span>
+        </span>
+
+        <span class="flex h-[20px] w-fit shrink-0 flex-row items-center gap-[12px]">
+          <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{project.stack}</span>
+          <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[4px]">
+            <Icon name="lucide:star" class="size-[12px] shrink-0 text-brand" />
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{project.stars}</span>
+          </span>
+        </span>
+      </a>
+    ))
+  }
+</section>

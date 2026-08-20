@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content'
+import Footer from '~/components/Footer.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import SocialButton from '~/components/SocialButton.astro'
+import ArtCard from '~/components/home/ArtCard.astro'
+import GreetingCard from '~/components/home/GreetingCard.astro'
+import LatestPostsCard from '~/components/home/LatestPostsCard.astro'
+import LikeWidget from '~/components/home/LikeWidget.astro'
+import NowPlayingCard from '~/components/home/NowPlayingCard.astro'
+import ProjectsSection from '~/components/home/ProjectsSection.astro'
+import ReadingCard from '~/components/home/ReadingCard.astro'
+import TagCloudCard from '~/components/home/TagCloudCard.astro'
+import UptimeCard from '~/components/home/UptimeCard.astro'
+import FeaturedCard from '~/components/mobile/FeaturedCard.astro'
+import MobileLatestPosts from '~/components/mobile/LatestPosts.astro'
+import SocialRow from '~/components/mobile/SocialRow.astro'
+import TopBar from '~/components/mobile/TopBar.astro'
+import { site, socials } from '~/config'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import { postStats } from '~/utils/post'
+import avatarDesktop from '../../images/generated-1787211089413.png'
+import avatarMobile from '../../images/generated-1787212262935.png'
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+)
+
+const enriched = posts.map((post) => {
+  const stats = postStats(post.body ?? '')
+  return {
+    title: post.data.title,
+    excerpt: post.data.description ?? '',
+    href: `/posts/${post.id}`,
+    date: post.data.date,
+    category: post.data.category ?? '未分类',
+    minutes: stats.minutes,
+    wordsLabel: stats.wordsLabel,
+    cover: post.data.cover,
+  }
+})
+
+const latest = enriched.slice(0, 2)
+const featured = enriched[0]
+
+const counts = new Map<string, number>()
+for (const post of posts) {
+  for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
+}
+const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+
+// 桌面区块间距取自设计稿的绝对坐标：Header 底 90 → Body 136（46）；
+// Body 底 859 → Projects 893（34）；Projects 底 1163 → Footer 1193（30）
+---
+
+<BaseLayout title={site.title}>
+  {/* ── 桌面：1440 三栏 ────────────────────────────────── */}
+  <header class="hidden h-fit w-full shrink-0 flex-row items-center justify-end gap-[12px] xl:flex">
+    {
+      socials.map((social) => (
+        <SocialButton
+          label={social.label}
+          icon={social.icon}
+          href={social.href}
+          variant={social.variant}
+        />
+      ))
+    }
+  </header>
+
+  <div class="mt-[46px] hidden w-full flex-row items-start gap-[48px] xl:flex">
+    <div class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px]">
+      <Sidebar />
+      <UptimeCard />
+    </div>
+
+    <div class="flex h-fit flex-1 flex-col items-start gap-[24px]">
+      <ArtCard />
+      <LatestPostsCard articles={latest} />
+      <TagCloudCard tags={tags} />
+    </div>
+
+    <div class="flex h-fit w-[392px] shrink-0 flex-col items-start gap-[24px]">
+      <GreetingCard avatar={avatarDesktop} />
+      <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[16px]">
+        <LikeWidget />
+        <NowPlayingCard />
+      </div>
+      <ReadingCard />
+    </div>
+  </div>
+
+  <div class="mt-[34px] hidden w-full xl:block"><ProjectsSection /></div>
+  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+
+  {/* ── 移动：390 单栏，顶栏 + 底部 Tab Bar，无 Footer ──── */}
+  <div class="flex w-full flex-col items-start gap-[14px] xl:hidden">
+    <TopBar />
+    <GreetingCard avatar={avatarMobile} compact />
+    <SocialRow />
+    <ArtCard compact />
+    <MobileLatestPosts articles={latest} />
+    {
+      featured && (
+        <FeaturedCard
+          date={featured.date}
+          category={featured.category}
+          title={featured.title}
+          href={featured.href}
+          minutes={featured.minutes}
+          wordsLabel={featured.wordsLabel}
+        />
+      )
+    }
+  </div>
+</BaseLayout>

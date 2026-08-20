@@ -1,0 +1,63 @@
+---
+// 组件画廊 —— 对照 blog.pen 校验 7 个复用组件的还原度
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import FilterPill from '~/components/FilterPill.astro'
+import NavItem from '~/components/NavItem.astro'
+import PostRow from '~/components/PostRow.astro'
+import ProjectCard from '~/components/ProjectCard.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import SocialButton from '~/components/SocialButton.astro'
+import TimelineRow from '~/components/TimelineRow.astro'
+
+const label = 'text-[11.5px] font-bold tracking-[1.8px] text-ink-muted'
+---
+
+<BaseLayout title="组件画廊" rail={false} tabBar={false}>
+  <main class="flex flex-col gap-[48px]">
+    <div class="flex flex-col gap-[14px]">
+      <span class={label}>NAV ITEM · TQ3Oj</span>
+      <NavItem label="近期文章" icon="notebook-text" active />
+      <NavItem label="我的项目" icon="layout-grid" />
+    </div>
+
+    <div class="flex flex-col gap-[14px]">
+      <span class={label}>SOCIAL BUTTON · iKj8F &nbsp; / &nbsp; FILTER PILL · RJEix</span>
+      <div class="flex flex-row items-center gap-[12px]">
+        <SocialButton label="稀土掘金" icon="pen-line" />
+        <SocialButton label="Github" icon="github" variant="dark" />
+        <FilterPill label="年" active />
+        <FilterPill label="月" />
+      </div>
+    </div>
+
+    <div class="flex flex-row gap-[48px]">
+      <div class="flex flex-col gap-[14px]">
+        <span class={label}>SIDEBAR · I23TnW</span>
+        <Sidebar />
+      </div>
+      <div class="flex flex-col gap-[14px]">
+        <span class={label}>PROJECT CARD · XnV5M</span>
+        <ProjectCard title="curve-arrow" desc="生成平滑手绘风箭头的小工具" stack="TypeScript" stars={128} />
+      </div>
+    </div>
+
+    <div class="flex w-[760px] flex-col gap-[14px]">
+      <span class={label}>TIMELINE ROW · jKPjc</span>
+      <TimelineRow date="08-19" title="AI 画布与游戏" readMinutes={7} tags={['AI', '游戏']} />
+      <TimelineRow date="08-12" title="用 Astro 重写博客" readMinutes={12} tags={['前端']} />
+    </div>
+
+    <div class="flex w-[1096px] flex-col gap-[14px]">
+      <span class={label}>POST ROW · YZaZG</span>
+      <PostRow
+        index={7}
+        date={new Date(2026, 7, 12)}
+        category="前端工程"
+        title="用 Astro 重写博客：从 64px 圆角到一条墨线"
+        excerpt="把三年积累的样式重新梳理一遍，才发现真正需要保留的只有版式与呼吸感。这篇记录了迁移过程中的取舍：为什么放弃大圆角、如何用一条竖线代替卡片嵌套。"
+        readMinutes={7}
+        words="1.2k 字"
+      />
+    </div>
+  </main>
+</BaseLayout>

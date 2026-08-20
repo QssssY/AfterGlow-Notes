@@ -1,0 +1,80 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+import { Icon } from 'astro-icon/components'
+
+interface Article {
+  title: string
+  excerpt: string
+  href: string
+  date: Date
+  minutes: number
+  wordsLabel: string
+  cover?: ImageMetadata | undefined
+}
+
+interface Props {
+  articles: Article[]
+  /** 移动端：gap 12、padding 18 */
+  compact?: boolean
+}
+
+const { articles, compact = false } = Astro.props
+const fmt = (d: Date) => `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+---
+
+<!-- 最新文章 Card · blog.pen Home / Column A -->
+<div
+  class:list={[
+    'glass box-border flex h-fit w-full shrink-0 flex-col items-start rounded-[30px]',
+    compact ? 'gap-[12px] p-[18px]' : 'gap-[16px] p-[24px]',
+  ]}
+>
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <span class="flex-1 text-[13px] font-normal text-ink-soft">最新文章</span>
+    <a href="/archive" class="text-[12px] font-normal whitespace-nowrap text-brand-ink">查看全部</a>
+  </div>
+
+  {
+    articles.map((article, i) => (
+      <>
+        {i > 0 && <span class="h-[1px] w-full shrink-0 bg-hairline" />}
+        <a href={article.href} class="flex h-fit w-full shrink-0 flex-row items-start gap-[14px]">
+          {article.cover ? (
+            <Image
+              src={article.cover}
+              alt=""
+              width={104}
+              height={104}
+              class="size-[52px] shrink-0 rounded-[14px] object-cover outline-1 -outline-offset-[0.5px] outline-hairline"
+            />
+          ) : (
+            <span class="size-[52px] shrink-0 rounded-[14px] bg-avatar-bg outline-1 -outline-offset-[0.5px] outline-hairline" />
+          )}
+
+          <span class="flex h-fit flex-1 flex-col items-start gap-[6px]">
+            <span class="w-full text-[15px] font-medium text-ink">{article.title}</span>
+            <span class="w-full text-[12px]/[19px] font-normal text-ink-soft">{article.excerpt}</span>
+            <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[7px]">
+              <Icon name="lucide:clock-3" class="size-[11px] shrink-0 text-ink-muted" />
+              <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">
+                {article.minutes} 分钟
+              </span>
+              <span class="size-[3px] shrink-0 rounded-full bg-dot-idle" />
+              <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">
+                {article.wordsLabel}
+              </span>
+            </span>
+          </span>
+
+          <time
+            datetime={article.date.toISOString()}
+            class="text-[11px] font-normal whitespace-nowrap text-ink-muted"
+          >
+            {fmt(article.date)}
+          </time>
+        </a>
+      </>
+    ))
+  }
+</div>
