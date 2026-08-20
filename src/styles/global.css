@@ -173,11 +173,12 @@
 }
 
 /* Aurora 背景层：每页一个。
- * 设计稿里这层只有 blur(70) 没有填充，内容是我按品牌色补的：
+ * 设计稿里这层只有模糊没有填充，内容是我按品牌色补的：
  * 橙(brand) + 墨绿(leaf) + 金(gold) 三团柔光，落点参考三栏重心。
- * 尺寸用 -inset-[240px] 复刻设计稿的 1920×1808 @ (-240,-240)。 */
+ * 尺寸用 -inset-[240px] 复刻设计稿的 1920×1808 @ (-240,-240)。
+ * Pencil 的模糊半径是 CSS 的两倍，桌面 70→35px、移动 60→30px。 */
 @utility aurora {
-  filter: blur(70px);
+  filter: blur(35px);
   background:
     radial-gradient(38% 26% at 20% 16%, var(--brand) 0%, transparent 68%),
     radial-gradient(30% 22% at 80% 10%, var(--leaf) 0%, transparent 68%),
@@ -188,6 +189,14 @@
 
 .dark .aurora {
   opacity: 0.1;
+}
+
+/* 断点跟 xl (80rem) 对齐：全站桌面/移动布局都在这里切，
+ * 用 40rem 会多出一段「移动布局配桌面模糊」的中间态。 */
+@media (width < 80rem) {
+  .aurora {
+    filter: blur(30px);
+  }
 }
 
 @layer base {
