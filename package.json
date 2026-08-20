@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node scripts/subset-cjk.mjs && astro dev",
-    "build": "node scripts/subset-cjk.mjs && astro build",
+    "build": "node scripts/subset-cjk.mjs && astro build && pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
     "fonts": "node scripts/subset-cjk.mjs",
@@ -34,6 +34,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@resvg/resvg-js": "^2.6.2",
+    "pagefind": "^1.5.2",
+    "satori": "^0.29.1",
     "subset-font": "^2.5.0",
     "typescript": "^6.0.3"
   }
