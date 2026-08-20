@@ -1,0 +1,84 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  /** 设计稿是两位数序号，如 07 */
+  index: number | string
+  date: Date
+  category: string
+  title: string
+  excerpt: string
+  href?: string | undefined
+  readMinutes: number
+  /** 设计稿写法：1.2k 字 */
+  words: string
+  coverIcon?: string
+}
+
+const {
+  index,
+  date,
+  category,
+  title,
+  excerpt,
+  href,
+  readMinutes,
+  words,
+  coverIcon = 'feather',
+} = Astro.props
+
+const pad = (n: number) => String(n).padStart(2, '0')
+const dateLabel = `${date.getFullYear()} · ${pad(date.getMonth() + 1)} · ${pad(date.getDate())}`
+const indexLabel = typeof index === 'number' ? pad(index) : index
+---
+
+<!-- Post Row · blog.pen YZaZG -->
+<a
+  href={href ?? '#'}
+  class="glass-row box-border flex w-full flex-row items-center gap-[18px] rounded-[22px] p-[14px]"
+>
+  <span class="flex h-fit w-[38px] shrink-0 flex-col items-center justify-center gap-[6px]">
+    <span class="font-display text-[21px] font-normal whitespace-nowrap text-ink-muted">
+      {indexLabel}
+    </span>
+    <span class="h-[2px] w-[14px] shrink-0 rounded-[1px] bg-hairline"></span>
+  </span>
+
+  <span class="h-[64px] w-[2px] shrink-0 rounded-[1px] bg-leaf"></span>
+
+  <span class="flex h-fit flex-1 flex-col items-start gap-[9px]">
+    <span class="flex h-[20px] w-fit shrink-0 flex-row items-center gap-[9px]">
+      <span class="size-[6px] shrink-0 rounded-full bg-brand shadow-[0_0_7px_0_var(--glow-fire)]"
+      ></span>
+      <time datetime={date.toISOString()} class="text-[13px] font-normal whitespace-nowrap text-ink-muted">
+        {dateLabel}
+      </time>
+      <span class="text-[13px] font-normal whitespace-nowrap text-hairline">/</span>
+      <span class="text-[13px] font-bold whitespace-nowrap text-leaf-deep">{category}</span>
+    </span>
+
+    <span class="w-full text-[23px]/[32px] font-bold text-ink">{title}</span>
+
+    <span class="w-full text-[15px]/[26px] font-normal text-ink-soft">{excerpt}</span>
+
+    <span class="flex h-[19px] w-fit shrink-0 flex-row items-center gap-[16px]">
+      <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+        <Icon name="lucide:clock-3" class="size-[13px] shrink-0 text-ink-muted" />
+        <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-muted">
+          {readMinutes} 分钟
+        </span>
+      </span>
+      <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+        <Icon name="lucide:file-text" class="size-[13px] shrink-0 text-ink-muted" />
+        <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-muted">{words}</span>
+      </span>
+    </span>
+  </span>
+
+  <!-- 236px 定宽封面在窄屏会把整行撑出视口，所以 xl 以下不渲染 -->
+  <span
+    class="hidden h-[162px] w-[236px] shrink-0 flex-row items-center justify-center overflow-hidden rounded-[22px] bg-[linear-gradient(-124.467deg,#F4EBDC_14.645%,#DCEFF4_85.355%)] xl:flex"
+  >
+    <Icon name={`lucide:${coverIcon}`} class="size-[52px] shrink-0 text-ink opacity-[0.24]" />
+  </span>
+</a>

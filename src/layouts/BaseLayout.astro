@@ -1,0 +1,117 @@
+---
+import TabBar from '~/components/mobile/TabBar.astro'
+import VerticalRail from '~/components/VerticalRail.astro'
+import { site } from '~/config'
+import '~/styles/global.css'
+
+interface Props {
+  title: string
+  description?: string | undefined
+  /** 竖排站名装饰层，组件画廊这类页面不需要 */
+  rail?: boolean
+  /** 移动端底部 Tab Bar */
+  tabBar?: boolean
+  /**
+   * 桌面端顶部内边距。设计稿里 Home 有 Header 所以内容从 y48 起；
+   * 归档 / 文章 / 项目 / 关于四页没有 Header，内容从 y72 起。
+   */
+  topPad?: 48 | 72
+}
+
+const {
+  title,
+  description = site.description,
+  rail = true,
+  tabBar = true,
+  topPad = 48,
+} = Astro.props
+const fullTitle = title === site.title ? title : `${title} · ${site.title}`
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+
+    <!-- 首屏渲染前同步应用主题，避免暗色下闪白 -->
+    <script is:inline>
+      ;((d) => {
+        const stored = localStorage.getItem('theme') ?? 'light'
+        d.classList.toggle(
+          'dark',
+          stored === 'dark' ||
+            (stored === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches),
+        )
+        d.dataset.theme = stored
+      })(document.documentElement)
+    </script>
+  </head>
+
+  <body class="bg-cream text-ink">
+    <div class="relative mx-auto w-full max-w-[1440px] overflow-hidden">
+      <!--
+        Aurora Backdrop · blog.pen 里这层只有 blur(70) 没有填充，
+        内容是按品牌色补的（见 global.css 的 @utility aurora）。
+        inset -240 复刻设计稿的 1920×1808 @ (-240,-240)。
+      -->
+      <div class="aurora pointer-events-none absolute inset-[-240px] z-0"></div>
+
+      {rail && <VerticalRail />}
+      <!-- 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右 -->
+      <div
+        class:list={[
+          'relative z-10 flex flex-col px-[24px] pt-[28px]',
+          tabBar ? 'pb-[110px]' : 'pb-[28px]',
+          'xl:px-[48px] xl:pb-[56px]',
+          topPad === 72 ? 'xl:pt-[72px]' : 'xl:pt-[48px]',
+        ]}
+      >
+        <slot />
+      </div>
+    </div>
+
+    {tabBar && <TabBar />}
+
+    <script>
+      // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的单个循环按钮
+      const ORDER = ['light', 'dark', 'auto']
+      const query = matchMedia('(prefers-color-scheme: dark)')
+      const chips = document.querySelectorAll<HTMLElement>('[data-theme-choice]')
+
+      function apply(choice: string) {
+        document.documentElement.classList.toggle(
+          'dark',
+          choice === 'dark' || (choice === 'auto' && query.matches),
+        )
+        document.documentElement.dataset.theme = choice
+        localStorage.setItem('theme', choice)
+        for (const chip of chips) {
+          chip.setAttribute('aria-checked', String(chip.dataset.themeChoice === choice))
+        }
+      }
+
+      const current = () => localStorage.getItem('theme') ?? 'light'
+      apply(current())
+
+      for (const chip of chips) {
+        chip.addEventListener('click', () => apply(chip.dataset.themeChoice!))
+      }
+
+      for (const button of document.querySelectorAll('[data-theme-cycle]')) {
+        button.addEventListener('click', () => {
+          apply(ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length]!)
+        })
+      }
+
+      query.addEventListener('change', () => {
+        if (current() === 'auto') apply('auto')
+      })
+    </script>
+  </body>
+</html>

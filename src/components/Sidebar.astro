@@ -1,0 +1,103 @@
+---
+import { Image } from 'astro:assets'
+import { Icon } from 'astro-icon/components'
+import avatarSrc from '../../images/generated-1787210923171.png'
+import { isNavActive, nav, site, themeChoices } from '~/config'
+import NavItem from './NavItem.astro'
+
+const pathname = Astro.url.pathname
+---
+
+<!-- Sidebar · blog.pen I23TnW -->
+<aside class="glass box-border flex w-[280px] flex-col items-start gap-[26px] rounded-[36px] p-[24px]">
+  <!-- Brand -->
+  <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[13px]">
+    <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px]">
+      <a href="/" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[9px]">
+        <span
+          class="flex size-[26px] shrink-0 flex-row items-center justify-center rounded-[13px] bg-fire-tint"
+        >
+          <span class="size-[9px] shrink-0 rounded-full bg-brand shadow-[0_0_10px_0_var(--glow-fire)]"
+          ></span>
+        </span>
+        <span class="font-display text-[19px]/[19px] font-normal whitespace-nowrap text-ink">
+          {site.title}
+        </span>
+      </a>
+      <a
+        href="/rss.xml"
+        aria-label="RSS 订阅"
+        class="hairline-box flex h-[28px] w-[30px] shrink-0 flex-row items-center justify-center rounded-[12px]"
+      >
+        <Icon name="lucide:rss" class="size-[14px] shrink-0 text-ink-soft" />
+      </a>
+    </div>
+
+    <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+      <Image
+        src={avatarSrc}
+        alt={site.author}
+        width={68}
+        height={68}
+        class="size-[34px] shrink-0 rounded-[17px] object-cover shadow-[0_10px_18px_-4px_var(--color-dot-idle)]"
+      />
+      <span class="font-display text-[18px]/[18px] font-medium whitespace-nowrap text-ink">
+        {site.author}
+      </span>
+      <span class="text-[11px] font-medium whitespace-nowrap text-brand-ink">
+        {site.authorBadge}
+      </span>
+    </div>
+  </div>
+
+  <!-- General Group -->
+  <nav class="flex h-fit w-full shrink-0 flex-col items-start gap-[8px]">
+    <span class="text-[12px] font-normal tracking-[1.2px] whitespace-nowrap text-ink-soft">
+      GENERAL
+    </span>
+    {
+      nav.map((item) => (
+        <NavItem
+          label={item.label}
+          icon={item.icon}
+          href={item.href}
+          active={isNavActive(item.match, pathname)}
+          full
+        />
+      ))
+    }
+  </nav>
+
+  <!-- Appearance Group -->
+  <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
+    <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      APPEARANCE
+    </span>
+    <div
+      role="radiogroup"
+      aria-label="外观"
+      data-theme-switch
+      class="hairline-box flex h-fit w-full shrink-0 flex-row items-center gap-[2px] rounded-[12px] p-[3px]"
+    >
+      {
+        themeChoices.map((choice) => (
+          <button
+            type="button"
+            role="radio"
+            aria-checked="false"
+            data-theme-choice={choice.value}
+            class="group flex h-[26px] flex-1 flex-row items-center justify-center gap-[5px] rounded-[6px] outline-1 -outline-offset-[0.5px] outline-transparent aria-checked:bg-card-solid aria-checked:outline-hairline"
+          >
+            <Icon
+              name="lucide:sun-moon"
+              class="hidden size-[12px] shrink-0 text-brand-ink group-aria-checked:block"
+            />
+            <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted group-aria-checked:font-bold group-aria-checked:text-brand-ink">
+              {choice.label}
+            </span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+</aside>

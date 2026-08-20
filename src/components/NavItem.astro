@@ -1,0 +1,36 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  label: string
+  icon: string
+  href?: string | undefined
+  active?: boolean
+  /** 侧栏里的实例是 fill_container；组件本身定义为 232px 宽 */
+  full?: boolean
+}
+
+const { label, icon: iconName, href, active = false, full = false } = Astro.props
+---
+
+<!-- Nav Item · blog.pen TQ3Oj -->
+<a
+  href={href ?? '#'}
+  class:list={[
+    'box-border flex flex-row items-center gap-[12px] rounded-[26px] px-[20px] py-[12px] transition-colors',
+    full ? 'w-full' : 'w-[232px]',
+    active ? 'glass-solid' : 'hover:bg-card',
+  ]}
+  aria-current={active ? 'page' : undefined}
+>
+  <Icon
+    name={`lucide:${iconName}`}
+    class:list={['size-[26px] shrink-0', active ? 'text-brand' : 'text-ink-soft']}
+  />
+  <span
+    class:list={[
+      'text-[15px] whitespace-nowrap',
+      active ? 'font-medium text-ink' : 'font-normal text-ink-soft',
+    ]}>{label}</span
+  >
+</a>

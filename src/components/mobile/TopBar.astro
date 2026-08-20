@@ -1,0 +1,42 @@
+---
+import { Image } from 'astro:assets'
+import { Icon } from 'astro-icon/components'
+import avatar from '../../../images/generated-1787212258862.png'
+import { site } from '~/config'
+---
+
+<!-- Top Bar · blog.pen Mobile 首页（移动端不用 Sidebar） -->
+<div class="flex h-fit w-full shrink-0 flex-col items-start gap-[12px]">
+  <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[9px]">
+    <a href="/" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px]">
+      <span class="flex size-[24px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
+        <span class="size-[8px] shrink-0 rounded-full bg-brand shadow-[0_0_9px_0_var(--glow-fire)]"></span>
+      </span>
+      <span class="font-display text-[17px]/[17px] font-normal whitespace-nowrap text-ink">
+        {site.title}
+      </span>
+    </a>
+
+    <button
+      type="button"
+      data-theme-cycle
+      aria-label="切换外观"
+      class="glass flex h-fit w-fit shrink-0 flex-row rounded-[12px] p-[7px]"
+    >
+      <Icon name="lucide:sun-moon" class="size-[20px] shrink-0 text-ink" />
+    </button>
+  </div>
+
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[9px]">
+    <Image
+      src={avatar}
+      alt={site.author}
+      width={60}
+      height={60}
+      class="size-[30px] shrink-0 rounded-full object-cover"
+    />
+    <span class="font-display text-[16px]/[16px] font-normal whitespace-nowrap text-ink">
+      {site.author}
+    </span>
+  </div>
+</div>

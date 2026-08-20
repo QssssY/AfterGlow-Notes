@@ -1,0 +1,58 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  date: Date
+  category: string
+  title: string
+  href: string
+  minutes: number
+  wordsLabel: string
+  glyph?: string
+}
+
+const { date, category, title, href, minutes, wordsLabel, glyph = 'app-window' } = Astro.props
+const pad = (n: number) => String(n).padStart(2, '0')
+const dateLabel = `${date.getFullYear()} · ${pad(date.getMonth() + 1)} · ${pad(date.getDate())}`
+---
+
+<!-- Featured · blog.pen Mobile 首页 -->
+<section class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
+  <span class="text-[11px] font-bold tracking-[1.6px] whitespace-nowrap text-ink-muted">
+    精 选 FEATURED
+  </span>
+
+  <a
+    href={href}
+    class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-start overflow-hidden rounded-[28px]"
+  >
+    <span
+      class="flex h-[120px] w-full shrink-0 flex-row items-center justify-center bg-[linear-gradient(-109.335deg,#E3D2B4_14.645%,#C9E0D8_85.355%)]"
+    >
+      <Icon name={`lucide:${glyph}`} class="size-[40px] shrink-0 text-brand-ink opacity-[0.9]" />
+    </span>
+
+    <span class="flex h-fit w-full shrink-0 flex-col items-start gap-[7px] px-[16px] pt-[14px] pb-[16px]">
+      <span class="flex h-[18px] w-fit shrink-0 flex-row items-center gap-[8px]">
+        <span class="size-[6px] shrink-0 rounded-full bg-brand shadow-[0_0_7px_0_var(--glow-fire)]"></span>
+        <time datetime={date.toISOString()} class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">
+          {dateLabel}
+        </time>
+        <span class="text-[11.5px] font-bold whitespace-nowrap text-leaf-deep">{category}</span>
+      </span>
+
+      <span class="w-full text-[15.5px]/[22px] font-bold text-ink">{title}</span>
+
+      <span class="flex h-[17px] w-fit shrink-0 flex-row items-center gap-[14px]">
+        <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+          <Icon name="lucide:clock-3" class="size-[12px] shrink-0 text-ink-muted" />
+          <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">{minutes} 分钟</span>
+        </span>
+        <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+          <Icon name="lucide:file-text" class="size-[12px] shrink-0 text-ink-muted" />
+          <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">{wordsLabel}</span>
+        </span>
+      </span>
+    </span>
+  </a>
+</section>

@@ -1,0 +1,45 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  label: string
+  icon: string
+  href?: string | undefined
+  /**
+   * glass = 标准玻璃态（稀土掘金）
+   * dark  = 深色变体（Home Header 的 Github）：黑底白字 + Averia 18px + 更宽的横向 padding
+   */
+  variant?: 'glass' | 'dark'
+  /** 移动端 Social Row 里的实例是 fill_container */
+  full?: boolean
+}
+
+const { label, icon: iconName, href, variant = 'glass', full = false } = Astro.props
+const external = href?.startsWith('http')
+const dark = variant === 'dark'
+---
+
+<!-- Social Button · blog.pen iKj8F（dark 变体取自 Home Header 的 Github 按钮） -->
+<a
+  href={href ?? '#'}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener noreferrer' : undefined}
+  class:list={[
+    'box-border flex flex-row items-center gap-[8px] rounded-[14px]',
+    dark
+      ? 'bg-btn-dark px-[14px] py-[8px] outline-[1.5px] -outline-offset-[0.75px] outline-sheen shadow-[0_24px_44px_-16px_var(--shadow-soft),0_0_20px_0_var(--sheen)] backdrop-blur-[4px]'
+      : 'glass px-[12px] py-[10px]',
+    full ? 'w-full justify-center' : 'w-fit',
+  ]}
+>
+  <Icon
+    name={`lucide:${iconName}`}
+    class:list={['size-[22px] shrink-0', dark ? 'text-white' : 'text-ink']}
+  />
+  <span
+    class:list={[
+      'whitespace-nowrap',
+      dark ? 'font-display text-[18px] font-medium text-white' : 'text-[14px] font-medium text-ink',
+    ]}>{label}</span
+  >
+</a>

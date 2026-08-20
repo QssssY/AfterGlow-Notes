@@ -1,0 +1,38 @@
+---
+import { Icon } from 'astro-icon/components'
+import { likes, socials } from '~/config'
+
+const github = socials.find((s) => s.variant === 'dark')!
+const juejin = socials.find((s) => s.variant === 'glass')!
+const likeLabel = likes >= 1000 ? `${Math.round(likes / 1000)}k` : String(likes)
+---
+
+<!-- Social Row · blog.pen Mobile 首页（尺寸与桌面 Social Button 不同，故未复用） -->
+<div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+  <a
+    href={github.href}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex h-fit flex-1 flex-row items-center justify-center gap-[7px] rounded-[13px] bg-btn-dark px-[13px] py-[8px] outline-[1.5px] -outline-offset-[0.75px] outline-sheen shadow-[0_24px_44px_-16px_var(--shadow-soft),0_0_20px_0_var(--sheen)] backdrop-blur-[4px]"
+  >
+    <Icon name="lucide:github" class="size-[20px] shrink-0 text-white" />
+    <span class="font-display text-[15px] font-normal whitespace-nowrap text-white">
+      {github.label}
+    </span>
+  </a>
+
+  <a
+    href={juejin.href}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="glass flex h-fit flex-1 flex-row items-center justify-center gap-[7px] rounded-[13px] px-[13px] py-[8px]"
+  >
+    <Icon name="lucide:pen-line" class="size-[18px] shrink-0 text-ink" />
+    <span class="text-[13px] font-medium whitespace-nowrap text-ink">{juejin.label}</span>
+  </a>
+
+  <span class="glass flex h-fit w-fit shrink-0 flex-row items-center gap-[6px] rounded-[13px] px-[12px] py-[8px]">
+    <Icon name="lucide:heart" class="size-[18px] shrink-0 text-[#E08A9C]" />
+    <span class="text-[12px] font-medium whitespace-nowrap text-[#A85E6C]">{likeLabel}</span>
+  </span>
+</div>

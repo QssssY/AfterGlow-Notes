@@ -1,0 +1,22 @@
+---
+import { site } from '~/config'
+
+// 设计稿里在 1440 帧内定位于 x=1366，右边缘距页面右侧 48px —— 用 right 定位以便随宽度自适应
+const chars = [...site.title]
+---
+
+<!-- Vertical Rail · blog.pen（竖排站名，装饰层） -->
+<div
+  aria-hidden="true"
+  class="pointer-events-none absolute top-[150px] right-[48px] hidden w-[26px] flex-col items-center gap-0 xl:flex"
+>
+  <span class="h-[38px] w-[1px] shrink-0 bg-hairline"></span>
+  {
+    chars.map((char) => (
+      <span class="font-display w-[26px] text-center text-[15px] font-normal text-ink-muted">
+        {char}
+      </span>
+    ))
+  }
+  <span class="size-[5px] shrink-0 rounded-full bg-brand shadow-[0_0_8px_0_var(--glow-fire)]"></span>
+</div>

@@ -1,0 +1,40 @@
+---
+import { Icon } from 'astro-icon/components'
+import { isNavActive, nav } from '~/config'
+
+const pathname = Astro.url.pathname
+---
+
+<!-- Tab Bar · blog.pen Mobile 首页（替代桌面的 Sidebar 与 Footer） -->
+<nav
+  class="glass fixed bottom-[29px] left-[16px] right-[16px] z-20 flex h-fit flex-row items-center gap-[2px] rounded-[22px] p-[8px] xl:hidden"
+>
+  {
+    nav.map((item) => {
+      const active = isNavActive(item.match, pathname)
+      return (
+        <a
+          href={item.href}
+          aria-current={active ? 'page' : undefined}
+          class:list={[
+            'flex h-fit flex-1 flex-col items-center justify-center gap-[3px] rounded-[15px] py-[7px]',
+            active && 'bg-fire-tint',
+          ]}
+        >
+          <Icon
+            name={`lucide:${item.icon}`}
+            class:list={['size-[20px] shrink-0', active ? 'text-brand-ink' : 'text-ink-soft']}
+          />
+          <span
+            class:list={[
+              'text-[10px] whitespace-nowrap',
+              active ? 'font-semibold text-brand-ink' : 'font-normal text-ink',
+            ]}
+          >
+            {item.short}
+          </span>
+        </a>
+      )
+    })
+  }
+</nav>

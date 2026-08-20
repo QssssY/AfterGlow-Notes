@@ -1,0 +1,41 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  title: string
+  desc: string
+  stack: string
+  stars: number | string
+  href?: string | undefined
+  /** 网格里的实例会覆盖成 fill_container */
+  full?: boolean
+}
+
+const { title, desc, stack, stars, href, full = false } = Astro.props
+---
+
+<!-- Project Card · blog.pen XnV5M -->
+<a
+  href={href ?? '#'}
+  target={href?.startsWith('http') ? '_blank' : undefined}
+  rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+  class:list={[
+    'glass box-border flex flex-col items-start gap-[14px] rounded-[28px] p-[20px]',
+    full ? 'w-full' : 'w-[260px]',
+  ]}
+>
+  <span class="h-[132px] w-full shrink-0 rounded-[18px] bg-avatar-bg"></span>
+
+  <span class="flex w-full shrink-0 flex-row items-center gap-[8px]">
+    <span class="flex-1 text-[16px] font-medium text-ink">{title}</span>
+    <Icon name="lucide:arrow-up-right" class="size-[18px] shrink-0 text-ink-muted" />
+  </span>
+
+  <span class="w-full text-[13px]/[21px] font-normal text-ink-soft">{desc}</span>
+
+  <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[10px]">
+    <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{stack}</span>
+    <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+    <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">★ {stars}</span>
+  </span>
+</a>

@@ -1,0 +1,20 @@
+---
+interface Props {
+  label: string
+  href?: string | undefined
+  active?: boolean
+}
+
+const { label, href, active = false } = Astro.props
+---
+
+<!-- Filter Pill · blog.pen RJEix -->
+<a
+  href={href ?? '#'}
+  class:list={[
+    'box-border flex w-fit flex-row rounded-[12px] px-[13px] py-[6px] text-[12px] font-medium whitespace-nowrap transition-colors',
+    active ? 'glass-solid text-brand-ink' : 'text-ink-soft hover:bg-card',
+  ]}
+>
+  {label}
+</a>
