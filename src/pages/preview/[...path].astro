@@ -1,5 +1,11 @@
 ---
-// 组件画廊 —— 对照 blog.pen 校验 7 个复用组件的还原度
+/**
+ * 组件画廊 —— 对照 blog.pen 校验复用组件的还原度。
+ *
+ * 做成 rest 路由只为一件事：getStaticPaths 在生产构建时返回空数组，
+ * 于是这页不进 dist（它占了站内 href="#" 占位链接的一大半），
+ * 但 pnpm dev 下照旧能打开。
+ */
 import BaseLayout from '~/layouts/BaseLayout.astro'
 import FilterPill from '~/components/FilterPill.astro'
 import NavItem from '~/components/NavItem.astro'
@@ -8,6 +14,10 @@ import ProjectCard from '~/components/ProjectCard.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import SocialButton from '~/components/SocialButton.astro'
 import TimelineRow from '~/components/TimelineRow.astro'
+
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { path: undefined } }] : []
+}
 
 const label = 'text-[11.5px] font-bold tracking-[1.8px] text-ink-muted'
 ---
