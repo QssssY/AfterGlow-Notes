@@ -9,6 +9,11 @@ interface Props {
 }
 
 const { stacks, active = stacks[0] } = Astro.props
+
+const VIEWS = [
+  { key: 'grid', icon: 'layout-grid', label: '网格视图' },
+  { key: 'list', icon: 'list', label: '列表视图' },
+] as const
 ---
 
 <!-- Filter Bar · blog.pen Projects -->
@@ -19,23 +24,17 @@ const { stacks, active = stacks[0] } = Astro.props
 
   <div class="hidden h-fit w-fit shrink-0 flex-row items-center gap-[6px] xl:flex">
     {
-      (
-        [
-          ['layout-grid', true],
-          ['list', false],
-        ] as const
-      ).map(([icon, on]) => (
+      VIEWS.map((view) => (
         <button
           type="button"
-          aria-label={icon === 'list' ? '列表视图' : '网格视图'}
-          class:list={[
-            'flex size-[34px] shrink-0 flex-row items-center justify-center rounded-[12px] outline-1 -outline-offset-[0.5px]',
-            on ? 'bg-fire-tint outline-brand' : 'bg-chip outline-hairline',
-          ]}
+          data-view-set={view.key}
+          aria-pressed={view.key === 'grid'}
+          aria-label={view.label}
+          class="group/v flex size-[34px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] bg-chip outline-1 -outline-offset-[0.5px] outline-hairline transition-colors aria-pressed:bg-fire-tint aria-pressed:outline-brand"
         >
           <Icon
-            name={`lucide:${icon}`}
-            class:list={['size-[16px] shrink-0', on ? 'text-brand-ink' : 'text-ink-muted']}
+            name={`lucide:${view.icon}`}
+            class="size-[16px] shrink-0 text-ink-muted transition-colors group-aria-pressed/v:text-brand-ink"
           />
         </button>
       ))

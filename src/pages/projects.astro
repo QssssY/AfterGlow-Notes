@@ -10,8 +10,6 @@ import BaseLayout from '~/layouts/BaseLayout.astro'
 // 设计稿 Projects 页自带的数据。没有并入 src/config.ts —— 那里的 `projects` 是 Home
 // 「在做的事」区用的三条，star 数与本页不同（如 live2d-web：Home ★312 / 本页 ★242），
 // 设计稿本身就不一致，所以各页先按自己的稿子走。
-const stacks = ['全部', 'TypeScript', 'Rust', 'Astro', '归档'] as const
-
 const featured = {
   badge: '正在打磨',
   title: 'pen-canvas',
@@ -29,8 +27,12 @@ const projects = [
   { title: 'mono-note', desc: '桌面便签，只有一个窗口和一种字体。', stack: 'Electron', stars: 31 },
 ] as const
 
-// 设计稿是两行定宽三列；移动端按 Home 的规则收成单列
-const rows = [projects.slice(0, 3), projects.slice(3, 6)]
+/**
+ * 档位从真实数据派生，不照抄设计稿的 ['全部','TypeScript','Rust','Astro','归档'] ——
+ * 现有项目里没有 Rust，也没有「归档」状态字段，那两档点了会是空结果。
+ * 等真有归档项目了再给数据加 archived 字段补回来。
+ */
+const stacks = ['全部', ...new Set(projects.map((p) => p.stack))]
 ---
 
 <BaseLayout title="我的项目" rail={false} topPad={72}>
@@ -57,10 +59,23 @@ const rows = [projects.slice(0, 3), projects.slice(3, 6)]
         href={featured.href}
       />
 
-      {
-        rows.map((row) => (
-          <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[24px] xl:flex-row">
-            {row.map((project) => (
+      {/*
+        设计稿画的是两行定宽三列。这里用单个 flex-wrap 容器代替两个定长行：
+        全排满时几何完全一样（1/3 = (100% - 两个 24 间隙) / 3），
+        但筛选隐藏卡片后能自然回流，不会留下空洞。
+      */}
+      <div
+        data-project-grid
+        data-view="grid"
+        class="group/view flex h-fit w-full flex-row flex-wrap items-stretch gap-[24px]"
+      >
+        {
+          projects.map((project) => (
+            <div
+              data-project
+              data-stack={project.stack}
+              class="flex w-full xl:w-[calc((100%-48px)/3)] xl:group-data-[view=list]/view:w-full"
+            >
               <ProjectCard
                 title={project.title}
                 desc={project.desc}
@@ -69,10 +84,13 @@ const rows = [projects.slice(0, 3), projects.slice(3, 6)]
                 href="#"
                 full
               />
-            ))}
-          </div>
-        ))
-      }
+            </div>
+          ))
+        }
+        <p data-project-empty hidden class="w-full py-[24px] text-center text-[13px] text-ink-muted">
+          这个技术栈下还没有项目。
+        </p>
+      </div>
     </div>
   </div>
 
@@ -80,3 +98,40 @@ const rows = [projects.slice(0, 3), projects.slice(3, 6)]
     <Footer license="项目代码以 MIT 授权开源 · 萤火录" />
   </div>
 </BaseLayout>
+
+<script>
+  const pills = [...document.querySelectorAll<HTMLElement>('[data-filter]')]
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-project]')]
+  const grid = document.querySelector<HTMLElement>('[data-project-grid]')
+  const empty = document.querySelector<HTMLElement>('[data-project-empty]')
+
+  if (pills.length && cards.length && grid) {
+    const ALL = pills[0]!.dataset.filter
+
+    for (const pill of pills) {
+      pill.addEventListener('click', () => {
+        const want = pill.dataset.filter
+        let shown = 0
+        for (const card of cards) {
+          const hit = want === ALL || card.dataset.stack === want
+          card.hidden = !hit
+          if (hit) shown++
+        }
+        for (const p of pills) p.setAttribute('aria-pressed', String(p.dataset.filter === want))
+        if (empty) empty.hidden = shown > 0
+      })
+    }
+  }
+
+  // 网格 / 列表：只切容器上的 data-view，宽度由 group-data 变体接管
+  const toggles = [...document.querySelectorAll<HTMLElement>('[data-view-set]')]
+  if (grid && toggles.length) {
+    for (const toggle of toggles) {
+      toggle.addEventListener('click', () => {
+        const view = toggle.dataset.viewSet!
+        grid.dataset.view = view
+        for (const t of toggles) t.setAttribute('aria-pressed', String(t.dataset.viewSet === view))
+      })
+    }
+  }
+</script>
