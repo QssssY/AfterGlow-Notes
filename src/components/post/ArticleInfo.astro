@@ -1,0 +1,53 @@
+---
+import { relativeDay } from '~/utils/post'
+
+/**
+ * 本文 ARTICLE · blog.pen Post 文章详情 / Left Column（dZnLM）
+ *
+ * 规格：glass + r26 + p22 + 竖向 gap12（和上面的目录卡同一套外壳，
+ * 不是左栏那种 r28/p18 的 Panel）。每行左键 12.5 普通、右值 12.5 medium，
+ * 行与行之间一条 hairline。
+ *
+ * 字数这项设计稿这轮从正文头部的元信息行挪到了这里，所以那行只剩日期 + 阅读时长。
+ * 「更新」一行只有 frontmatter 写了 updated 才出现 —— 没改过就不编一个更新时间。
+ */
+interface Props {
+  words: number
+  minutes: number
+  date: Date
+  updated?: Date | undefined
+}
+
+const { words, minutes, date, updated } = Astro.props
+
+const pad = (n: number) => String(n).padStart(2, '0')
+
+/** 设计稿的写法：2026 / 08 / 19 */
+const published = `${date.getFullYear()} / ${pad(date.getMonth() + 1)} / ${pad(date.getDate())}`
+
+const rows = [
+  // 设计稿写的是 6,240，带千分位、不带「字」——「字数」已经在左边说了
+  { key: '字数', value: words.toLocaleString('en-US') },
+  { key: '阅读', value: `约 ${minutes} 分钟` },
+  { key: '发布', value: published },
+  ...(updated ? [{ key: '更新', value: relativeDay(updated) }] : []),
+]
+---
+
+<dl class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[26px] p-[22px]">
+  <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+    本 文 ARTICLE
+  </span>
+
+  {
+    rows.map((row, i) => (
+      <>
+        {i > 0 && <span class="h-[1px] w-full shrink-0 bg-hairline" />}
+        <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+          <dt class="flex-1 text-[12.5px] font-normal text-ink-soft">{row.key}</dt>
+          <dd class="text-[12.5px] font-medium whitespace-nowrap text-ink">{row.value}</dd>
+        </div>
+      </>
+    ))
+  }
+</dl>

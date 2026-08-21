@@ -5,9 +5,11 @@ import { Icon } from 'astro-icon/components'
 import Footer from '~/components/Footer.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import ArticleActions from '~/components/post/ArticleActions.astro'
+import ArticleInfo from '~/components/post/ArticleInfo.astro'
 import LicenseBlock from '~/components/post/LicenseBlock.astro'
 import PrevNext from '~/components/post/PrevNext.astro'
 import ReadingProgress from '~/components/post/ReadingProgress.astro'
+import RelatedCard from '~/components/post/RelatedCard.astro'
 import TocCard from '~/components/post/TocCard.astro'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 import { postStats } from '~/utils/post'
@@ -17,18 +19,36 @@ export async function getStaticPaths() {
     (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
   )
 
-  return posts.map((post, i) => ({
-    params: { slug: post.id },
-    props: {
-      post,
-      // 数组是时间倒序：下一项更旧 = 上一篇，上一项更新 = 下一篇
-      older: posts[i + 1],
-      newer: posts[i - 1],
-    },
-  }))
+  return posts.map((post, i) => {
+    /**
+     * 左栏「相关 RELATED」：和本篇有共同标签的文章，取最近三篇。
+     * posts 已经是时间倒序，filter 不改顺序，所以 slice 出来就是最近的三篇。
+     * 在这里算而不是在组件里：这里本来就握着全部文章，组件不必再查一次集合。
+     */
+    const tags = new Set(post.data.tags)
+    const related = posts
+      .filter((other) => other.id !== post.id && other.data.tags.some((tag) => tags.has(tag)))
+      .slice(0, 3)
+      .map((other) => ({
+        title: other.data.title,
+        href: `/posts/${other.id}`,
+        date: other.data.date,
+      }))
+
+    return {
+      params: { slug: post.id },
+      props: {
+        post,
+        related,
+        // 数组是时间倒序：下一项更旧 = 上一篇，上一项更新 = 下一篇
+        older: posts[i + 1],
+        newer: posts[i - 1],
+      },
+    }
+  })
 }
 
-const { post, older, newer } = Astro.props
+const { post, related, older, newer } = Astro.props
 const { Content, headings } = await render(post)
 const stats = postStats(post.body ?? '')
 
@@ -54,10 +74,23 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
   <ReadingProgress />
 
   <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
-    <!-- 左栏：桌面是 Sidebar + 目录；移动端只留目录（侧栏由底部 TabBar 代替） -->
+    <!--
+      左栏：桌面是 Sidebar + 目录 + 本文 + 相关；移动端只留目录
+      （侧栏由底部 TabBar 代替；本文与相关两块也不在移动端出现 ——
+      它们在设计稿里是左栏内容，摆到 390 下就成了正文前的一大段前言）。
+    -->
     <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:w-[280px]">
       <div class="hidden w-full xl:block"><Sidebar /></div>
       <TocCard headings={headings} />
+      <div class="hidden w-full xl:block">
+        <ArticleInfo
+          words={stats.words}
+          minutes={stats.minutes}
+          date={date}
+          updated={post.data.updated}
+        />
+      </div>
+      <div class="hidden w-full xl:block"><RelatedCard posts={related} /></div>
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1">
@@ -121,10 +154,7 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
             <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
               阅读约 {stats.minutes} 分钟
             </span>
-            <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
-            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
-              {stats.wordsLabel}
-            </span>
+            {/* 字数这轮挪进了左栏的 ARTICLE 面板，这行不再重复 */}
           </div>
         </header>
 

@@ -1,5 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { relativeDay } from '~/utils/post'
 
 interface Props {
   /**
@@ -11,25 +12,19 @@ interface Props {
 }
 
 const { likes, updated } = Astro.props
-
-function relative(date: Date) {
-  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000)
-  if (days <= 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 30) return `${days} 天前`
-  if (days < 365) return `${Math.floor(days / 30)} 个月前`
-  return `${Math.floor(days / 365)} 年前`
-}
 ---
 
 <!-- Actions · blog.pen Post 文章详情 / Article Card -->
 <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
-  <!-- 设计稿只画了静态计数；真正的点赞需要后端计数服务 -->
+  <!--
+    设计稿只画了静态计数；真正的点赞需要后端计数服务。
+    描边 #F5C0CB66 在设计稿里仍是写死的（那轮抽 like-* 变量漏了它），照抄。
+  -->
   {
     likes !== undefined && (
-      <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[22px] bg-[#F5C0CB33] px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-[#F5C0CB66]">
-        <Icon name="lucide:heart" class="size-[18px] shrink-0 text-[#E08A9C]" />
-        <span class="text-[13px] font-medium whitespace-nowrap text-[#C2707F]">喜欢 · {likes}</span>
+      <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[22px] bg-like-tint px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-[#F5C0CB66]">
+        <Icon name="lucide:heart" class="size-[18px] shrink-0 text-like-ink" />
+        <span class="text-[13px] font-medium whitespace-nowrap text-like-text">喜欢 · {likes}</span>
       </span>
     )
   }
@@ -50,7 +45,7 @@ function relative(date: Date) {
   {
     updated && (
       <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
-        最后更新于 {relative(updated)}
+        最后更新于 {relativeDay(updated)}
       </span>
     )
   }
