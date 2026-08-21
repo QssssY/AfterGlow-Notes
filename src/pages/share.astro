@@ -45,7 +45,7 @@ const categories = new Set(shareItems.map((item) => item.category)).size
           <div class="hidden h-fit w-fit shrink-0 flex-row items-center gap-[7px] xl:flex">
             <Icon name="lucide:bookmark" class="size-[14px] shrink-0 text-ink-muted" />
             <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-muted">
-              共 {total} 条收藏
+              共 <span data-share-count>{total}</span> 条收藏
             </span>
           </div>
         </div>
@@ -60,9 +60,13 @@ const categories = new Set(shareItems.map((item) => item.category)).size
                 domain={item.domain}
                 icon={item.icon}
                 tone={item.tone}
+                category={item.category}
               />
             ))
           }
+          <p data-share-empty hidden class="w-full py-[24px] text-center text-[13px] text-ink-muted">
+            这个分类还没有收录。
+          </p>
         </div>
       </div>
     </div>
@@ -72,3 +76,33 @@ const categories = new Set(shareItems.map((item) => item.category)).size
     <Footer license="外链内容版权归原作者所有 · 萤火录" />
   </div>
 </BaseLayout>
+
+<script>
+  // 纯前端按分类显隐；「全部」是 shareFilters 的第一项
+  const pills = [...document.querySelectorAll<HTMLElement>('[data-filter]')]
+  const items = [...document.querySelectorAll<HTMLElement>('[data-share-item]')]
+  const count = document.querySelector<HTMLElement>('[data-share-count]')
+  const empty = document.querySelector<HTMLElement>('[data-share-empty]')
+
+  if (pills.length && items.length) {
+    const ALL = pills[0]!.dataset.filter
+
+    const apply = (want: string | undefined) => {
+      let shown = 0
+      for (const item of items) {
+        const hit = want === ALL || item.dataset.category === want
+        item.hidden = !hit
+        if (hit) shown++
+      }
+      for (const pill of pills) {
+        pill.setAttribute('aria-pressed', String(pill.dataset.filter === want))
+      }
+      if (count) count.textContent = String(shown)
+      if (empty) empty.hidden = shown > 0
+    }
+
+    for (const pill of pills) {
+      pill.addEventListener('click', () => apply(pill.dataset.filter))
+    }
+  }
+</script>

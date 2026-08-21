@@ -9,9 +9,11 @@ interface Props {
   icon: string
   /** fire = 橙底橙字，leaf = 玻璃底绿字。设计稿里按条手挑，不跟 category 走 */
   tone: 'fire' | 'leaf'
+  /** 供筛选脚本读取 */
+  category: string
 }
 
-const { title, desc, href, domain, icon, tone } = Astro.props
+const { title, desc, href, domain, icon, tone, category } = Astro.props
 ---
 
 <!-- Share Item · blog.pen FaObM -->
@@ -19,6 +21,8 @@ const { title, desc, href, domain, icon, tone } = Astro.props
   href={href}
   target="_blank"
   rel="noopener noreferrer"
+  data-share-item
+  data-category={category}
   class="glass-row group box-border flex w-full flex-row items-center gap-[18px] rounded-[22px] p-[16px]"
 >
   <span
