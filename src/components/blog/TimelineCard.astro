@@ -12,19 +12,32 @@ interface Props {
 const { groups, highlightId } = Astro.props
 ---
 
-<!-- Timeline Card · blog.pen 归档页内容区 -->
+<!--
+  Timeline Card · blog.pen 归档页内容区
+
+  服务端只渲染「年」分组（也是无 JS 时的兜底）。List Header 那排 日/周/月/年/分类
+  由下面的脚本接管：条目行原样搬运，只重建组头 —— 所以每行的视觉与设计稿保持一致。
+  组头带 id="y-年份"，年表面板的锚点跳的就是它。
+-->
 <div
+  data-timeline
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[2px] rounded-[32px] max-xl:px-[18px] max-xl:py-[20px] xl:px-[28px] xl:py-[26px]"
 >
   {
     groups.map((group, i) => (
       <>
-        {i > 0 && <span class="h-[1px] w-full shrink-0 bg-hairline" />}
+        {i > 0 && <span data-tl-sep class="h-[1px] w-full shrink-0 bg-hairline" />}
 
-        <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[8px]">
-          <span class="text-[16px] font-medium whitespace-nowrap text-ink">{group.year}年</span>
+        <div
+          data-tl-header
+          id={`y-${group.year}`}
+          class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[8px]"
+        >
+          <span data-tl-title class="text-[16px] font-medium whitespace-nowrap text-ink">
+            {group.year}年
+          </span>
           <span class="size-[7px] shrink-0 rounded-full bg-dot-idle" />
-          <span class="flex-1 text-[13px] font-normal text-ink-soft">
+          <span data-tl-count class="flex-1 text-[13px] font-normal text-ink-soft">
             {group.posts.length} 篇文章
           </span>
           <a href="/rss.xml" class="text-[12px] font-normal whitespace-nowrap text-brand-ink">
@@ -40,9 +53,100 @@ const { groups, highlightId } = Astro.props
             readMinutes={post.minutes}
             tags={post.tags}
             highlight={post.id === highlightId}
+            dateIso={post.date.toISOString()}
+            category={post.category}
           />
         ))}
       </>
     ))
   }
 </div>
+
+<script>
+  /**
+   * List Header 的 日/周/月/年/分类 分组切换。
+   *
+   * 条目 <a data-entry> 是同一批节点换个顺序挂（本来就按时间倒序，
+   * 各种分组都不用重排），只有组头和分隔线是克隆/新建的。
+   * 只作用于当前分页的条目 —— 翻页后各页各自分组，和「年」视图口径一致。
+   */
+  const root = document.querySelector<HTMLElement>('[data-timeline]')
+  const pills = [...document.querySelectorAll<HTMLElement>('[data-group]')]
+
+  if (root && pills.length > 0) {
+    const entries = [...root.querySelectorAll<HTMLElement>('[data-entry]')]
+    const headerTpl = root.querySelector<HTMLElement>('[data-tl-header]')?.cloneNode(true) as
+      | HTMLElement
+      | undefined
+
+    if (entries.length > 0 && headerTpl) {
+      // ISO 周：周四所在的周年 + 周序号
+      const isoWeek = (d: Date): [number, number] => {
+        const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+        const day = t.getUTCDay() || 7
+        t.setUTCDate(t.getUTCDate() + 4 - day)
+        const yearStart = Date.UTC(t.getUTCFullYear(), 0, 1)
+        return [t.getUTCFullYear(), Math.ceil(((t.getTime() - yearStart) / 86_400_000 + 1) / 7)]
+      }
+
+      const keyAndLabel = (mode: string, el: HTMLElement): [string, string] => {
+        const d = new Date(el.dataset.date ?? 0)
+        const y = d.getFullYear()
+        switch (mode) {
+          case 'day':
+            return [`${y}-${d.getMonth()}-${d.getDate()}`, `${y} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`]
+          case 'week': {
+            const [wy, w] = isoWeek(d)
+            return [`${wy}-w${w}`, `${wy} 年第 ${w} 周`]
+          }
+          case 'month':
+            return [`${y}-${d.getMonth()}`, `${y} 年 ${d.getMonth() + 1} 月`]
+          case 'cat': {
+            const cat = el.dataset.cat ?? '未分类'
+            return [cat, cat]
+          }
+          default:
+            return [String(y), `${y}年`]
+        }
+      }
+
+      const regroup = (mode: string) => {
+        // 桶按条目出现顺序建（条目本身是时间倒序）
+        const buckets = new Map<string, { label: string; items: HTMLElement[] }>()
+        for (const el of entries) {
+          const [key, label] = keyAndLabel(mode, el)
+          const bucket = buckets.get(key)
+          if (bucket) bucket.items.push(el)
+          else buckets.set(key, { label, items: [el] })
+        }
+
+        const next: HTMLElement[] = []
+        let i = 0
+        for (const [key, bucket] of buckets) {
+          if (i > 0) {
+            const sep = document.createElement('span')
+            sep.dataset.tlSep = ''
+            sep.className = 'h-[1px] w-full shrink-0 bg-hairline'
+            next.push(sep)
+          }
+          const header = headerTpl.cloneNode(true) as HTMLElement
+          // 锚点 id 只在「年」视图有意义（年表面板跳的就是它）
+          header.id = mode === 'year' ? `y-${key}` : ''
+          header.querySelector('[data-tl-title]')!.textContent =
+            mode === 'year' ? `${key}年` : bucket.label
+          header.querySelector('[data-tl-count]')!.textContent = `${bucket.items.length} 篇文章`
+          next.push(header, ...bucket.items)
+          i += 1
+        }
+        root.replaceChildren(...next)
+      }
+
+      for (const pill of pills) {
+        pill.addEventListener('click', () => {
+          for (const p of pills) p.setAttribute('aria-pressed', String(p === pill))
+          regroup(pill.dataset.group!)
+        })
+      }
+    }
+  }
+</script>

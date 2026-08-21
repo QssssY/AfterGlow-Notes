@@ -9,12 +9,17 @@ interface Props {
 const { total } = Astro.props
 
 /**
- * 设计稿的分组切换是「日 / 周 / 月 / 年 / 分类」，其中「年」为激活态。
- * 目前时间轴就是按年分组的，所以这里只把它作为当前状态展示 ——
- * 另外四种分组还没实现，故意不做成可点按钮，避免给出无效的交互暗示。
+ * 分组切换「日 / 周 / 月 / 年 / 分类」。默认「年」，与服务端渲染的分组一致；
+ * 点击后由 TimelineCard 里的脚本就地重排组头。选中态样式由 aria-pressed 驱动。
  */
-const GROUPS = ['日', '周', '月', '年', '分类'] as const
-const ACTIVE = '年'
+const GROUPS = [
+  { key: 'day', label: '日' },
+  { key: 'week', label: '周' },
+  { key: 'month', label: '月' },
+  { key: 'year', label: '年' },
+  { key: 'cat', label: '分类' },
+] as const
+const ACTIVE = 'year'
 ---
 
 <div class="flex h-[40px] w-full shrink-0 flex-row items-center justify-between gap-[12px]">
@@ -24,20 +29,16 @@ const ACTIVE = '年'
     class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[4px] rounded-[16px] p-[4px]"
   >
     {
-      GROUPS.map((group) => {
-        const active = group === ACTIVE
-        return (
-          <span
-            aria-current={active ? 'true' : undefined}
-            class:list={[
-              'box-border flex h-fit w-fit shrink-0 flex-row rounded-[12px] px-[13px] py-[6px] text-[12px] whitespace-nowrap',
-              active ? 'bg-brand font-semibold text-on-brand' : 'font-medium text-ink-soft',
-            ]}
-          >
-            {group}
-          </span>
-        )
-      })
+      GROUPS.map((group) => (
+        <button
+          type="button"
+          data-group={group.key}
+          aria-pressed={group.key === ACTIVE}
+          class="box-border flex h-fit w-fit shrink-0 cursor-pointer flex-row rounded-[12px] px-[13px] py-[6px] text-[12px] font-medium whitespace-nowrap text-ink-soft transition-colors hover:bg-card aria-pressed:bg-brand aria-pressed:font-semibold aria-pressed:text-on-brand"
+        >
+          {group.label}
+        </button>
+      ))
     }
   </div>
 

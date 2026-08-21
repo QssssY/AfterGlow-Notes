@@ -12,12 +12,30 @@ interface Props {
    * 圆点变成 5×14 的品牌色长条，标题也是品牌色。
    */
   highlight?: boolean
+  /** 分组切换脚本要的原始数据（见 TimelineCard）：ISO 日期与分类名 */
+  dateIso?: string | undefined
+  category?: string | undefined
 }
 
-const { date, title, href, readMinutes, tags = [], highlight = false } = Astro.props
+const {
+  date,
+  title,
+  href,
+  readMinutes,
+  tags = [],
+  highlight = false,
+  dateIso,
+  category,
+} = Astro.props
 ---
 
-<a href={href} class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[12px]">
+<a
+  href={href}
+  data-entry
+  data-date={dateIso}
+  data-cat={category}
+  class="group/entry flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[12px]"
+>
   <span class="w-[44px] shrink-0 text-[13px] font-medium text-ink-soft">{date}</span>
 
   <span class="flex h-[16px] w-[8px] shrink-0 flex-row items-center justify-center">
@@ -29,7 +47,10 @@ const { date, title, href, readMinutes, tags = [], highlight = false } = Astro.p
   </span>
 
   <span
-    class:list={['flex-1 text-[14px] font-medium', highlight ? 'text-brand' : 'text-ink']}
+    class:list={[
+      'flex-1 text-[14px] font-medium transition-colors',
+      highlight ? 'text-brand' : 'text-ink group-hover/entry:text-brand-ink',
+    ]}
     >{title}</span
   >
 

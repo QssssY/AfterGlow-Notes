@@ -28,10 +28,13 @@ const PX_PER_POST = 7.35
   {
     years.map((entry, i) => (
       <a
-        href={`/archive?year=${entry.year}`}
-        class="flex h-[20px] w-full shrink-0 flex-row items-center gap-[10px]"
+        href={`/archive#y-${entry.year}`}
+        class="group/year flex h-[20px] w-full shrink-0 flex-row items-center gap-[10px]"
       >
-        <span class="text-[12.5px] font-bold whitespace-nowrap text-ink-soft">{entry.year}</span>
+        <span
+          class="text-[12.5px] font-bold whitespace-nowrap text-ink-soft transition-colors group-hover/year:text-brand-ink"
+          >{entry.year}</span
+        >
         <span class="flex h-[6px] flex-1 flex-row overflow-hidden rounded-[3px] bg-hairline">
           <span
             class:list={[
