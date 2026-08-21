@@ -167,7 +167,7 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
 
         <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
 
-        <ArticleActions updated={post.data.updated} />
+        <ArticleActions slug={post.id} updated={post.data.updated} />
       </article>
 
       <LicenseBlock

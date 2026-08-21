@@ -23,6 +23,7 @@ import { likes } from '~/config'
     aria-label="喜欢这个站点"
     class="glass group/like absolute top-[16px] left-0 flex size-[76px] cursor-pointer flex-row items-center justify-center rounded-[38px]"
   >
+    <span data-like-burst aria-hidden="true" class="pointer-events-none absolute inset-0"></span>
     <Icon
       name="lucide:heart"
       class="size-[30px] shrink-0 text-like-fill transition-[transform,color] group-active/like:scale-90 group-aria-pressed/like:text-like-ink"
@@ -39,6 +40,8 @@ import { likes } from '~/config'
 </div>
 
 <script>
+  import { likeBurst } from '~/scripts/like-burst'
+
   const KEY = 'firefly:liked'
 
   // localStorage 在隐私模式或禁用 cookie 时会抛，包起来后点赞退化成本次会话有效
@@ -58,7 +61,7 @@ import { likes } from '~/config'
     }
   }
 
-  for (const button of document.querySelectorAll<HTMLElement>('[data-like]')) {
+  for (const button of document.querySelectorAll<HTMLElement>('[data-like][data-like-base]')) {
     const base = Number(button.dataset.likeBase ?? 0)
     const count = document.querySelector<HTMLElement>('[data-like-count]')
 
@@ -73,6 +76,7 @@ import { likes } from '~/config'
       liked = !liked
       write(liked)
       render()
+      if (liked) likeBurst(button)
     })
   }
 </script>
