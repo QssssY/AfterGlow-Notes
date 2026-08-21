@@ -22,18 +22,19 @@ export const email = '1795845968@qq.com'
 
 /**
  * 导航 —— label 用于桌面侧栏，short 用于移动端 Tab Bar。
- * 第 5 项在设计稿里桌面叫「优秀博客」、移动端 Tab 叫「友链」，是同一个目标。
+ * 末项在设计稿里桌面叫「优秀博客」、移动端 Tab 叫「友链」，是同一个目标。
  *
- * match 是激活态的路径前缀组：设计稿里 Home / 归档 / 文章详情三个页面的侧栏
- * 都是「近期文章」高亮（Sidebar 实例零覆盖），说明它代表整个文章区。
+ * match 是激活态的路径前缀组。首页与文章是分开的两项：首页只认 '/'，
+ * 文章认整个文章区（归档 / 详情 / 标签），否则首页会同时点亮两项。
  */
 export const nav = [
+  { label: '首页', short: '首页', icon: 'house', href: '/', match: ['/'] },
   {
-    label: '近期文章',
+    label: '文章',
     short: '文章',
     icon: 'notebook-text',
-    href: '/',
-    match: ['/', '/archive', '/posts', '/tags'],
+    href: '/archive',
+    match: ['/archive', '/posts', '/tags'],
   },
   { label: '我的项目', short: '项目', icon: 'layout-grid', href: '/projects', match: ['/projects'] },
   { label: '关于网站', short: '关于', icon: 'circle-user', href: '/about', match: ['/about'] },
@@ -46,10 +47,14 @@ export function isNavActive(match: readonly string[], pathname: string) {
   return match.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
 }
 
-/** Home Header 的两个 Social Button —— Github 是深色变体 */
+/**
+ * 社交入口 —— 设计稿这轮把它们从首页顶部的 Header 挪进了侧栏 Social Row，
+ * 首页那排大按钮已经不存在了。桌面侧栏取 github + bilibili + 邮箱三颗，
+ * 移动端 Social Row 取前两颗（尺寸另一套，没复用）。
+ */
 export const socials = [
   { label: 'Github', icon: 'github', href: 'https://github.com/QssssY', variant: 'dark' },
-  { label: '稀土掘金', icon: 'pen-line', href: 'https://juejin.cn', variant: 'glass' },
+  { label: 'bilibili', icon: 'tv', href: 'https://www.bilibili.com', variant: 'glass' },
 ] as const
 
 /** 外观切换器的三档 */
@@ -65,13 +70,113 @@ export const uptime = {
   sinceLabel: '自 2023 年 10 月 首次部署',
 } as const
 
+/**
+ * 构建 BUILD（关于页左栏）—— 设计稿把四个值都写死了，会过期也会说假话。
+ *
+ * 框架 / 样式：构建时从 package.json 读真实版本（见 utils/build.ts），不写在这里。
+ * 上次构建：构建时间戳，同上。
+ * 天数：复用 uptime.since 实时算。
+ * 托管：还没定部署平台（astro.config.mjs 里 site 也还是 localhost），
+ *      所以先写占位；定了改这一行就行。
+ * 设计稿还有一行「构建耗时 18s」—— 同一次构建里没法自报耗时，删掉了。
+ */
+export const build = {
+  status: '部署正常',
+  hosting: '未定',
+} as const
+
 /** Greeting Card */
 export const greeting = {
   bio: '记录、研究并延伸我所遇见、观察和思考的一切。',
 } as const
 
-/** Like Widget */
+/** Like Widget —— 设计稿写的是 20118，不带千分位 */
 export const likes = 20118
+
+/**
+ * 此刻 Card（首页中栏）—— 设计稿这轮新加的一块，取代了原来的「最新文章」列表。
+ *
+ * 设计稿里的原文是「在重写画布的相机控制，第七版了」+ Blender / WebGPU 那套，
+ * 那是虚构人设。这里换成中性表述，说的都是这个仓库里真有的事；
+ * 想写具体进展就直接改这几行，updated 记得跟着动。
+ */
+export const now = {
+  updated: new Date(2026, 7, 21),
+  statement: '在把这个博客从设计稿一比一搬成代码。',
+  note: '写东西之前先把它做出来，做的过程里才知道该写什么。所以这里长期有半成品，我不急着收尾。',
+  /** 只有移动端 Now Card 有这一行 */
+  aside: '这块每周改一次。改不动就说明我这周在摸鱼。',
+  /**
+   * 桌面用圆点（active 决定橙/灰），移动端用图标砖（icon 是 lucide 名）。
+   * 两处共用同一份条目：同一周的事说两套不同的，改一处必忘另一处。
+   */
+  items: [
+    {
+      kind: '在做',
+      detail: '把 blog.pen 的面板逐块落到 Astro 组件里',
+      icon: 'hammer',
+      active: true,
+    },
+    {
+      kind: '在啃',
+      detail: 'Tailwind 4 的 @theme 与主题变量怎么摆才不重复',
+      icon: 'sprout',
+      active: false,
+    },
+  ],
+} as const
+
+/**
+ * 在用 Card（首页中栏末位）—— 一行 4 件工具，icon 是 lucide 名。
+ * 设计稿列的是 Blender / WebGPU / Astro / Neovim，其中只有 Astro 是真的；
+ * 换成这个仓库实际在用的四件。
+ */
+export const tools = [
+  { name: 'Astro', meta: '这个站', icon: 'rocket' },
+  { name: 'Tailwind', meta: '样式', icon: 'palette' },
+  { name: 'Java', meta: '主力', icon: 'coffee' },
+  { name: 'Vue', meta: '前端', icon: 'component' },
+] as const
+
+/**
+ * Snapshot Strip（首页中栏末位）—— 设计稿是三张 Unsplash 占位图，热链的。
+ * 和 Art Card 一样先不落图：给了 src 就渲染图，没给就是 avatar-bg 底色块。
+ * 想放真照片，把图片放进 images/ 再 import 进 index.astro 传下来。
+ */
+export const snapshots = [{ alt: '' }, { alt: '' }, { alt: '' }] as const
+
+/**
+ * 构成 STACK（项目页左栏）—— 语言占比。
+ *
+ * 不是设计稿那套 TypeScript/Rust/Astro：这是 repos 里三个真仓库的
+ * GitHub 语言字节数聚合（共 5.93 MB，2026-08-21 取）。要刷新就重新跑
+ * api.github.com/repos/<repo>/languages 把字节数加起来重算。
+ * accent：占比最高的一条走 fire，中间的走 leaf，「其他」走 dot-idle。
+ */
+export const stack = [
+  { lang: 'Java', pct: 49, accent: 'fire' },
+  { lang: 'Vue', pct: 32, accent: 'leaf' },
+  { lang: 'JavaScript', pct: 16, accent: 'leaf' },
+  { lang: '其他', pct: 3, accent: 'idle' },
+] as const
+
+/**
+ * 状态 NOW（项目页左栏）的末行说明。
+ *
+ * 面板里每个仓库的状态不写死，按 repos[].pushed 实时判（见 NowPanel.astro），
+ * 所以这句要跟那套判法对得上 —— 改判法记得改这句。
+ */
+export const repoNote = '只列还在动的仓库，状态按最近一次提交算。维护不动的东西，挂着也是欠着。'
+
+/**
+ * 细则 FINE PRINT（关于页左栏）—— 说的是这个站真实的做法：
+ * 没接统计脚本、评论走 mailto、字体和图片都自托管（见 global.css 顶部）。
+ */
+export const finePrint = {
+  blurb: '没有埋点，没有广告，也不卖数据给任何人。',
+  points: ['访问量只看服务端日志，不落库', '评论用邮件代替，不另存一份人', '字体和图片全部自托管'],
+  reply: '来信一般三天内回，长信回得慢些。',
+} as const
 
 /** Now Playing —— 12 根等化条的高度取自设计稿 */
 export const nowPlaying = {

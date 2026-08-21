@@ -43,10 +43,16 @@
   --leaf-deep: #1f5e4e;
   --avatar-bg: #e8ddd0;
   --dot-idle: #d9d2c8;
+  /* Post Row 无封面时的占位图标 —— 浅色稿是 ink，深色稿那帧改成了带 alpha 的 brand */
+  --cover-glyph: #5b423f;
   --code-bg: #2e2724;
   --shadow-soft: #00000014;
   --sheen: #ffffff3d;
   --btn-dark: #070707;
+  --like-fill: #f5c0cb;
+  --like-ink: #e08a9c;
+  --like-text: #c2707f;
+  --like-tint: #f5c0cb33;
 }
 
 .dark {
@@ -68,10 +74,15 @@
   --leaf-deep: #8fdcc6;
   --avatar-bg: #3a322c;
   --dot-idle: #4a403a;
+  --cover-glyph: #f2a94ec7;
   --code-bg: #0d0b0a;
   --shadow-soft: #00000059;
   --sheen: #ffffff14;
   --btn-dark: #2a2521;
+  --like-fill: #f0a4b4;
+  --like-ink: #f0a4b4;
+  --like-text: #e39aa8;
+  --like-tint: #f5c0cb1f;
 }
 
 @theme inline {
@@ -94,15 +105,25 @@
   --color-leaf-deep: var(--leaf-deep);
   --color-avatar-bg: var(--avatar-bg);
   --color-dot-idle: var(--dot-idle);
+  --color-cover-glyph: var(--cover-glyph);
   --color-code-bg: var(--code-bg);
   --color-sheen: var(--sheen);
   --color-btn-dark: var(--btn-dark);
+
+  /* 「喜欢」那一簇粉 —— 跨首页 / 文章页 / 移动端共 9 个节点，
+   * 设计稿这轮把它们抽成了带暗色变体的变量，之前暗色下这几处粉色不跟主题走。 */
+  --color-like-fill: var(--like-fill);
+  --color-like-ink: var(--like-ink);
+  --color-like-text: var(--like-text);
+  --color-like-tint: var(--like-tint);
 
   /* 颜色 —— 不随主题变 */
   --color-gold: #eec25e;
   --color-on-brand: #241c18;
   --color-code-fg: #f0e6da;
   --color-code-dim: #a2988e;
+  --color-syn-keyword: #ffc98b;
+  --color-syn-string: #9fe0c8;
 
   /* 圆角 —— 设计稿里走变量的 5 档 + radius-m */
   --radius-chip: 12px;

@@ -30,3 +30,16 @@ export function daysSince(since: Date) {
   const days = Math.floor((Date.now() - since.getTime()) / 86_400_000)
   return days.toLocaleString('en-US')
 }
+
+/**
+ * 设计稿的相对时间写法：今天 / 昨天 / 3 天前 / 2 个月前 / 1 年前。
+ * 文章页的 Actions 行和左栏 ARTICLE 面板都要说「更新于」，共用这一份。
+ */
+export function relativeDay(date: Date) {
+  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000)
+  if (days <= 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 30) return `${days} 天前`
+  if (days < 365) return `${Math.floor(days / 30)} 个月前`
+  return `${Math.floor(days / 365)} 年前`
+}
