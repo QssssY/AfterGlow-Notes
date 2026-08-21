@@ -7,13 +7,21 @@ interface Props {
   badge: string
   title: string
   desc: string
-  meta: readonly string[]
+  /**
+   * 设计稿这行是「语言 · ★N · 更新于X」三段圆点分隔。
+   * 拆成三个具名属性而不是字符串数组，是为了能单独给 star 数挂刷新钩子。
+   */
+  stack: string
+  stars: number | string
+  updated: string
   href?: string | undefined
+  /** owner/repo；给了就让 RepoStars 的脚本来刷新 star 数 */
+  repo?: string | undefined
   /** 设计稿这里是 Unsplash 占位图，等提供真实截图 */
   thumb?: ImageMetadata | undefined
 }
 
-const { badge, title, desc, meta, href, thumb } = Astro.props
+const { badge, title, desc, stack, stars, updated, href, repo, thumb } = Astro.props
 const external = href?.startsWith('http')
 ---
 
@@ -22,6 +30,7 @@ const external = href?.startsWith('http')
   href={href ?? '#'}
   target={external ? '_blank' : undefined}
   rel={external ? 'noopener noreferrer' : undefined}
+  data-gh={repo}
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[24px] rounded-[32px] p-[20px] xl:flex-row xl:items-center"
 >
   {
@@ -46,14 +55,13 @@ const external = href?.startsWith('http')
     <span class="w-full text-[14px]/[25px] font-normal text-ink">{desc}</span>
 
     <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
-      {
-        meta.map((item, i) => (
-          <>
-            {i > 0 && <span class="size-[4px] shrink-0 rounded-full bg-ink-muted" />}
-            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{item}</span>
-          </>
-        ))
-      }
+      <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{stack}</span>
+      <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+      <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+        ★ <span data-gh-stars>{stars}</span>
+      </span>
+      <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+      <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{updated}</span>
       <span class="h-[1px] flex-1"></span>
       <Icon name="lucide:arrow-up-right" class="size-[20px] shrink-0 text-ink-soft" />
     </span>

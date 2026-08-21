@@ -1,6 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { projects } from '~/config'
+import { repoUrl, repos } from '~/config'
 ---
 
 <!-- Projects Section · blog.pen Home -->
@@ -16,25 +16,33 @@ import { projects } from '~/config'
   </div>
 
   {
-    projects.map((project) => (
+    repos.map((repo) => (
       <a
-        href={project.href}
+        href={repoUrl(repo.repo)}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-gh={repo.repo}
         class="glass-panel box-border flex h-fit w-full shrink-0 flex-row items-center gap-[14px] rounded-[22px] px-[16px] py-[14px]"
       >
         <span class="flex size-[38px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
-          <Icon name={`lucide:${project.icon}`} class="size-[17px] shrink-0 text-brand-ink" />
+          <Icon name={`lucide:${repo.icon}`} class="size-[17px] shrink-0 text-brand-ink" />
         </span>
 
-        <span class="flex h-fit flex-1 flex-col items-start gap-[3px]">
-          <span class="text-[14.5px] font-bold whitespace-nowrap text-ink">{project.name}</span>
-          <span class="w-full text-[12.5px] font-normal text-ink-soft">{project.desc}</span>
+        <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[3px]">
+          {/* 设计稿的项目名都很短，真实仓库名有 27 字的，加 truncate 兜住 */}
+          <span class="w-full truncate text-[14.5px] font-bold text-ink" title={repo.name}>
+            {repo.name}
+          </span>
+          <span class="w-full text-[12.5px] font-normal text-ink-soft">{repo.desc}</span>
         </span>
 
         <span class="flex h-[20px] w-fit shrink-0 flex-row items-center gap-[12px]">
-          <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{project.stack}</span>
+          <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{repo.stack}</span>
           <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[4px]">
             <Icon name="lucide:star" class="size-[12px] shrink-0 text-brand" />
-            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{project.stars}</span>
+            <span data-gh-stars class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+              {repo.stars}
+            </span>
           </span>
         </span>
       </a>

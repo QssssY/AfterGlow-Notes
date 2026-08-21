@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content'
 import Footer from '~/components/Footer.astro'
+import RepoStars from '~/components/RepoStars.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import SocialButton from '~/components/SocialButton.astro'
 import ArtCard from '~/components/home/ArtCard.astro'
@@ -113,4 +114,6 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       )
     }
   </div>
+
+  <RepoStars />
 </BaseLayout>

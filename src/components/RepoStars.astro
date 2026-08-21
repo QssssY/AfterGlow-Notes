@@ -1,0 +1,52 @@
+---
+/**
+ * 浏览器端拉 GitHub star 数。只放脚本，不渲染任何东西。
+ *
+ * 为什么不在构建时拉：GitHub 匿名接口按 IP 限流 60 次/时，构建机是单 IP，
+ * 而放到访客浏览器里每人各占自己的配额，反而不容易撞限流（Firefly 的做法）。
+ * 代价是数字要等一个往返才刷新，所以构建时先渲染 config 里的兜底值。
+ *
+ * 契约：带 data-gh="owner/repo" 的元素内，[data-gh-stars] 收 star 数，
+ * 页面上的 [data-gh-total] 收所有仓库的 star 总和。
+ */
+---
+
+<script>
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-gh]')]
+
+  if (cards.length) {
+    const names = [...new Set(cards.map((card) => card.dataset.gh!))]
+    const fmt = new Intl.NumberFormat('en-US', { notation: 'compact' })
+
+    const fetchOne = (repo: string) =>
+      fetch(`https://api.github.com/repos/${repo}`, { referrerPolicy: 'no-referrer' })
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+        .then((data) => ({ repo, stars: Number(data.stargazers_count) }))
+        // 限流、离线、仓库转私有都会走到这里：返回 null，保留构建时的数字
+        .catch(() => null)
+
+    Promise.all(names.map(fetchOne)).then((results) => {
+      let total = 0
+      let ok = 0
+
+      for (const result of results) {
+        if (!result) continue
+        ok++
+        total += result.stars
+        for (const card of cards) {
+          if (card.dataset.gh !== result.repo) continue
+          const slot = card.querySelector<HTMLElement>('[data-gh-stars]')
+          if (slot) slot.textContent = fmt.format(result.stars)
+        }
+      }
+
+      // 只有全部拉到才改总数。少拉一个就写总和，会显示成比真实值更小的数字，
+      // 那比干脆不动更糟 —— 单张卡拉失败只是那张卡不刷新，总数仍然自洽。
+      if (ok === names.length) {
+        for (const slot of document.querySelectorAll<HTMLElement>('[data-gh-total]')) {
+          slot.textContent = fmt.format(total)
+        }
+      }
+    })
+  }
+</script>

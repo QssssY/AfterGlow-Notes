@@ -2,7 +2,8 @@
 interface Props {
   title: string
   subtitle: string
-  stats: readonly { value: string; label: string }[]
+  /** total 为真的那项会挂上 data-gh-total，交给 RepoStars 的脚本刷新 */
+  stats: readonly { value: string; label: string; total?: boolean }[]
 }
 
 const { title, subtitle, stats } = Astro.props
@@ -21,7 +22,10 @@ const { title, subtitle, stats } = Astro.props
     {
       stats.map((stat) => (
         <div class="flex h-fit w-fit shrink-0 flex-col items-end gap-[4px]">
-          <span class="font-display text-[24px]/[24px] font-normal whitespace-nowrap text-ink">
+          <span
+            class="font-display text-[24px]/[24px] font-normal whitespace-nowrap text-ink"
+            data-gh-total={stat.total ? '' : undefined}
+          >
             {stat.value}
           </span>
           <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{stat.label}</span>

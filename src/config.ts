@@ -41,7 +41,7 @@ export function isNavActive(match: readonly string[], pathname: string) {
 
 /** Home Header 的两个 Social Button —— Github 是深色变体 */
 export const socials = [
-  { label: 'Github', icon: 'github', href: 'https://github.com', variant: 'dark' },
+  { label: 'Github', icon: 'github', href: 'https://github.com/QssssY', variant: 'dark' },
   { label: '稀土掘金', icon: 'pen-line', href: 'https://juejin.cn', variant: 'glass' },
 ] as const
 
@@ -225,30 +225,48 @@ export const blogroll = [
   },
 ] as const
 
-/** Projects Section */
-export const projects = [
+/**
+ * GitHub 仓库 —— 项目页与首页「在做的事」共用这一份，取代设计稿里那批虚构项目
+ * （pen-canvas / live2d-web / spline-lite 等，链接全是死的）。
+ *
+ * repos[0] 是主推项目，进项目页的 Featured 卡；其余进下面的网格。
+ * stars 是构建时写死的兜底值，浏览器端会拉最新的覆盖它（见 RepoStars.astro），
+ * 拉不到就保留这里的数字，不会显示空白。
+ *
+ * offCat 在 GitHub 上没填 description，desc 是照它 README 摘的；
+ * stack 取 GitHub 语言统计里占比最大的那个（mini-vue 的语言统计是空的，
+ * 按默认分支上 41 个 .js 判为 JavaScript）。
+ */
+export const repos = [
   {
-    name: 'pen-canvas',
-    desc: '把设计画布做成可脚本化的图层树，给中文排版留足呼吸',
+    repo: 'QssssY/offCat',
+    name: 'offCat',
+    desc: '面向求职场景的 AI 应用：简历诊断、模拟面试、JD 匹配与模板导出，前后端同仓。',
+    stack: 'Java',
+    stars: 1,
     icon: 'layout-grid',
-    stack: 'TypeScript',
-    stars: 868,
-    href: '#',
+    badge: '正在打磨',
+    pushed: '2026-08-19T15:06:27Z',
   },
   {
-    name: 'live2d-web',
-    desc: '浏览器里跑 Live2D：口型同步与物理摆动的最小实现',
+    repo: 'QssssY/ai-psychological-assistant',
+    name: 'ai-psychological-assistant',
+    desc: 'AI 情感智能助手，做陪伴式对话与情绪记录。',
+    stack: 'Vue',
+    stars: 0,
     icon: 'app-window',
-    stack: 'TypeScript',
-    stars: 312,
-    href: '#',
+    pushed: '2026-03-13T14:12:51Z',
   },
   {
-    name: 'spline-lite',
-    desc: 'Three.js 复刻 Spline 的清新材质，包体压到 1/8',
+    repo: 'QssssY/mini-vue',
+    name: 'mini-vue',
+    desc: '手写 Vue 3 核心，把响应式、运行时与编译器各自实现一遍。',
+    stack: 'JavaScript',
+    stars: 0,
     icon: 'package',
-    stack: 'Three.js',
-    stars: 247,
-    href: '#',
+    pushed: '2026-02-24T16:33:31Z',
   },
 ] as const
+
+/** 仓库地址由 repo 拼出来，不单独存 href */
+export const repoUrl = (repo: string) => `https://github.com/${repo}`
