@@ -5,7 +5,9 @@ import RepoStars from '~/components/RepoStars.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import FeaturedProject from '~/components/projects/FeaturedProject.astro'
 import FilterBar from '~/components/projects/FilterBar.astro'
+import NowPanel from '~/components/projects/NowPanel.astro'
 import PageHead from '~/components/projects/PageHead.astro'
+import StackPanel from '~/components/projects/StackPanel.astro'
 import { repoUrl, repos } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 
@@ -34,8 +36,10 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
 
 <BaseLayout title="我的项目" rail={false} topPad={72}>
   <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
-    <div class="hidden w-[280px] shrink-0 xl:block">
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
       <Sidebar />
+      <StackPanel />
+      <NowPanel />
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
@@ -70,7 +74,7 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
       <div
         data-project-grid
         data-view="grid"
-        class="group/view flex h-fit w-full flex-row flex-wrap items-stretch gap-[24px]"
+        class="group/view flex h-fit w-full flex-row flex-wrap items-start gap-[24px]"
       >
         {
           rest.map((repo) => (

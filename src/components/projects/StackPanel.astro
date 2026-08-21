@@ -1,0 +1,39 @@
+---
+import Panel from '~/components/Panel.astro'
+import { stack } from '~/config'
+
+/**
+ * 构成 STACK · blog.pen Projects 我的项目 / Left Column（uZngV）
+ *
+ * 规格：Panel 外壳 + 竖向 gap10 的四行，每行高 20、gap10：
+ * 语言名 12.5/700 定宽 72 · 轨道 h6 r3（hairline 底）· 占比 12px 定宽 30。
+ * 条的长度就是百分比本身 —— 设计稿轨道宽 122，46% 那条正好画了 56px。
+ *
+ * 占比取自 config.stack（真实仓库的 GitHub 语言字节数），
+ * 不是设计稿那套 TypeScript / Rust / Astro。
+ */
+const barColor = {
+  fire: 'bg-brand',
+  leaf: 'bg-leaf',
+  idle: 'bg-dot-idle',
+} as const
+---
+
+<Panel caption="构 成  STACK">
+  <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[10px]">
+    {
+      stack.map((row) => (
+        <li class="flex h-[20px] w-full shrink-0 flex-row items-center gap-[10px]">
+          <span class="w-[72px] shrink-0 text-[12.5px] font-bold text-ink-soft">{row.lang}</span>
+          <span class="h-[6px] min-w-0 flex-1 overflow-hidden rounded-[3px] bg-hairline">
+            <span
+              class:list={['block h-full rounded-[3px]', barColor[row.accent]]}
+              style={`width:${row.pct}%`}
+            />
+          </span>
+          <span class="w-[30px] shrink-0 text-[12px] font-normal text-ink-muted">{row.pct}%</span>
+        </li>
+      ))
+    }
+  </ul>
+</Panel>

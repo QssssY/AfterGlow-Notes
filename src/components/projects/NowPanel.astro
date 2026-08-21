@@ -1,0 +1,46 @@
+---
+import Panel from '~/components/Panel.astro'
+import { repoNote, repos } from '~/config'
+
+/**
+ * 状态 NOW · blog.pen Projects 我的项目 / Left Column（Yo5uS）
+ *
+ * 规格：Panel 外壳 + 竖向 gap9 的仓库行（6px 圆点 + 名字 12.5 + 状态 12），
+ * 一条 hairline，末尾 12px/1.55 的说明。
+ *
+ * 设计稿那三行（pen-canvas 在推进 / live2d-web 只修 bug / mono-note 暂停中）
+ * 是虚构项目配写死的状态。这里换成真实仓库，状态按最近一次推送实时判：
+ * 30 天内算在推进（橙）、半年内算偶尔动（绿）、更久算搁置（灰）。
+ */
+function statusOf(pushed: string) {
+  const days = Math.floor((Date.now() - new Date(pushed).getTime()) / 86_400_000)
+  if (days <= 30) return { label: '在推进', dot: 'bg-brand' }
+  if (days <= 180) return { label: '偶尔动', dot: 'bg-leaf' }
+  return { label: '搁置中', dot: 'bg-dot-idle' }
+}
+---
+
+<Panel caption="状 态  NOW">
+  <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[9px]">
+    {
+      repos.map((repo) => {
+        const status = statusOf(repo.pushed)
+        return (
+          <li class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+            <span class:list={['size-[6px] shrink-0 rounded-full', status.dot]} />
+            <span class="min-w-0 flex-1 truncate text-[12.5px] font-normal text-ink-soft">
+              {repo.name}
+            </span>
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+              {status.label}
+            </span>
+          </li>
+        )
+      })
+    }
+  </ul>
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <p class="w-full text-[12px]/[1.55] font-normal text-ink-soft">{repoNote}</p>
+</Panel>
