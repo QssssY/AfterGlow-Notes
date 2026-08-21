@@ -1,10 +1,13 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { email } from '~/config'
 
 /**
  * 申请友链 · blog.pen Blogroll SAL0U
  * 和左栏的 Panel 不是同一套：这里是 glass-panel 阴影 + radius 28 + p 20。
- * 设计稿只画了静态外观；做成真表单，但还没有后端，action 留给以后接。
+ *
+ * 没有后端：提交时打开访客自己的邮件客户端，把三个字段拼进主题和正文。
+ * 以后接了表单服务，改掉下面的 submit 处理即可。
  */
 const fields = [
   { name: 'name', icon: 'type', placeholder: '站点名称', type: 'text' },
@@ -25,7 +28,11 @@ const fields = [
     </p>
   </div>
 
-  <form class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[10px] xl:flex-row xl:items-center">
+  <form
+    data-apply
+    data-to={email}
+    class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[10px] xl:flex-row xl:items-center"
+  >
     {
       fields.map((field) => (
         <label
@@ -52,8 +59,34 @@ const fields = [
     </button>
   </form>
 
-  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+  <a
+    href={`mailto:${email}?subject=${encodeURIComponent('申请友链')}`}
+    class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]"
+  >
     <Icon name="lucide:link" class="size-[13px] shrink-0 text-ink-muted" />
     <span class="text-[11.5px] font-normal text-ink-muted">也可以直接发邮件，附上站点地址即可。</span>
-  </div>
+  </a>
 </div>
+
+<script>
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-apply]')) {
+    form.addEventListener('submit', (event) => {
+      // 不让它按原生方式提交（那会刷新页面且什么也不发生）
+      event.preventDefault()
+
+      const to = form.dataset.to
+      if (!to) return
+
+      const value = (name: string) =>
+        form.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? ''
+
+      const subject = encodeURIComponent(`申请友链：${value('name')}`)
+      const body = encodeURIComponent(
+        [`站点名称：${value('name')}`, `站点地址：${value('url')}`, `一句话简介：${value('desc')}`].join(
+          '\n',
+        ),
+      )
+      location.href = `mailto:${to}?subject=${subject}&body=${body}`
+    })
+  }
+</script>

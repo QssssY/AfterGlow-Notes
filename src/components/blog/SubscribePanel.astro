@@ -1,19 +1,20 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { email } from '~/config'
 import Panel from './Panel.astro'
 ---
 
 <!--
   Subscribe Panel · blog.pen 归档页左栏
-  设计稿只画了静态外观；这里做成真表单，但 action 还没有后端，
-  提交先交给用户自己接（Buttondown / Listmonk 之类）。
+  没有后端：提交时打开访客自己的邮件客户端，收件人、主题、正文都预填好。
+  等以后接了订阅服务（Buttondown / Listmonk 之类），把下面的 submit 处理换掉即可。
 -->
 <Panel caption="订 阅 SUBSCRIBE">
   <p class="w-full text-[12px]/[19px] font-normal text-ink-soft">
     新文章发布时收到通知，不含广告。
   </p>
 
-  <form class="flex w-full shrink-0 flex-col gap-[12px]" data-subscribe>
+  <form class="flex w-full shrink-0 flex-col gap-[12px]" data-subscribe data-to={email}>
     <label
       class="hairline-box box-border flex h-[36px] w-full shrink-0 flex-row items-center gap-[8px] rounded-[12px] px-[12px]"
     >
@@ -37,3 +38,20 @@ import Panel from './Panel.astro'
     </div>
   </form>
 </Panel>
+
+<script>
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-subscribe]')) {
+    form.addEventListener('submit', (event) => {
+      // 不让它按原生方式提交（那会刷新页面且什么也不发生）
+      event.preventDefault()
+
+      const to = form.dataset.to
+      const input = form.querySelector<HTMLInputElement>('input[name="email"]')
+      if (!to || !input) return
+
+      const subject = encodeURIComponent('订阅萤火录')
+      const body = encodeURIComponent(`请把这个邮箱加入订阅：${input.value}`)
+      location.href = `mailto:${to}?subject=${subject}&body=${body}`
+    })
+  }
+</script>

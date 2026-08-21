@@ -5,6 +5,7 @@ import AboutMe from '~/components/about/AboutMe.astro'
 import ChangelogCard from '~/components/about/ChangelogCard.astro'
 import FriendsPanel from '~/components/about/FriendsPanel.astro'
 import SideStack from '~/components/about/SideStack.astro'
+import { email } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 
 // 设计稿 About 页自带的数据，暂放页面文件里（见 report：建议之后并入 src/config.ts）
@@ -22,7 +23,7 @@ const stats = [
 ]
 
 const contacts = [
-  { icon: 'mail', value: 'hi@qingchuan.ink', href: 'mailto:hi@qingchuan.ink' },
+  { icon: 'mail', value: email, href: `mailto:${email}` },
   { icon: 'github', value: 'github.com/QssssY', href: 'https://github.com/QssssY' },
   { icon: 'rss', value: 'qingchuan.ink/rss.xml', href: '/rss.xml' },
 ]
