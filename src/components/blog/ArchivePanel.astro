@@ -1,16 +1,32 @@
 ---
-import Panel from './Panel.astro'
+import Panel from '~/components/Panel.astro'
 
 interface Props {
-  years: { year: number; count: number; percent: number }[]
+  years: { year: number; count: number }[]
 }
 
 const { years } = Astro.props
+
+/**
+ * 每篇文章占多少像素。
+ *
+ * 设计稿的四条是 14→103px、19→140px、9→66px、6→44px，一致落在 7.35px/篇 ——
+ * 也就是说条长是绝对刻度，不是把最多的那年归一成满轨（归一化的话，
+ * 哪怕全年只写了两篇，那条也会铺满轨道，读出来的意思完全不同）。
+ * 轨道实宽约 172px，所以 24 篇左右会到顶，再多就用 min() 截住。
+ */
+const PX_PER_POST = 7.35
 ---
 
+<!--
+  年表 ARCHIVE · blog.pen Blog 文章列表 / Left Column（IeJGi）
+
+  只有最新那年的条走品牌橙，更早的年份走 accent-leaf —— 设计稿里
+  2026 是橙的，2025 / 2024 / 2023 三条都是绿的。
+-->
 <Panel caption="年 表 ARCHIVE">
   {
-    years.map((entry) => (
+    years.map((entry, i) => (
       <a
         href={`/archive?year=${entry.year}`}
         class="flex h-[20px] w-full shrink-0 flex-row items-center gap-[10px]"
@@ -18,8 +34,12 @@ const { years } = Astro.props
         <span class="text-[12.5px] font-bold whitespace-nowrap text-ink-soft">{entry.year}</span>
         <span class="flex h-[6px] flex-1 flex-row overflow-hidden rounded-[3px] bg-hairline">
           <span
-            class="h-[6px] shrink-0 rounded-[3px] bg-brand"
-            style={`width:${entry.percent}%`}
+            class:list={[
+              'h-[6px] shrink-0 rounded-[3px]',
+              // years 是按年份倒序的，所以第 0 条就是最新那年
+              i === 0 ? 'bg-brand' : 'bg-leaf',
+            ]}
+            style={`width:min(${(entry.count * PX_PER_POST).toFixed(1)}px,100%)`}
           />
         </span>
         <span class="w-[22px] shrink-0 text-right text-[12px] font-normal text-ink-muted">

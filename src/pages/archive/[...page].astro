@@ -3,22 +3,18 @@ import type { GetStaticPaths } from 'astro'
 import Footer from '~/components/Footer.astro'
 import PostRow from '~/components/PostRow.astro'
 import Sidebar from '~/components/Sidebar.astro'
+import StatsPageHead from '~/components/StatsPageHead.astro'
 import ArchivePanel from '~/components/blog/ArchivePanel.astro'
-import BannerChronicle from '~/components/blog/BannerChronicle.astro'
 import ListHeader from '~/components/blog/ListHeader.astro'
 import Pagination from '~/components/blog/Pagination.astro'
 import SearchOverlay from '~/components/blog/SearchOverlay.astro'
-import StatsPanel from '~/components/blog/StatsPanel.astro'
 import SubscribePanel from '~/components/blog/SubscribePanel.astro'
-import TagsPanel from '~/components/blog/TagsPanel.astro'
+import TagsBand from '~/components/blog/TagsBand.astro'
 import TimelineCard from '~/components/blog/TimelineCard.astro'
 import FeaturedCard from '~/components/mobile/FeaturedCard.astro'
 import { compactCount, groupByYear, loadPosts, tagCounts, yearBars } from '~/components/blog/data'
 import { Icon } from 'astro-icon/components'
 import BaseLayout from '~/layouts/BaseLayout.astro'
-
-/** 设计稿写的是 3.2k 订阅；没有真实数据源，等接了邮件服务再换掉 */
-const SUBSCRIBERS = '—'
 
 // pageSize 写字面量：getStaticPaths 被 Astro 抽成独立模块，取不到这里的常量
 export const getStaticPaths = (async ({ paginate }) => {
@@ -37,23 +33,32 @@ const groups = groupByYear(page.data)
 const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
 ---
 
-<BaseLayout title="编年" description={`按时间倒叙的写作记录 —— 共 ${total} 篇`} rail={false} topPad={72}>
-  <BannerChronicle
-    subtitle={`按时间倒叙的写作记录 —— 共 ${total} 篇，约 ${compactCount(totalWords)}字`}
-    latest={newest ? { title: newest.title, href: newest.href } : undefined}
-  />
-
-  <div class="mt-[30px] flex w-full flex-row items-start gap-[48px]">
-    <div class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+<BaseLayout title="文章" description={`按时间倒叙的写作记录 —— 共 ${total} 篇`} rail={false} topPad={72}>
+  {/*
+    设计稿这轮删掉了满宽的萤火虫 Banner：文章列表改成内容栏顶部的 Page Head，
+    篇数与字数从副标题挪进右侧那两格统计（原来左栏那块 Stats 面板说的是同一件事，
+    重复了，一并删掉）。左栏只剩 年表 + 订阅，间距也从 24 收到 16。
+  */}
+  <div class="flex w-full flex-row items-start gap-[48px]">
+    <div class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex">
       <Sidebar />
-      <StatsPanel total={total} wordsLabel={compactCount(totalWords)} subscribers={SUBSCRIBERS} />
       <ArchivePanel years={yearBars(all)} />
-      <TagsPanel tags={tagCounts(all)} />
       <SubscribePanel />
     </div>
 
     <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px]">
+      <StatsPageHead
+        title="文章"
+        subtitle="按时间倒叙排列的写作记录。想清楚了才写，不追热点，也不凑更新。"
+        stats={[
+          { value: String(total), label: '篇文章' },
+          { value: compactCount(totalWords), label: '累计字数' },
+        ]}
+      />
+
       <ListHeader total={total} />
+
+      <TagsBand tags={tagCounts(all)} />
 
       {
         page.currentPage === 1 && newest && (

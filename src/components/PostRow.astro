@@ -84,11 +84,18 @@ const indexLabel = typeof index === 'number' ? pad(index) : index
   <span
     class="hidden h-[162px] w-[236px] shrink-0 flex-row items-center justify-center overflow-hidden rounded-[22px] bg-[linear-gradient(-124.467deg,#E8D3AE_14.645%,#C9DED6_85.355%)] xl:flex"
   >
+    <!--
+      没有封面时的占位图标：52px、节点透明度 0.92。填色两个主题不同色相
+      （浅色 #5B423F、深色 #F2A94EC7），所以走 cover-glyph 这个主题变量。
+    -->
     {
       cover ? (
         <Image src={cover} alt="" width={472} height={324} class="size-full object-cover" />
       ) : (
-        <Icon name={`lucide:${coverIcon}`} class="size-[52px] shrink-0 text-ink opacity-[0.24]" />
+        <Icon
+          name={`lucide:${coverIcon}`}
+          class="size-[52px] shrink-0 text-cover-glyph opacity-[0.92]"
+        />
       )
     }
   </span>

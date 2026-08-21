@@ -66,17 +66,21 @@ export function groupByYear(posts: ArchivePost[]) {
     .map(([year, items]) => ({ year, posts: items }))
 }
 
-/** Archive 面板的年度条形图：条长按当年篇数占最大值的比例 */
+/**
+ * Archive 面板的年度条形图数据：年份倒序 + 当年篇数。
+ *
+ * 条长不在这里算 —— 设计稿的条是「每篇固定像素」，不是把最多的那年归一到满轨，
+ * 换算规则跟着面板走（见 ArchivePanel.astro）。
+ */
 export function yearBars(posts: ArchivePost[]) {
   const counts = new Map<number, number>()
   for (const post of posts) {
     const year = post.date.getFullYear()
     counts.set(year, (counts.get(year) ?? 0) + 1)
   }
-  const max = Math.max(1, ...counts.values())
   return [...counts.entries()]
     .sort((a, b) => b[0] - a[0])
-    .map(([year, count]) => ({ year, count, percent: Math.round((count / max) * 100) }))
+    .map(([year, count]) => ({ year, count }))
 }
 
 export function tagCounts(posts: ArchivePost[]) {
