@@ -39,6 +39,8 @@ const rows = [friends.slice(0, 2), friends.slice(2)]
             {row.map((friend) => (
               <a
                 href={friend.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 class="box-border flex h-fit w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[14px] py-[12px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
               >
                 <span
