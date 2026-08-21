@@ -1,0 +1,38 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+import { snapshots } from '~/config'
+
+interface Props {
+  /**
+   * 三张照片。设计稿里是 Unsplash 热链占位图，和 Art Card 一样不落进仓库：
+   * 给了就渲染图，没给就是 avatar-bg 底色块。
+   */
+  images?: readonly (ImageMetadata | undefined)[]
+}
+
+const { images = [] } = Astro.props
+
+/**
+ * Snapshot Strip · blog.pen Home 首页 / Column B 末位（rHthS）
+ *
+ * 规格：392×98 · r28（radius-panel）· p8 · 横向 gap8
+ * 三格等宽（各 120×82）· 每格 r22（radius-row）
+ * 外壳与 Art Card 同一套做法：玻璃壳包一层，内格只有圆角和图。
+ */
+---
+
+<section
+  class="glass box-border flex h-[98px] w-full shrink-0 flex-row items-center gap-[8px] rounded-[28px] p-[8px]"
+>
+  {
+    snapshots.map((shot, i) => {
+      const src = images[i]
+      return src ? (
+        <Image src={src} alt={shot.alt} class="h-full min-w-0 flex-1 rounded-[22px] object-cover" />
+      ) : (
+        <span class="h-full min-w-0 flex-1 rounded-[22px] bg-avatar-bg" />
+      )
+    })
+  }
+</section>

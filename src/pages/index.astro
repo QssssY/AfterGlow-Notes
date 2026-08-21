@@ -3,21 +3,22 @@ import { getCollection } from 'astro:content'
 import Footer from '~/components/Footer.astro'
 import RepoStars from '~/components/RepoStars.astro'
 import Sidebar from '~/components/Sidebar.astro'
-import SocialButton from '~/components/SocialButton.astro'
 import ArtCard from '~/components/home/ArtCard.astro'
 import GreetingCard from '~/components/home/GreetingCard.astro'
-import LatestPostsCard from '~/components/home/LatestPostsCard.astro'
 import LikeWidget from '~/components/home/LikeWidget.astro'
+import NowCard from '~/components/home/NowCard.astro'
 import NowPlayingCard from '~/components/home/NowPlayingCard.astro'
 import ProjectsSection from '~/components/home/ProjectsSection.astro'
 import ReadingCard from '~/components/home/ReadingCard.astro'
+import SnapshotStrip from '~/components/home/SnapshotStrip.astro'
 import TagCloudCard from '~/components/home/TagCloudCard.astro'
+import ToolsBar from '~/components/home/ToolsBar.astro'
 import UptimeCard from '~/components/home/UptimeCard.astro'
 import FeaturedCard from '~/components/mobile/FeaturedCard.astro'
-import MobileLatestPosts from '~/components/mobile/LatestPosts.astro'
+import MobileNowCard from '~/components/mobile/NowCard.astro'
 import SocialRow from '~/components/mobile/SocialRow.astro'
 import TopBar from '~/components/mobile/TopBar.astro'
-import { site, socials } from '~/config'
+import { site } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 import { postStats } from '~/utils/post'
 import avatarDesktop from '../../images/generated-1787211089413.png'
@@ -41,7 +42,7 @@ const enriched = posts.map((post) => {
   }
 })
 
-const latest = enriched.slice(0, 2)
+// 首页不再有文章列表（设计稿这轮换成了 此刻 Card），只有移动端末尾那张主推卡用得到
 const featured = enriched[0]
 
 const counts = new Map<string, number>()
@@ -50,26 +51,14 @@ for (const post of posts) {
 }
 const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
 
-// 桌面区块间距取自设计稿的绝对坐标：Header 底 90 → Body 136（46）；
-// Body 底 859 → Projects 893（34）；Projects 底 1163 → Footer 1193（30）
+// 桌面区块间距取自设计稿的绝对坐标：Body 顶 72（由 topPad 给）；
+// Body 底 870 → Projects 904（34）；Projects 底 1174 → Footer 1204（30）
 ---
 
-<BaseLayout title={site.title}>
-  {/* ── 桌面：1440 三栏 ────────────────────────────────── */}
-  <header class="hidden h-fit w-full shrink-0 flex-row items-center justify-end gap-[12px] xl:flex">
-    {
-      socials.map((social) => (
-        <SocialButton
-          label={social.label}
-          icon={social.icon}
-          href={social.href}
-          variant={social.variant}
-        />
-      ))
-    }
-  </header>
-
-  <div class="mt-[46px] hidden w-full flex-row items-start gap-[48px] xl:flex">
+<BaseLayout title={site.title} topPad={72}>
+  {/* ── 桌面：1440 三栏 ──────────────────────────────────
+      设计稿这轮删掉了右上角那排 Social Button，社交入口挪进了侧栏 Social Row。 */}
+  <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">
     <div class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px]">
       <Sidebar />
       <UptimeCard />
@@ -77,8 +66,9 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
 
     <div class="flex h-fit flex-1 flex-col items-start gap-[24px]">
       <ArtCard />
-      <LatestPostsCard articles={latest} />
+      <NowCard />
       <TagCloudCard tags={tags} />
+      <ToolsBar />
     </div>
 
     <div class="flex h-fit w-[392px] shrink-0 flex-col items-start gap-[24px]">
@@ -88,6 +78,7 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
         <NowPlayingCard />
       </div>
       <ReadingCard />
+      <SnapshotStrip />
     </div>
   </div>
 
@@ -100,7 +91,7 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
     <GreetingCard avatar={avatarMobile} compact />
     <SocialRow />
     <ArtCard compact />
-    <MobileLatestPosts articles={latest} />
+    <MobileNowCard />
     {
       featured && (
         <FeaturedCard

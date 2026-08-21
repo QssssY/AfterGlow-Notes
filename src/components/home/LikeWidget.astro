@@ -7,10 +7,12 @@ import { likes } from '~/config'
   Like Slot · blog.pen Home / Widget Row
   设计稿只画了静态计数，也没画已赞态。这里做成 localStorage 记住的本机点赞：
   能点、有反馈，但换个浏览器就没了 —— 真正的共享计数要后端，等接了再换数据源。
-  已赞态把心形描边加深（#F5C0CB → #E08A9C，后者是设计稿文章页那颗心的颜色），
+  已赞态把心形描边加深（like-fill → like-ink，后者是设计稿文章页那颗心的颜色），
   是设计稿之外补的最小状态，不动布局也不加新元素。
   注意不能用 fill：astro-icon 渲染成 symbol + use，路径自带 fill="none" 属性，
   外部 CSS 选不进 use 的影子树；只有 color 这类继承属性能穿透（描边是 currentColor）。
+
+  计数不加千分位：设计稿写的是 20118，不是 20,118。
 -->
 <div class="relative size-[104px] shrink-0">
   <button
@@ -23,7 +25,7 @@ import { likes } from '~/config'
   >
     <Icon
       name="lucide:heart"
-      class="size-[30px] shrink-0 text-[#F5C0CB] transition-[transform,color] group-active/like:scale-90 group-aria-pressed/like:text-[#E08A9C]"
+      class="size-[30px] shrink-0 text-like-fill transition-[transform,color] group-active/like:scale-90 group-aria-pressed/like:text-like-ink"
     />
   </button>
 
@@ -31,7 +33,7 @@ import { likes } from '~/config'
     class="absolute top-[6px] left-[56px] flex h-fit w-fit flex-row items-center justify-center rounded-[12px] bg-fire-tint px-[8px] py-[4px]"
   >
     <span data-like-count class="text-[11px] font-bold whitespace-nowrap text-brand-ink">
-      {likes.toLocaleString('en-US')}
+      {likes}
     </span>
   </span>
 </div>
@@ -63,7 +65,7 @@ import { likes } from '~/config'
     let liked = read()
     const render = () => {
       button.setAttribute('aria-pressed', String(liked))
-      if (count) count.textContent = (base + (liked ? 1 : 0)).toLocaleString('en-US')
+      if (count) count.textContent = String(base + (liked ? 1 : 0))
     }
     render()
 

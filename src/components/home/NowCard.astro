@@ -1,0 +1,51 @@
+---
+import { now } from '~/config'
+
+/**
+ * 此刻 Card · blog.pen Home 首页 / Column A（KemZV）
+ *
+ * 设计稿这轮用它取代了原来的「最新文章」列表卡 —— 首页桌面端不再有文章列表，
+ * 文章都在 /archive。所以 LatestPostsCard 已经从首页移除。
+ *
+ * 规格：576×246 · r28（radius-panel）· p24 · 竖向 gap16
+ * Head 行 gap8：6px 绿点 + 「此刻」13px + 右侧更新时间 11px
+ * Statement 17px/1.5 medium，Note 12.5px/1.7，中间一条 hairline
+ * Items 竖向 gap10，每行 gap10：5px 圆点（在做=橙 / 其余=dot-idle）+ 类别 11px + 详情 12.5px
+ */
+
+/** 设计稿写法：更新于 8 月 18 日 */
+const updated = `更新于 ${now.updated.getMonth() + 1} 月 ${now.updated.getDate()} 日`
+---
+
+<section
+  class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[16px] rounded-[28px] p-[24px]"
+>
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <span class="size-[6px] shrink-0 rounded-full bg-leaf"></span>
+    <span class="flex-1 text-[13px] font-normal text-ink-soft">此刻</span>
+    <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{updated}</span>
+  </div>
+
+  <p class="w-full text-[17px]/[1.5] font-medium text-ink">{now.statement}</p>
+
+  <p class="w-full text-[12.5px]/[1.7] font-normal text-ink-soft">{now.note}</p>
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[10px]">
+    {
+      now.items.map((item) => (
+        <li class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+          <span
+            class:list={[
+              'size-[5px] shrink-0 rounded-full',
+              item.active ? 'bg-brand' : 'bg-dot-idle',
+            ]}
+          />
+          <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{item.kind}</span>
+          <span class="flex-1 text-[12.5px] font-normal text-ink">{item.detail}</span>
+        </li>
+      ))
+    }
+  </ul>
+</section>

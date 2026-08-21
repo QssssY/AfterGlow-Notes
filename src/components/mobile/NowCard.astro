@@ -1,0 +1,52 @@
+---
+import { Icon } from 'astro-icon/components'
+import { now } from '~/config'
+
+/**
+ * Now Card · blog.pen Mobile 首页（kXFhg）
+ *
+ * 设计稿这轮用它取代了移动端的「最新文章」面板，和桌面 此刻 Card 是同一件事，
+ * 但不是同一份规格：这里 caption 是「现 在 NOW」、行内是 26px 图标砖而不是圆点、
+ * 末尾多一行 aside，所以单独写一个组件，不给 NowCard 加 compact 分支。
+ *
+ * 规格：342×246 · r28 · p18 · 竖向 gap14
+ * Head gap8：caption 12px text-secondary + 右侧月份 11px/500 brand-ink
+ * 每行 gap10：26×26 砖（fire-tint 底 / r9）内含 14px fire-ink 图标 +
+ *            右侧竖向 gap2（类别 10.5px text-muted / 详情 12.5px/1.45）
+ * 末尾 1px hairline + aside 11.5px/1.5 text-secondary
+ */
+
+/** 设计稿写法：8 月 */
+const stamp = `${now.updated.getMonth() + 1} 月`
+---
+
+<section
+  class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[28px] p-[18px]"
+>
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <span class="flex-1 text-[12px] font-normal text-ink-soft">现 在 NOW</span>
+    <span class="text-[11px] font-medium whitespace-nowrap text-brand-ink">{stamp}</span>
+  </div>
+
+  <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[14px]">
+    {
+      now.items.map((item) => (
+        <li class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+          <span class="flex size-[26px] shrink-0 flex-row items-center justify-center rounded-[9px] bg-fire-tint">
+            <Icon name={`lucide:${item.icon}`} class="size-[14px] shrink-0 text-brand-ink" />
+          </span>
+          <span class="flex min-w-0 flex-1 flex-col items-start gap-[2px]">
+            <span class="text-[10.5px] font-normal whitespace-nowrap text-ink-muted">
+              {item.kind}
+            </span>
+            <span class="w-full text-[12.5px]/[1.45] font-normal text-ink">{item.detail}</span>
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <p class="w-full text-[11.5px]/[1.5] font-normal text-ink-soft">{now.aside}</p>
+</section>

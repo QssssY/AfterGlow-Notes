@@ -1,0 +1,33 @@
+---
+import { Icon } from 'astro-icon/components'
+import { tools } from '~/config'
+
+/**
+ * 在用 Card · blog.pen Home 首页 / Column A 末位（RZgmG）
+ *
+ * 规格：576×59 · r22（radius-row，比同栏其他卡浅一档，因为这条矮）
+ * padding 20/22 · 横向 gap14 · 居中对齐
+ * 「在用」13px text-secondary + 1×18 竖线 + Items（gap18）
+ * 每件工具 gap7：14px 图标 text-muted + 名称 13px/500 + 小字 11px text-muted
+ */
+---
+
+<section
+  class="glass box-border flex h-fit w-full shrink-0 flex-row items-center gap-[14px] rounded-[22px] px-[22px] py-[20px]"
+>
+  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">在用</span>
+
+  <span class="h-[18px] w-[1px] shrink-0 bg-hairline"></span>
+
+  <ul class="flex h-fit min-w-0 flex-1 list-none flex-row items-center gap-[18px]">
+    {
+      tools.map((tool) => (
+        <li class="flex h-fit w-fit shrink-0 flex-row items-center gap-[7px]">
+          <Icon name={`lucide:${tool.icon}`} class="size-[14px] shrink-0 text-ink-muted" />
+          <span class="text-[13px] font-medium whitespace-nowrap text-ink">{tool.name}</span>
+          <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{tool.meta}</span>
+        </li>
+      ))
+    }
+  </ul>
+</section>

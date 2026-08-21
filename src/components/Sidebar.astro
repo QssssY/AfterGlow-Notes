@@ -2,10 +2,13 @@
 import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
 import avatarSrc from '../../images/generated-1787210923171.png'
-import { isNavActive, nav, site, themeChoices } from '~/config'
+import { email, isNavActive, nav, site, socials, themeChoices } from '~/config'
 import NavItem from './NavItem.astro'
 
 const pathname = Astro.url.pathname
+
+const github = socials.find((s) => s.variant === 'dark')!
+const bilibili = socials.find((s) => s.variant === 'glass')!
 ---
 
 <!-- Sidebar · blog.pen I23TnW -->
@@ -67,6 +70,43 @@ const pathname = Astro.url.pathname
       ))
     }
   </nav>
+
+  <!--
+    Social Row —— 设计稿这轮新加的一行，首页顶部那排大按钮挪到了这里。
+    Github 是 Social Button 组件的深色实例，但尺寸另一套（h30 / r12 / 图标 16 /
+    Averia 14），所以没复用 SocialButton.astro（那份是 h42 / r14 / 图标 22）。
+  -->
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <a
+      href={github.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex h-[30px] flex-1 flex-row items-center justify-center gap-[8px] rounded-[12px] bg-btn-dark px-[12px] outline-[1.5px] -outline-offset-[0.75px] outline-sheen shadow-[0_24px_44px_-16px_var(--shadow-soft),0_0_20px_0_var(--sheen)] backdrop-blur-[4px]"
+    >
+      <Icon name="lucide:github" class="size-[16px] shrink-0 text-white" />
+      <span class="font-display text-[14px] font-normal whitespace-nowrap text-white">
+        {github.label}
+      </span>
+    </a>
+
+    <a
+      href={bilibili.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={bilibili.label}
+      class="hairline-box flex h-[30px] w-fit shrink-0 flex-row items-center justify-center rounded-[12px] px-[8px]"
+    >
+      <Icon name="lucide:tv" class="size-[15px] shrink-0 text-ink-soft" />
+    </a>
+
+    <a
+      href={`mailto:${email}`}
+      aria-label="邮箱"
+      class="hairline-box flex h-[30px] w-fit shrink-0 flex-row items-center justify-center rounded-[12px] px-[8px]"
+    >
+      <Icon name="lucide:mail" class="size-[15px] shrink-0 text-ink-soft" />
+    </a>
+  </div>
 
   <!-- Appearance Group -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">

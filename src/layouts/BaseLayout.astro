@@ -18,8 +18,8 @@ interface Props {
   /** 移动端底部 Tab Bar */
   tabBar?: boolean
   /**
-   * 桌面端顶部内边距。设计稿里 Home 有 Header 所以内容从 y48 起；
-   * 归档 / 文章 / 项目 / 关于四页没有 Header，内容从 y72 起。
+   * 桌面端顶部内边距。设计稿现在所有页面的 Body 都从 y72 起
+   * （首页那排 Header 大按钮这轮被挪进了侧栏，48 那一档只剩组件画廊在用）。
    */
   topPad?: 48 | 72
 }
