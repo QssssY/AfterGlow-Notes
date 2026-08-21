@@ -2,8 +2,10 @@
 import Footer from '~/components/Footer.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import AboutMe from '~/components/about/AboutMe.astro'
+import BuildPanel from '~/components/about/BuildPanel.astro'
 import ChangelogCard from '~/components/about/ChangelogCard.astro'
 import FriendsPanel from '~/components/about/FriendsPanel.astro'
+import PrivacyPanel from '~/components/about/PrivacyPanel.astro'
 import SideStack from '~/components/about/SideStack.astro'
 import { email } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
@@ -15,6 +17,24 @@ const paragraphs = [
 ]
 
 const chips = ['TypeScript', 'Three.js', 'Astro', 'Blender', 'Python']
+
+/**
+ * About Me 里 chips 下方新加的两列清单（设计稿这轮加的）。
+ *
+ * 设计稿原文是 Neovim / Blender 4.2 / Obsidian，和首页「在用」那条对不上。
+ * 两处说的是同一件事，写成两套迟早互相打脸，所以这里跟着 config.tools 的口径，
+ * 只写这个仓库里真能查到的东西。想换成你自己的，改这里和 config.tools。
+ */
+const lists = [
+  {
+    label: '我在用的东西',
+    items: ['Astro 7 + Tailwind 4，全站静态', 'Pencil 画设计稿，代码照着还原', 'pnpm + Git，部署还没定'],
+  },
+  {
+    label: '我关心的方向',
+    items: ['把设计稿一比一还原成代码', '中文排版里那些小细节', '静态站的构建与字体体积'],
+  },
+]
 
 const stats = [
   { value: '69', label: '篇文章' },
@@ -67,8 +87,10 @@ const friends = [
 
 <BaseLayout title="关于网站" rail={false} topPad={72}>
   <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
-    <div class="hidden w-[280px] shrink-0 xl:block">
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
       <Sidebar />
+      <BuildPanel />
+      <PrivacyPanel />
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
@@ -82,7 +104,12 @@ const friends = [
 
       <!-- Row 1 -->
       <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:flex-row">
-        <AboutMe role="前端 / 图形 / 偶尔做点没用的东西" paragraphs={paragraphs} chips={chips} />
+        <AboutMe
+          role="前端 / 图形 / 偶尔做点没用的东西"
+          paragraphs={paragraphs}
+          chips={chips}
+          lists={lists}
+        />
         <SideStack stats={stats} contacts={contacts} />
       </div>
 

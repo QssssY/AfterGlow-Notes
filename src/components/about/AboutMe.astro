@@ -7,9 +7,11 @@ interface Props {
   role: string
   paragraphs: readonly string[]
   chips: readonly string[]
+  /** chips 下方那条 hairline 加两列清单（我在用的东西 / 我关心的方向） */
+  lists?: readonly { label: string; items: readonly string[] }[]
 }
 
-const { role, paragraphs, chips } = Astro.props
+const { role, paragraphs, chips, lists = [] } = Astro.props
 ---
 
 <!-- About Me · blog.pen About / Row 1 -->
@@ -41,4 +43,26 @@ const { role, paragraphs, chips } = Astro.props
       ))
     }
   </div>
+
+  {
+    lists.length > 0 && (
+      <>
+        <span class="h-[1px] w-full shrink-0 bg-hairline" />
+
+        <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:flex-row">
+          {lists.map((list) => (
+            <div class="flex h-fit w-full flex-col items-start gap-[10px] xl:flex-1">
+              <span class="text-[12px] font-normal text-ink-soft">{list.label}</span>
+              {list.items.map((item) => (
+                <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+                  <span class="size-[4px] shrink-0 rounded-full bg-ink-muted" />
+                  <span class="flex-1 text-[13px] font-normal text-ink">{item}</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </>
+    )
+  }
 </div>

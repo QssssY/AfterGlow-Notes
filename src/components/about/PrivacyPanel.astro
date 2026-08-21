@@ -1,0 +1,32 @@
+---
+import { Icon } from 'astro-icon/components'
+import Panel from '~/components/Panel.astro'
+import { finePrint } from '~/config'
+
+/**
+ * 细则 FINE PRINT · blog.pen About 关于网站 / Left Column（Gyi4f）
+ *
+ * 三条要点的圆点是 4px text-muted，正文 12.5px/1.5；
+ * 末行 hairline 之下是 13px mail 图标（brand-ink）+ 11.5px 说明。
+ */
+---
+
+<Panel caption="细 则  FINE PRINT">
+  <p class="w-full text-[12px]/[1.55] font-normal text-ink-soft">{finePrint.blurb}</p>
+
+  {
+    finePrint.points.map((point) => (
+      <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+        <span class="size-[4px] shrink-0 rounded-full bg-ink-muted" />
+        <span class="flex-1 text-[12.5px]/[1.5] font-normal text-ink">{point}</span>
+      </span>
+    ))
+  }
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <Icon name="lucide:mail" class="size-[13px] shrink-0 text-brand-ink" />
+    <span class="flex-1 text-[11.5px]/[1.5] font-normal text-ink-soft">{finePrint.reply}</span>
+  </span>
+</Panel>
