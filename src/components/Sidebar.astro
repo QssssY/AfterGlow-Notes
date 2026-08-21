@@ -54,10 +54,16 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
   </div>
 
   <!-- General Group -->
-  <nav class="flex h-fit w-full shrink-0 flex-col items-start gap-[8px]">
+  <nav data-nav class="relative flex h-fit w-full shrink-0 flex-col items-start gap-[8px]">
     <span class="text-[12px] font-normal tracking-[1.2px] whitespace-nowrap text-ink-soft">
       GENERAL
     </span>
+    <!-- 滑动高亮：跟着指针在条目间弹跳（YYsuni nav-hover 胶囊的 CSS 版），
+         位置由下面的脚本摆，键盘 focus 一并跟随；不动激活态那块 glass-solid -->
+    <span
+      data-nav-glow
+      aria-hidden="true"
+      class="pointer-events-none absolute left-0 w-full rounded-[26px] bg-card opacity-0 outline-1 -outline-offset-[0.5px] outline-card-border"></span>
     {
       nav.map((item) => (
         <NavItem
@@ -107,6 +113,31 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
       <Icon name="lucide:mail" class="size-[15px] shrink-0 text-ink-soft" />
     </a>
   </div>
+
+  <script>
+    // 滑动高亮：hover / focus 到哪个条目，胶囊就弹到哪；离开整组淡出
+    for (const navEl of document.querySelectorAll<HTMLElement>('[data-nav]')) {
+      const glow = navEl.querySelector<HTMLElement>('[data-nav-glow]')
+      const items = [...navEl.querySelectorAll<HTMLElement>('a')]
+      if (!glow || items.length === 0) continue
+
+      const moveTo = (item: HTMLElement) => {
+        glow.style.top = `${item.offsetTop}px`
+        glow.style.height = `${item.offsetHeight}px`
+        glow.style.opacity = '1'
+      }
+      const hide = () => {
+        glow.style.opacity = '0'
+      }
+
+      for (const item of items) {
+        item.addEventListener('mouseenter', () => moveTo(item))
+        item.addEventListener('focus', () => moveTo(item))
+        item.addEventListener('blur', hide)
+      }
+      navEl.addEventListener('mouseleave', hide)
+    }
+  </script>
 
   <!-- Appearance Group -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">

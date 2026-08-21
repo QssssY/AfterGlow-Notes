@@ -13,24 +13,29 @@ interface Props {
 const { label, icon: iconName, href, active = false, full = false } = Astro.props
 ---
 
-<!-- Nav Item · blog.pen TQ3Oj -->
+<!-- Nav Item · blog.pen TQ3Oj
+     relative 是给侧栏的滑动高亮用的：胶囊绝对定位在条目下面，
+     条目自己不建层的话，文字会被胶囊盖住。hover 底色由胶囊负责，这里只过渡文字色。 -->
 <a
   href={href ?? '#'}
   class:list={[
-    'box-border flex flex-row items-center gap-[12px] rounded-[26px] px-[20px] py-[12px] transition-colors',
+    'group/nav relative box-border flex flex-row items-center gap-[12px] rounded-[26px] px-[20px] py-[12px] transition-colors',
     full ? 'w-full' : 'w-[232px]',
-    active ? 'glass-solid' : 'hover:bg-card',
+    active && 'glass-solid',
   ]}
   aria-current={active ? 'page' : undefined}
 >
   <Icon
     name={`lucide:${iconName}`}
-    class:list={['size-[26px] shrink-0', active ? 'text-brand' : 'text-ink-soft']}
+    class:list={[
+      'size-[26px] shrink-0 transition-colors',
+      active ? 'text-brand' : 'text-ink-soft group-hover/nav:text-ink',
+    ]}
   />
   <span
     class:list={[
-      'text-[15px] whitespace-nowrap',
-      active ? 'font-medium text-ink' : 'font-normal text-ink-soft',
+      'text-[15px] whitespace-nowrap transition-colors',
+      active ? 'font-medium text-ink' : 'font-normal text-ink-soft group-hover/nav:text-ink',
     ]}>{label}</span
   >
 </a>

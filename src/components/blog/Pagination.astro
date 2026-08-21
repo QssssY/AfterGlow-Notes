@@ -31,6 +31,9 @@ const pages = pageList(current, totalPages)
 const box =
   'flex size-[38px] shrink-0 flex-row items-center justify-center rounded-[12px] text-[13.5px] font-bold'
 const idle = 'bg-card text-ink-soft outline-[1.5px] -outline-offset-[0.75px] outline-card-border'
+// 只有真链接有悬浮/按压反馈，禁用箭头和 … 是 span、保持不动
+const tap =
+  'transition-[translate,background-color,scale] hover:-translate-y-[1px] hover:bg-card-solid active:scale-95'
 ---
 
 {
@@ -40,7 +43,7 @@ const idle = 'bg-card text-ink-soft outline-[1.5px] -outline-offset-[0.75px] out
       class="flex h-[52px] w-full shrink-0 flex-row items-center justify-center gap-[8px]"
     >
       {current > 1 ? (
-        <a href={hrefFor(current - 1)} rel="prev" aria-label="上一页" class:list={[box, idle]}>
+        <a href={hrefFor(current - 1)} rel="prev" aria-label="上一页" class:list={[box, idle, tap]}>
           ‹
         </a>
       ) : (
@@ -63,14 +66,14 @@ const idle = 'bg-card text-ink-soft outline-[1.5px] -outline-offset-[0.75px] out
             {page}
           </span>
         ) : (
-          <a href={hrefFor(page)} class:list={[box, idle]}>
+          <a href={hrefFor(page)} class:list={[box, idle, tap]}>
             {page}
           </a>
         ),
       )}
 
       {current < totalPages ? (
-        <a href={hrefFor(current + 1)} rel="next" aria-label="下一页" class:list={[box, idle]}>
+        <a href={hrefFor(current + 1)} rel="next" aria-label="下一页" class:list={[box, idle, tap]}>
           ›
         </a>
       ) : (

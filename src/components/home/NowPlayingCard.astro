@@ -12,12 +12,14 @@ import { nowPlaying } from '~/config'
 
   <span class="w-full text-[14px] font-medium text-ink">{nowPlaying.track}</span>
 
-  <div class="flex h-[20px] w-fit shrink-0 flex-row items-end gap-[4px]">
+  <!-- 条形高度是设计稿定格的一帧；律动只做 scaleY 收缩，峰值仍是这些高度。
+       节拍参数（时长三档、负延迟错相）内联给动效层的 eq 关键帧用。 -->
+  <div data-eq class="flex h-[20px] w-fit shrink-0 flex-row items-end gap-[4px]">
     {
-      nowPlaying.bars.map((h) => (
+      nowPlaying.bars.map((h, i) => (
         <span
           class="w-[3px] shrink-0 rounded-[2px] bg-brand opacity-[0.55]"
-          style={`height:${h}px`}
+          style={`height:${h}px;--eq-dur:${(0.8 + (i % 3) * 0.18).toFixed(2)}s;--eq-delay:${(-i * 0.13).toFixed(2)}s`}
         />
       ))
     }

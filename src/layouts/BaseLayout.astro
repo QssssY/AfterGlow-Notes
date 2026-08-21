@@ -114,7 +114,20 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       const query = matchMedia('(prefers-color-scheme: dark)')
       const chips = document.querySelectorAll<HTMLElement>('[data-theme-choice]')
 
-      function apply(choice: string) {
+      /**
+       * 切换瞬间给全站颜色挂一个短过渡（见 global.css 的 .theme-anim）。
+       * 类是临时的：常驻会让所有 hover 的颜色反馈都慢半拍。
+       */
+      let animTimer: ReturnType<typeof setTimeout> | undefined
+      function withColorTransition() {
+        const root = document.documentElement
+        root.classList.add('theme-anim')
+        clearTimeout(animTimer)
+        animTimer = setTimeout(() => root.classList.remove('theme-anim'), 400)
+      }
+
+      function apply(choice: string, animate = false) {
+        if (animate) withColorTransition()
         document.documentElement.classList.toggle(
           'dark',
           choice === 'dark' || (choice === 'auto' && query.matches),
@@ -130,18 +143,58 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       apply(current())
 
       for (const chip of chips) {
-        chip.addEventListener('click', () => apply(chip.dataset.themeChoice!))
+        chip.addEventListener('click', () => apply(chip.dataset.themeChoice!, true))
       }
 
       for (const button of document.querySelectorAll('[data-theme-cycle]')) {
         button.addEventListener('click', () => {
-          apply(ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length]!)
+          apply(ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length]!, true)
         })
       }
 
       query.addEventListener('change', () => {
         if (current() === 'auto') apply('auto')
       })
+    </script>
+
+    <script>
+      /**
+       * 入场浮现 —— 参考 YYsuni 2025 blog 卡片进场（opacity 0→1 + 上移收位，错峰）。
+       *
+       * 用 WAAPI 而不是 CSS 类：动画结束后不留任何样式，
+       * 不会和 hover 上浮的 translate 过渡打架。fill: backwards 保证
+       * 延迟期间元素停在初始帧，不会先闪现再消失。
+       * 只挑最外层的玻璃卡（嵌套的跟着父级走就够了），首屏之外的进视口再播。
+       */
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const cards = [...document.querySelectorAll<HTMLElement>('.glass, .glass-panel, .glass-row')]
+          .filter((el) => !el.parentElement?.closest('.glass, .glass-panel, .glass-row'))
+          .filter((el) => el.offsetParent !== null)
+
+        const io = new IntersectionObserver(
+          (entries) => {
+            let i = 0
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue
+              io.unobserve(entry.target)
+              entry.target.animate(
+                [
+                  { opacity: 0, translate: '0 12px' },
+                  { opacity: 1, translate: '0 0' },
+                ],
+                {
+                  duration: 480,
+                  delay: Math.min(i++ * 55, 440),
+                  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                  fill: 'backwards',
+                },
+              )
+            }
+          },
+          { rootMargin: '0px 0px -4% 0px' },
+        )
+        for (const el of cards) io.observe(el)
+      }
     </script>
   </body>
 </html>

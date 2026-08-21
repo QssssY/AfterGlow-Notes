@@ -15,7 +15,7 @@ const { tags } = Astro.props
       tags.map((tag) => (
         <a
           href={`/tags/${tag.name}`}
-          class="box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[6px] rounded-[14px] bg-chip px-[12px] py-[6px] outline-1 -outline-offset-[0.5px] outline-card-border"
+          class="box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[6px] rounded-[14px] bg-chip px-[12px] py-[6px] outline-1 -outline-offset-[0.5px] outline-card-border transition-[translate,background-color,scale] hover:-translate-y-[1px] hover:bg-card-solid active:scale-95"
         >
           <span class="text-[12px] font-normal whitespace-nowrap text-ink">#{tag.name}</span>
           <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{tag.count}</span>

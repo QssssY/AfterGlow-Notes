@@ -221,9 +221,7 @@
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+  /* 平滑滚动挪进了文件末尾的动效层：reduced-motion 下应该直接跳转 */
 
   /* 视觉隐藏但保留给屏幕阅读器和 pagefind 索引 */
   .sr-only {
@@ -373,4 +371,182 @@
   height: 1px;
   border: 0;
   background-color: var(--hairline);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 交互动效层 —— 参考 YYsuni/2025-blog-public 的手感移植：
+ * 卡片 hover 上浮 / 按下回弹（motion 的 whileHover/whileTap）、
+ * 点赞心跳与爆裂、导航滑动高亮、等化条律动、入场错峰浮现。
+ * 全部只动 transform / opacity / 阴影，不碰设计稿的静态数值；
+ * prefers-reduced-motion 下整层关闭。
+ * ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* motion/react 弹簧的 CSS 近似：轻微过冲再落回 */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版） */
+  :is(a, button):is(.glass, .glass-row, .glass-panel) {
+    transition:
+      translate 0.35s var(--spring),
+      scale 0.35s var(--spring),
+      box-shadow 0.35s ease;
+  }
+  @media (hover: hover) {
+    :is(a, button):is(.glass, .glass-row, .glass-panel):hover {
+      translate: 0 -3px;
+      box-shadow:
+        0 30px 52px -18px var(--shadow-soft),
+        0 0 24px 0 var(--sheen);
+    }
+  }
+  :is(a, button):is(.glass, .glass-row, .glass-panel):active {
+    translate: 0 -1px;
+    scale: 0.98;
+  }
+
+  /* 小件（chip / 图标钮 / 分页块）：hover 微浮，按下缩一点 */
+  :is(a, button).hairline-box {
+    transition:
+      translate 0.3s var(--spring),
+      scale 0.3s var(--spring),
+      background-color 0.2s ease;
+  }
+  @media (hover: hover) {
+    :is(a, button).hairline-box:hover {
+      translate: 0 -1px;
+      background-color: var(--card-solid);
+    }
+  }
+  :is(a, button).hairline-box:active {
+    scale: 0.95;
+    translate: 0 0;
+  }
+
+  /* 按钮通用按压（主题分段、订阅、复制链接、筛选胶囊……） */
+  button {
+    transition: scale 0.3s var(--spring);
+  }
+  button:active {
+    scale: 0.96;
+  }
+
+  /* 卡片右上的外链箭头随 hover 游走（YYsuni 卡片的方向暗示） */
+  svg[data-icon='lucide:arrow-up-right'],
+  svg[data-icon='lucide:arrow-right'],
+  svg[data-icon='lucide:arrow-left'] {
+    transition: translate 0.3s var(--spring);
+  }
+  a:hover svg[data-icon='lucide:arrow-up-right'] {
+    translate: 2px -2px;
+  }
+  a:hover svg[data-icon='lucide:arrow-right'] {
+    translate: 3px 0;
+  }
+  a:hover svg[data-icon='lucide:arrow-left'] {
+    translate: -3px 0;
+  }
+
+  /* Post Row 的封面在整行 hover 时轻微推近 */
+  .glass-row img,
+  .glass-row svg[data-icon] {
+    transition: scale 0.5s var(--spring);
+  }
+  @media (hover: hover) {
+    .glass-row:hover > span:last-child img,
+    .glass-row:hover > span:last-child svg {
+      scale: 1.05;
+    }
+  }
+
+  /* 时间轴行：整行右移一点，标题过渡到品牌色（组件里配 group 类） */
+  [data-entry] {
+    transition: translate 0.3s var(--spring);
+  }
+  @media (hover: hover) {
+    [data-entry]:hover {
+      translate: 3px 0;
+    }
+  }
+
+  /* 点赞 —— hover 心跳（YYsuni heartbeat-frame 原参数） */
+  @keyframes heartbeat {
+    0%,
+    40%,
+    80%,
+    100% {
+      scale: 1;
+    }
+    20%,
+    60% {
+      scale: 1.15;
+    }
+  }
+  @media (hover: hover) {
+    [data-like]:hover svg[data-icon='lucide:heart'] {
+      animation: heartbeat 0.8s ease-in-out;
+    }
+  }
+
+  /* 正在听 —— 等化条律动，节拍参数由内联 --eq-delay / --eq-dur 给 */
+  @keyframes eq {
+    from {
+      transform: scaleY(1);
+    }
+    to {
+      transform: scaleY(0.42);
+    }
+  }
+  [data-eq] > * {
+    transform-origin: bottom;
+    animation: eq var(--eq-dur, 1s) ease-in-out var(--eq-delay, 0s) infinite alternate;
+  }
+
+  /* 侧栏导航的滑动高亮（YYsuni nav-hover 胶囊的 CSS 版，位置由脚本摆） */
+  [data-nav-glow] {
+    transition:
+      top 0.35s var(--spring),
+      height 0.35s var(--spring),
+      opacity 0.2s ease;
+  }
+}
+
+/* 从年表面板跳过来时，目标年份的组头闪一下（不属于 motion，锚点定位始终生效） */
+[data-tl-header] {
+  scroll-margin-top: 24px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes target-flash {
+    from {
+      background-color: var(--fire-tint);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+  [data-tl-header]:target {
+    border-radius: 12px;
+    animation: target-flash 1.6s ease-out 0.15s both;
+  }
+}
+
+/* 主题切换瞬间给全站颜色一个短过渡（脚本临时挂 .theme-anim） */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-anim,
+  .theme-anim *,
+  .theme-anim *::before,
+  .theme-anim *::after {
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      outline-color 0.35s ease,
+      color 0.35s ease,
+      box-shadow 0.35s ease !important;
+  }
 }
