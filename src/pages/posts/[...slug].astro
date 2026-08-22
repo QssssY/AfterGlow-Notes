@@ -72,20 +72,21 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
 >
   <ReadingProgress />
 
-  {/* 结构照搬 YYsuni：内容页没有整根侧栏，导航缩成顶部图标条（随页滚走） */}
-  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
 
   <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
     <!--
-      左栏（纯桌面）就是 YYsuni 文章页那根短栏：目录+本文+相关，
-      整栏一屏装得下（目录内部限高 300 自滚），简单 sticky top-48 ——
-      从不钉超过一屏的东西。
-      移动端整栏不渲染：导航由底部 TabBar 代替，本文/相关摆到 390 下
-      就成了正文前的一大段前言；目录单独在返回按钮之后再出一份（见下）。
+      文章页双模式（用户拍板）：
+      原版 = 极简 —— 整页只有「返回文章列表」+ 文章本体（左栏/授权/上下篇/页脚全不出）；
+      紧凑 = YYsuni 文章页短栏 —— 目录+本文+相关 一屏装得下，钉在图标条下方。
+      移动端不受模式影响：导航归 TabBar，目录在返回按钮后（见下）。
     -->
     <div
       data-pin-group
-      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:sticky xl:top-[48px] xl:flex"
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] compact:xl:sticky compact:xl:top-[84px] compact:xl:flex"
     >
       <TocCard headings={headings} />
       <ArticleInfo
@@ -97,7 +98,9 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
       <RelatedCard posts={related} />
     </div>
 
-    <div class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1">
+    <div
+      class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1 classic:xl:mx-auto classic:xl:max-w-[1016px]"
+    >
       <a
         href="/archive"
         class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[14px] px-[14px] py-[8px]"
@@ -184,18 +187,26 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
         <ArticleActions slug={post.id} updated={post.data.updated} />
       </article>
 
-      <LicenseBlock
-        permalink={permalink}
-        shareUrl={shareUrl}
-        title={post.data.title}
-        updated={post.data.updated}
-      />
+      {/* 原版文章页只留 返回+文章（用户点名「整个页面只有文章」），这两块只在紧凑模式出现 */}
+      <div class="w-full classic:xl:hidden">
+        <LicenseBlock
+          permalink={permalink}
+          shareUrl={shareUrl}
+          title={post.data.title}
+          updated={post.data.updated}
+        />
+      </div>
 
-      <PrevNext prev={entry(older)} next={entry(newer)} />
+      <div class="w-full classic:xl:hidden">
+        <PrevNext prev={entry(older)} next={entry(newer)} />
+      </div>
     </div>
   </div>
 
-  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+  {/* 原版文章页连页脚也不出（「整个页面只有文章」）；外层包一格避免与 xl:block 抢 display */}
+  <div class="classic:xl:hidden">
+    <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+  </div>
 </BaseLayout>
 
 <script>

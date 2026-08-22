@@ -1,6 +1,7 @@
 ---
 import Footer from '~/components/Footer.astro'
 import NavBar from '~/components/NavBar.astro'
+import Sidebar from '~/components/Sidebar.astro'
 import AboutMe from '~/components/about/AboutMe.astro'
 import BuildPanel from '~/components/about/BuildPanel.astro'
 import ChangelogCard from '~/components/about/ChangelogCard.astro'
@@ -99,17 +100,22 @@ const friends = [
 ---
 
 <BaseLayout title="关于网站" rail={false}>
-  {/* 结构照搬 YYsuni：内容页没有整根侧栏，导航缩成顶部图标条（随页滚走） */}
-  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
 
   <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
-    {/* 短栏 = 构建+隐私 两面板，一屏装得下，整栏 sticky */}
-    <div
-      data-pin-group
-      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:sticky xl:top-[48px] xl:flex"
-    >
-      <BuildPanel />
-      <PrivacyPanel />
+    {/* 左栏双模式：原版 = 完整 Sidebar + 面板全静态；紧凑 = 面板短栏钉在图标条下 */}
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+      <div class="hidden w-full classic:block"><Sidebar /></div>
+      <div
+        data-pin-group
+        class="flex w-full flex-col items-start gap-[24px] compact:xl:sticky compact:xl:top-[84px]"
+      >
+        <BuildPanel />
+        <PrivacyPanel />
+      </div>
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">

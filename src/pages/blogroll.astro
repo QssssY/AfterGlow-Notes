@@ -1,6 +1,7 @@
 ---
 import Footer from '~/components/Footer.astro'
 import NavBar from '~/components/NavBar.astro'
+import Sidebar from '~/components/Sidebar.astro'
 import StatsPageHead from '~/components/StatsPageHead.astro'
 import ApplyPanel from '~/components/blogroll/ApplyPanel.astro'
 import type { ImageMetadata } from 'astro'
@@ -40,10 +41,16 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
   description="长期在读的个人站点。都还在更新，而且写得比我好。"
   rail={false}
 >
-  {/* 结构照搬 YYsuni：没有侧栏面板的页面走居中单列（宽度保持设计稿内容列的 1016） */}
-  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
 
-  <div class="mx-auto flex h-fit w-full max-w-[1016px] flex-col items-start gap-[24px]">
+  <div class="flex w-full flex-row items-start gap-[48px]">
+    {/* 原版 = 完整 Sidebar（blog.pen 原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
+
+    <div class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]">
       <StatsPageHead
         title="优秀博客"
         subtitle="长期在读的个人站点。都还在更新，而且写得比我好。"
@@ -77,6 +84,7 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
 
         <ApplyPanel />
       </div>
+    </div>
   </div>
 
   <div class="mt-[30px] hidden w-full xl:block">

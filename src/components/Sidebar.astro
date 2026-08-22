@@ -188,4 +188,42 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
       }
     </div>
   </div>
+
+  <!-- Layout Group —— 布局双模式（用户点名要的开关）：
+       原版 = blog.pen 完整侧栏；紧凑 = YYsuni 式图标条 + 短栏。
+       控件样式复用上面外观切换那套；绑定在 BaseLayout（data-layout-choice）。 -->
+  <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
+    <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      LAYOUT
+    </span>
+    <div
+      role="radiogroup"
+      aria-label="布局"
+      class="hairline-box flex h-fit w-full shrink-0 flex-row items-center gap-[2px] rounded-[12px] p-[3px]"
+    >
+      {
+        [
+          { value: 'classic', label: '原版' },
+          { value: 'compact', label: '紧凑' },
+        ].map((choice) => (
+          <button
+            type="button"
+            role="radio"
+            aria-checked="false"
+            data-layout-choice={choice.value}
+            title={choice.value === 'classic' ? '每页都有完整侧栏' : '导航缩成图标条，内容更宽'}
+            class="group flex h-[26px] flex-1 flex-row items-center justify-center gap-[5px] rounded-[6px] outline-1 -outline-offset-[0.5px] outline-transparent aria-checked:bg-card-solid aria-checked:outline-hairline"
+          >
+            <Icon
+              name="lucide:layout-template"
+              class="hidden size-[12px] shrink-0 text-brand-ink group-aria-checked:block"
+            />
+            <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted group-aria-checked:font-bold group-aria-checked:text-brand-ink">
+              {choice.label}
+            </span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
 </aside>

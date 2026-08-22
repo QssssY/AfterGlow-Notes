@@ -18,6 +18,12 @@
 /* 暗色模式走 class 策略，由 <html class="dark"> 控制 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* 布局双模式（用户拍板）：默认「原版」= blog.pen 的完整侧栏列；
+   可切「紧凑」= YYsuni 结构（图标条导航 + 短栏/居中单列）。
+   由 <html data-layout> 控制，机制同暗色模式（预绘制脚本防闪、换页保持）。 */
+@custom-variant classic (&:where([data-layout='classic'], [data-layout='classic'] *));
+@custom-variant compact (&:where([data-layout='compact'], [data-layout='compact'] *));
+
 /* ─────────────────────────────────────────────────────────────
  * 设计 token —— 全部取自 blog.pen 的 `mode: light/dark` 变量轴
  * 随主题变的值定义在 :root / .dark，@theme inline 只做引用，

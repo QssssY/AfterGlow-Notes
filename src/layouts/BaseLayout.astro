@@ -44,7 +44,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-layout="classic">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -78,7 +78,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     -->
     <ClientRouter />
 
-    <!-- 首屏渲染前同步应用主题，避免暗色下闪白 -->
+    <!-- 首屏渲染前同步应用主题与布局模式，避免暗色/紧凑布局下闪一下默认态 -->
     <script is:inline>
       ;((d) => {
         const stored = localStorage.getItem('theme') ?? 'light'
@@ -88,6 +88,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
             (stored === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches),
         )
         d.dataset.theme = stored
+        d.dataset.layout = localStorage.getItem('layout') ?? 'classic'
       })(document.documentElement)
     </script>
   </head>
@@ -169,7 +170,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         if (current() === 'auto') apply('auto')
       })
 
-      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类补回来，暗色下不闪白；
+      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类和布局模式补回来，不闪默认态；
       // 同时挂 during-nav：换页不重播 @starting-style 的入场浮现 ——
       // 整页卡片每切一次导航就浮一次，高频切换晃眼睛（见 global.css 对应规则）
       document.addEventListener('astro:after-swap', () => {
@@ -179,6 +180,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
           choice === 'dark' || (choice === 'auto' && query.matches),
         )
         document.documentElement.dataset.theme = choice
+        document.documentElement.dataset.layout = localStorage.getItem('layout') ?? 'classic'
         document.documentElement.classList.add('during-nav')
       })
 
@@ -200,6 +202,27 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
             // 常与当前系统外观同色，点上去毫无反应，像是要点两次才生效。
             apply(document.documentElement.classList.contains('dark') ? 'light' : 'dark', true)
           })
+        }
+
+        // 布局双模式（原版 / 紧凑）——控件在首页侧栏；纯 CSS 切换，见 global.css 变体
+        const applyLayout = (choice: string) => {
+          document.documentElement.dataset.layout = choice
+          try {
+            localStorage.setItem('layout', choice)
+          } catch {
+            // 存不了就本次会话有效
+          }
+          for (const chip of document.querySelectorAll<HTMLElement>('[data-layout-choice]')) {
+            chip.setAttribute('aria-checked', String(chip.dataset.layoutChoice === choice))
+          }
+        }
+        // 先把控件的选中态和当前模式对齐（不写存储）
+        for (const chip of document.querySelectorAll<HTMLElement>('[data-layout-choice]')) {
+          chip.setAttribute(
+            'aria-checked',
+            String(chip.dataset.layoutChoice === (document.documentElement.dataset.layout ?? 'classic')),
+          )
+          chip.addEventListener('click', () => applyLayout(chip.dataset.layoutChoice!))
         }
       })
     </script>
