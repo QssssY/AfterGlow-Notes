@@ -636,7 +636,9 @@
    选择器带 :root 抬高优先级，确保压过 Astro 可能生成的默认换页动画。 */
 @media (prefers-reduced-motion: no-preference) {
   :root::view-transition-group(site-nav),
-  :root::view-transition-group(nav-avatar) {
+  :root::view-transition-group(nav-avatar),
+  :root::view-transition-group(nav-active),
+  :root::view-transition-group(tab-active) {
     animation-duration: 0.35s;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }

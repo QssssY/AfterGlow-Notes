@@ -44,6 +44,7 @@ const pathname = Astro.url.pathname
           href={item.href}
           title={item.label}
           aria-current={active ? 'page' : undefined}
+          transition:name={active ? 'nav-active' : undefined}
           class:list={[
             'flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] transition-colors',
             active ? 'bg-fire-tint' : 'hover:bg-chip',

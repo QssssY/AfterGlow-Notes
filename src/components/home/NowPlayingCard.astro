@@ -14,7 +14,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 等化条。
   能力（都不改布局）：
   - 点卡播放 / 暂停；多于一首时出现 上一首 / 下一首 / 播放列表 钮，音量钮常驻；
-    放完自动接下一首、到底循环；列表和音量是卡下方的玻璃弹层（互斥），点歌直接切
+    放完自动接下一首、到底循环；列表和音量是卡下方的玻璃弹层（互斥），
+    点歌即切即播、面板自动收起
   - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计稿的定格假谱
   - 曲名行播放时逐句显示 LRC 歌词，卡拉OK式从左往右点亮（唱到哪亮到哪）；
     渐变挂在贴文本宽的内层 span 上 —— 挂整行容器会按容器宽算，分界线跑得比人声快；
@@ -97,11 +98,12 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     <span data-np-text class="inline-block">{trackLabel(first)}</span>
   </span>
 
-  <!-- 条形高度循环设计稿定格的那 12 个值（卡片占满整行后 12 根太稀，铺到 24 根）。
-       未播放：CSS 假律动；播放（data-live）：JS 用实时频谱写 scaleY，见 global.css -->
-  <div data-eq class="flex h-[20px] w-fit shrink-0 flex-row items-end gap-[4px]">
+  <!-- 条形高度循环设计稿定格的那 12 个值。48 根 + justify-between 铺满整行
+       （此前 24 根定宽只到卡一半，右边空着难受——用户点名）。
+       未播放：CSS 假律动；播放（data-live)：JS 用实时频谱写 scaleY，见 global.css -->
+  <div data-eq class="flex h-[20px] w-full shrink-0 flex-row items-end justify-between">
     {
-      Array.from({ length: 24 }, (_, i) => nowPlaying.bars[i % nowPlaying.bars.length]!).map(
+      Array.from({ length: 48 }, (_, i) => nowPlaying.bars[i % nowPlaying.bars.length]!).map(
         (h, i) => (
           <span
             class="w-[3px] shrink-0 origin-bottom rounded-[2px] bg-brand opacity-[0.55]"
@@ -546,12 +548,14 @@ const trackLabel = (t: { title: string; artist?: string }) =>
         }
       })
 
-      // 弹层自身的点击别冒泡成整卡的播放切换；点行即切歌（面板留着方便连点试听）
+      // 弹层自身的点击别冒泡成整卡的播放切换；点行切歌开播并收起面板 ——
+      // 选完就开唱，面板继续摊着挡内容反而多一步手动关（用户点名要自动收）
       b.list?.addEventListener('click', (e) => e.stopPropagation())
       for (const item of b.items)
         item.addEventListener('click', () => {
           ensureGraph(player)
           setTrack(Number(item.dataset.npItem), true)
+          closePanels()
         })
 
       b.vol?.addEventListener('click', (e) => e.stopPropagation())

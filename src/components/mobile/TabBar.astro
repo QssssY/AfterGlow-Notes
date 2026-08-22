@@ -18,6 +18,7 @@ const pathname = Astro.url.pathname
         <a
           href={item.href}
           aria-current={active ? 'page' : undefined}
+          transition:name={active ? 'tab-active' : undefined}
           class:list={[
             'flex h-fit flex-1 flex-col items-center justify-center gap-[3px] rounded-[15px] py-[7px]',
             active && 'bg-fire-tint',

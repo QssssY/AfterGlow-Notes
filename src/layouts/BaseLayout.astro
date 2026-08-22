@@ -59,6 +59,10 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <link rel="preload" href={averiaWoff2} as="font" type="font/woff2" crossorigin />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <!-- 站标：SVG 主用（任意尺寸都利），PNG 兜底给不认 SVG 的场合，180 给 iOS 书签 -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href={canonical} />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 余晖录站标：暮色圆角砖 + 半轮落日沉入地平线，日下两道余晖倒影。
+       手绘矢量而非 AI 生图 —— favicon 要在 16px 里保持轮廓清晰。 -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FDF3E1"/>
+      <stop offset="1" stop-color="#F5D6A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#sky)"/>
+  <!-- 落日光晕 -->
+  <circle cx="32" cy="37" r="17.5" fill="#E8A85C" opacity="0.32"/>
+  <!-- 半轮落日 -->
+  <path d="M18.5 38 a13.5 13.5 0 0 1 27 0 Z" fill="#D9812B"/>
+  <!-- 地平线（压在日面之上，太阳像沉在线后） -->
+  <rect x="9" y="37.1" width="46" height="1.8" rx="0.9" fill="#5B423F" opacity="0.6"/>
+  <!-- 余晖倒影 -->
+  <rect x="23" y="43.5" width="18" height="2.6" rx="1.3" fill="#D9812B" opacity="0.55"/>
+  <rect x="27.5" y="49" width="9" height="2.4" rx="1.2" fill="#D9812B" opacity="0.3"/>
+</svg>
