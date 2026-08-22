@@ -78,31 +78,34 @@ const categories = new Set(shareItems.map((item) => item.category)).size
 </BaseLayout>
 
 <script>
-  // 纯前端按分类显隐；「全部」是 shareFilters 的第一项
-  const pills = [...document.querySelectorAll<HTMLElement>('[data-filter]')]
-  const items = [...document.querySelectorAll<HTMLElement>('[data-share-item]')]
-  const count = document.querySelector<HTMLElement>('[data-share-count]')
-  const empty = document.querySelector<HTMLElement>('[data-share-empty]')
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    // 纯前端按分类显隐；「全部」是 shareFilters 的第一项
+    const pills = [...document.querySelectorAll<HTMLElement>('[data-filter]')]
+    const items = [...document.querySelectorAll<HTMLElement>('[data-share-item]')]
+    const count = document.querySelector<HTMLElement>('[data-share-count]')
+    const empty = document.querySelector<HTMLElement>('[data-share-empty]')
 
-  if (pills.length && items.length) {
-    const ALL = pills[0]!.dataset.filter
+    if (pills.length && items.length) {
+      const ALL = pills[0]!.dataset.filter
 
-    const apply = (want: string | undefined) => {
-      let shown = 0
-      for (const item of items) {
-        const hit = want === ALL || item.dataset.category === want
-        item.hidden = !hit
-        if (hit) shown++
+      const apply = (want: string | undefined) => {
+        let shown = 0
+        for (const item of items) {
+          const hit = want === ALL || item.dataset.category === want
+          item.hidden = !hit
+          if (hit) shown++
+        }
+        for (const pill of pills) {
+          pill.setAttribute('aria-pressed', String(pill.dataset.filter === want))
+        }
+        if (count) count.textContent = String(shown)
+        if (empty) empty.hidden = shown > 0
       }
+
       for (const pill of pills) {
-        pill.setAttribute('aria-pressed', String(pill.dataset.filter === want))
+        pill.addEventListener('click', () => apply(pill.dataset.filter))
       }
-      if (count) count.textContent = String(shown)
-      if (empty) empty.hidden = shown > 0
     }
-
-    for (const pill of pills) {
-      pill.addEventListener('click', () => apply(pill.dataset.filter))
-    }
-  }
+  })
 </script>

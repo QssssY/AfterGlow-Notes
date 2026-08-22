@@ -58,64 +58,66 @@ import { likes } from '~/config'
 <script>
   import { getLikes, postLike } from '~/scripts/api'
   import { likeBurst } from '~/scripts/like-burst'
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    const KEY = 'firefly:liked'
 
-  const KEY = 'firefly:liked'
-
-  // localStorage 在隐私模式或禁用 cookie 时会抛，包起来后点赞退化成本次会话有效
-  const read = () => {
-    try {
-      return localStorage.getItem(KEY) === '1'
-    } catch {
-      return false
+    // localStorage 在隐私模式或禁用 cookie 时会抛，包起来后点赞退化成本次会话有效
+    const read = () => {
+      try {
+        return localStorage.getItem(KEY) === '1'
+      } catch {
+        return false
+      }
     }
-  }
-  const write = (liked: boolean) => {
-    try {
-      if (liked) localStorage.setItem(KEY, '1')
-      else localStorage.removeItem(KEY)
-    } catch {
-      // 存不了就算了，不打断交互
+    const write = (liked: boolean) => {
+      try {
+        if (liked) localStorage.setItem(KEY, '1')
+        else localStorage.removeItem(KEY)
+      } catch {
+        // 存不了就算了，不打断交互
+      }
     }
-  }
 
-  for (const button of document.querySelectorAll<HTMLElement>('[data-like][data-like-base]')) {
-    const base = Number(button.dataset.likeBase ?? 0)
-    const count = document.querySelector<HTMLElement>('[data-like-count]')
+    for (const button of document.querySelectorAll<HTMLElement>('[data-like][data-like-base]')) {
+      const base = Number(button.dataset.likeBase ?? 0)
+      const count = document.querySelector<HTMLElement>('[data-like-count]')
 
-    let liked = read()
-    // 服务端总数；null = 后端没配或没应答，显示 config 里的占位基数
-    let total: number | null = null
+      let liked = read()
+      // 服务端总数；null = 后端没配或没应答，显示 config 里的占位基数
+      let total: number | null = null
 
-    const render = () => {
-      button.setAttribute('aria-pressed', String(liked))
-      // 设计稿写法不带千分位（20118）
-      if (count) count.textContent = String(total ?? base + (liked ? 1 : 0))
-    }
-    render()
-
-    // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）
-    getLikes('site').then((state) => {
-      if (!state) return
-      liked = state.liked
-      total = state.count
-      write(liked)
+      const render = () => {
+        button.setAttribute('aria-pressed', String(liked))
+        // 设计稿写法不带千分位（20118）
+        if (count) count.textContent = String(total ?? base + (liked ? 1 : 0))
+      }
       render()
-    })
 
-    button.addEventListener('click', () => {
-      liked = !liked
-      write(liked)
-      if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
-      render()
-      if (liked) likeBurst(button)
-
-      postLike('site', liked ? 'like' : 'unlike').then((state) => {
+      // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）
+      getLikes('site').then((state) => {
         if (!state) return
         liked = state.liked
         total = state.count
         write(liked)
         render()
       })
-    })
-  }
+
+      button.addEventListener('click', () => {
+        liked = !liked
+        write(liked)
+        if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
+        render()
+        if (liked) likeBurst(button)
+
+        postLike('site', liked ? 'like' : 'unlike').then((state) => {
+          if (!state) return
+          liked = state.liked
+          total = state.count
+          write(liked)
+          render()
+        })
+      })
+    }
+  })
 </script>

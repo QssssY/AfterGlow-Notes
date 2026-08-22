@@ -63,90 +63,93 @@ const { groups, highlightId } = Astro.props
 </div>
 
 <script>
-  /**
-   * List Header 的 日/周/月/年/分类 分组切换。
-   *
-   * 条目 <a data-entry> 是同一批节点换个顺序挂（本来就按时间倒序，
-   * 各种分组都不用重排），只有组头和分隔线是克隆/新建的。
-   * 只作用于当前分页的条目 —— 翻页后各页各自分组，和「年」视图口径一致。
-   */
-  const root = document.querySelector<HTMLElement>('[data-timeline]')
-  const pills = [...document.querySelectorAll<HTMLElement>('[data-group]')]
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    /**
+     * List Header 的 日/周/月/年/分类 分组切换。
+     *
+     * 条目 <a data-entry> 是同一批节点换个顺序挂（本来就按时间倒序，
+     * 各种分组都不用重排），只有组头和分隔线是克隆/新建的。
+     * 只作用于当前分页的条目 —— 翻页后各页各自分组，和「年」视图口径一致。
+     */
+    const root = document.querySelector<HTMLElement>('[data-timeline]')
+    const pills = [...document.querySelectorAll<HTMLElement>('[data-group]')]
 
-  if (root && pills.length > 0) {
-    const entries = [...root.querySelectorAll<HTMLElement>('[data-entry]')]
-    const headerTpl = root.querySelector<HTMLElement>('[data-tl-header]')?.cloneNode(true) as
-      | HTMLElement
-      | undefined
+    if (root && pills.length > 0) {
+      const entries = [...root.querySelectorAll<HTMLElement>('[data-entry]')]
+      const headerTpl = root.querySelector<HTMLElement>('[data-tl-header]')?.cloneNode(true) as
+        | HTMLElement
+        | undefined
 
-    if (entries.length > 0 && headerTpl) {
-      // ISO 周：周四所在的周年 + 周序号
-      const isoWeek = (d: Date): [number, number] => {
-        const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-        const day = t.getUTCDay() || 7
-        t.setUTCDate(t.getUTCDate() + 4 - day)
-        const yearStart = Date.UTC(t.getUTCFullYear(), 0, 1)
-        return [t.getUTCFullYear(), Math.ceil(((t.getTime() - yearStart) / 86_400_000 + 1) / 7)]
-      }
-
-      const keyAndLabel = (mode: string, el: HTMLElement): [string, string] => {
-        const d = new Date(el.dataset.date ?? 0)
-        const y = d.getFullYear()
-        switch (mode) {
-          case 'day':
-            return [`${y}-${d.getMonth()}-${d.getDate()}`, `${y} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`]
-          case 'week': {
-            const [wy, w] = isoWeek(d)
-            return [`${wy}-w${w}`, `${wy} 年第 ${w} 周`]
-          }
-          case 'month':
-            return [`${y}-${d.getMonth()}`, `${y} 年 ${d.getMonth() + 1} 月`]
-          case 'cat': {
-            const cat = el.dataset.cat ?? '未分类'
-            return [cat, cat]
-          }
-          default:
-            return [String(y), `${y}年`]
-        }
-      }
-
-      const regroup = (mode: string) => {
-        // 桶按条目出现顺序建（条目本身是时间倒序）
-        const buckets = new Map<string, { label: string; items: HTMLElement[] }>()
-        for (const el of entries) {
-          const [key, label] = keyAndLabel(mode, el)
-          const bucket = buckets.get(key)
-          if (bucket) bucket.items.push(el)
-          else buckets.set(key, { label, items: [el] })
+      if (entries.length > 0 && headerTpl) {
+        // ISO 周：周四所在的周年 + 周序号
+        const isoWeek = (d: Date): [number, number] => {
+          const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+          const day = t.getUTCDay() || 7
+          t.setUTCDate(t.getUTCDate() + 4 - day)
+          const yearStart = Date.UTC(t.getUTCFullYear(), 0, 1)
+          return [t.getUTCFullYear(), Math.ceil(((t.getTime() - yearStart) / 86_400_000 + 1) / 7)]
         }
 
-        const next: HTMLElement[] = []
-        let i = 0
-        for (const [key, bucket] of buckets) {
-          if (i > 0) {
-            const sep = document.createElement('span')
-            sep.dataset.tlSep = ''
-            sep.className = 'h-[1px] w-full shrink-0 bg-hairline'
-            next.push(sep)
+        const keyAndLabel = (mode: string, el: HTMLElement): [string, string] => {
+          const d = new Date(el.dataset.date ?? 0)
+          const y = d.getFullYear()
+          switch (mode) {
+            case 'day':
+              return [`${y}-${d.getMonth()}-${d.getDate()}`, `${y} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`]
+            case 'week': {
+              const [wy, w] = isoWeek(d)
+              return [`${wy}-w${w}`, `${wy} 年第 ${w} 周`]
+            }
+            case 'month':
+              return [`${y}-${d.getMonth()}`, `${y} 年 ${d.getMonth() + 1} 月`]
+            case 'cat': {
+              const cat = el.dataset.cat ?? '未分类'
+              return [cat, cat]
+            }
+            default:
+              return [String(y), `${y}年`]
           }
-          const header = headerTpl.cloneNode(true) as HTMLElement
-          // 锚点 id 只在「年」视图有意义（年表面板跳的就是它）
-          header.id = mode === 'year' ? `y-${key}` : ''
-          header.querySelector('[data-tl-title]')!.textContent =
-            mode === 'year' ? `${key}年` : bucket.label
-          header.querySelector('[data-tl-count]')!.textContent = `${bucket.items.length} 篇文章`
-          next.push(header, ...bucket.items)
-          i += 1
         }
-        root.replaceChildren(...next)
-      }
 
-      for (const pill of pills) {
-        pill.addEventListener('click', () => {
-          for (const p of pills) p.setAttribute('aria-pressed', String(p === pill))
-          regroup(pill.dataset.group!)
-        })
+        const regroup = (mode: string) => {
+          // 桶按条目出现顺序建（条目本身是时间倒序）
+          const buckets = new Map<string, { label: string; items: HTMLElement[] }>()
+          for (const el of entries) {
+            const [key, label] = keyAndLabel(mode, el)
+            const bucket = buckets.get(key)
+            if (bucket) bucket.items.push(el)
+            else buckets.set(key, { label, items: [el] })
+          }
+
+          const next: HTMLElement[] = []
+          let i = 0
+          for (const [key, bucket] of buckets) {
+            if (i > 0) {
+              const sep = document.createElement('span')
+              sep.dataset.tlSep = ''
+              sep.className = 'h-[1px] w-full shrink-0 bg-hairline'
+              next.push(sep)
+            }
+            const header = headerTpl.cloneNode(true) as HTMLElement
+            // 锚点 id 只在「年」视图有意义（年表面板跳的就是它）
+            header.id = mode === 'year' ? `y-${key}` : ''
+            header.querySelector('[data-tl-title]')!.textContent =
+              mode === 'year' ? `${key}年` : bucket.label
+            header.querySelector('[data-tl-count]')!.textContent = `${bucket.items.length} 篇文章`
+            next.push(header, ...bucket.items)
+            i += 1
+          }
+          root.replaceChildren(...next)
+        }
+
+        for (const pill of pills) {
+          pill.addEventListener('click', () => {
+            for (const p of pills) p.setAttribute('aria-pressed', String(p === pill))
+            regroup(pill.dataset.group!)
+          })
+        }
       }
     }
-  }
+  })
 </script>

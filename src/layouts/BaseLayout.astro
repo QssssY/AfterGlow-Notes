@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions'
 import TabBar from '~/components/mobile/TabBar.astro'
 import VerticalRail from '~/components/VerticalRail.astro'
 import { site } from '~/config'
@@ -69,6 +70,13 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
 
+    <!--
+      View Transitions 客户端路由 —— 页面切换不再整页刷新，交叉淡入。
+      代价是全站脚本都改成了 astro:page-load 初始化（模块只执行一次，
+      每次换页要在新 DOM 上重绑），新增脚本必须沿用这个模式。
+    -->
+    <ClientRouter />
+
     <!-- 首屏渲染前同步应用主题，避免暗色下闪白 -->
     <script is:inline>
       ;((d) => {
@@ -118,8 +126,6 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的单个循环按钮
       const ORDER = ['light', 'dark', 'auto']
       const query = matchMedia('(prefers-color-scheme: dark)')
-      const chips = document.querySelectorAll<HTMLElement>('[data-theme-choice]')
-
       /**
        * 切换瞬间给全站颜色挂一个短过渡（见 global.css 的 .theme-anim）。
        * 类是临时的：常驻会让所有 hover 的颜色反馈都慢半拍。
@@ -140,26 +146,40 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         )
         document.documentElement.dataset.theme = choice
         localStorage.setItem('theme', choice)
-        for (const chip of chips) {
+        // 每次现查：客户端路由换页后是全新的一批控件
+        for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
           chip.setAttribute('aria-checked', String(chip.dataset.themeChoice === choice))
         }
       }
 
       const current = () => localStorage.getItem('theme') ?? 'light'
-      apply(current())
-
-      for (const chip of chips) {
-        chip.addEventListener('click', () => apply(chip.dataset.themeChoice!, true))
-      }
-
-      for (const button of document.querySelectorAll('[data-theme-cycle]')) {
-        button.addEventListener('click', () => {
-          apply(ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length]!, true)
-        })
-      }
 
       query.addEventListener('change', () => {
         if (current() === 'auto') apply('auto')
+      })
+
+      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类补回来，暗色下不闪白
+      document.addEventListener('astro:after-swap', () => {
+        const choice = current()
+        document.documentElement.classList.toggle(
+          'dark',
+          choice === 'dark' || (choice === 'auto' && query.matches),
+        )
+        document.documentElement.dataset.theme = choice
+      })
+
+      // 首次加载与每次换页都会触发：在当前 DOM 上重绑控件
+      document.addEventListener('astro:page-load', () => {
+        apply(current())
+
+        for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
+          chip.addEventListener('click', () => apply(chip.dataset.themeChoice!, true))
+        }
+        for (const button of document.querySelectorAll('[data-theme-cycle]')) {
+          button.addEventListener('click', () => {
+            apply(ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length]!, true)
+          })
+        }
       })
     </script>
 

@@ -12,18 +12,30 @@
 ---
 
 <script>
-  const cards = [...document.querySelectorAll<HTMLElement>('[data-gh]')]
+  const fmt = new Intl.NumberFormat('en-US', { notation: 'compact' })
 
-  if (cards.length) {
+  // 客户端路由下换页会反复触发：拉到过的仓库进内存缓存，
+  // 一次会话最多向 GitHub 发一轮请求，不吃访客的限流配额
+  const cache = new Map<string, { repo: string; stars: number }>()
+
+  const fetchOne = (repo: string) =>
+    cache.has(repo)
+      ? Promise.resolve(cache.get(repo)!)
+      : fetch(`https://api.github.com/repos/${repo}`, { referrerPolicy: 'no-referrer' })
+          .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+          .then((data) => {
+            const entry = { repo, stars: Number(data.stargazers_count) }
+            cache.set(repo, entry)
+            return entry
+          })
+          // 限流、离线、仓库转私有都会走到这里：返回 null，保留构建时的数字（下次换页重试）
+          .catch(() => null)
+
+  document.addEventListener('astro:page-load', () => {
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-gh]')]
+    if (cards.length === 0) return
+
     const names = [...new Set(cards.map((card) => card.dataset.gh!))]
-    const fmt = new Intl.NumberFormat('en-US', { notation: 'compact' })
-
-    const fetchOne = (repo: string) =>
-      fetch(`https://api.github.com/repos/${repo}`, { referrerPolicy: 'no-referrer' })
-        .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-        .then((data) => ({ repo, stars: Number(data.stargazers_count) }))
-        // 限流、离线、仓库转私有都会走到这里：返回 null，保留构建时的数字
-        .catch(() => null)
 
     Promise.all(names.map(fetchOne)).then((results) => {
       let total = 0
@@ -48,5 +60,5 @@
         }
       }
     })
-  }
+  })
 </script>

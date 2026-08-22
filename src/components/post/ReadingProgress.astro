@@ -11,16 +11,22 @@
 </div>
 
 <script>
-  const bar = document.querySelector<HTMLElement>('[data-reading-bar]')
+  // 客户端路由：window 上的监听只挂一次（模块只执行一次），
+  // 换页后由 astro:page-load 刷新 bar 的引用 —— 不在的页面上 bar 为 null，直接无操作
+  let bar: HTMLElement | null = null
 
-  if (bar) {
-    const update = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const pct = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0
-      bar.style.width = `${pct}%`
-    }
-    addEventListener('scroll', update, { passive: true })
-    addEventListener('resize', update)
-    update()
+  const update = () => {
+    if (!bar) return
+    const max = document.documentElement.scrollHeight - window.innerHeight
+    const pct = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0
+    bar.style.width = `${pct}%`
   }
+
+  addEventListener('scroll', update, { passive: true })
+  addEventListener('resize', update)
+
+  document.addEventListener('astro:page-load', () => {
+    bar = document.querySelector<HTMLElement>('[data-reading-bar]')
+    update()
+  })
 </script>

@@ -115,29 +115,32 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
   </div>
 
   <script>
-    // 滑动高亮：hover / focus 到哪个条目，胶囊就弹到哪；离开整组淡出
-    for (const navEl of document.querySelectorAll<HTMLElement>('[data-nav]')) {
-      const glow = navEl.querySelector<HTMLElement>('[data-nav-glow]')
-      const items = [...navEl.querySelectorAll<HTMLElement>('a')]
-      if (!glow || items.length === 0) continue
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+      // 滑动高亮：hover / focus 到哪个条目，胶囊就弹到哪；离开整组淡出
+      for (const navEl of document.querySelectorAll<HTMLElement>('[data-nav]')) {
+        const glow = navEl.querySelector<HTMLElement>('[data-nav-glow]')
+        const items = [...navEl.querySelectorAll<HTMLElement>('a')]
+        if (!glow || items.length === 0) continue
 
-      const moveTo = (item: HTMLElement) => {
-        glow.style.top = `${item.offsetTop}px`
-        glow.style.height = `${item.offsetHeight}px`
-        glow.style.opacity = '1'
-      }
-      const hide = () => {
-        glow.style.opacity = '0'
-      }
+        const moveTo = (item: HTMLElement) => {
+          glow.style.top = `${item.offsetTop}px`
+          glow.style.height = `${item.offsetHeight}px`
+          glow.style.opacity = '1'
+        }
+        const hide = () => {
+          glow.style.opacity = '0'
+        }
 
-      for (const item of items) {
-        item.addEventListener('mouseenter', () => moveTo(item))
-        item.addEventListener('focus', () => moveTo(item))
-        item.addEventListener('blur', hide)
+        for (const item of items) {
+          item.addEventListener('mouseenter', () => moveTo(item))
+          item.addEventListener('focus', () => moveTo(item))
+          item.addEventListener('blur', hide)
+        }
+        navEl.addEventListener('mouseleave', hide)
       }
-      navEl.addEventListener('mouseleave', hide)
-    }
-  </script>
+  })
+</script>
 
   <!-- Appearance Group -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">

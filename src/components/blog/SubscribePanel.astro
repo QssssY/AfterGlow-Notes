@@ -40,18 +40,21 @@ import Panel from '~/components/Panel.astro'
 </Panel>
 
 <script>
-  for (const form of document.querySelectorAll<HTMLFormElement>('[data-subscribe]')) {
-    form.addEventListener('submit', (event) => {
-      // 不让它按原生方式提交（那会刷新页面且什么也不发生）
-      event.preventDefault()
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    for (const form of document.querySelectorAll<HTMLFormElement>('[data-subscribe]')) {
+      form.addEventListener('submit', (event) => {
+        // 不让它按原生方式提交（那会刷新页面且什么也不发生）
+        event.preventDefault()
 
-      const to = form.dataset.to
-      const input = form.querySelector<HTMLInputElement>('input[name="email"]')
-      if (!to || !input) return
+        const to = form.dataset.to
+        const input = form.querySelector<HTMLInputElement>('input[name="email"]')
+        if (!to || !input) return
 
-      const subject = encodeURIComponent('订阅萤火录')
-      const body = encodeURIComponent(`请把这个邮箱加入订阅：${input.value}`)
-      location.href = `mailto:${to}?subject=${subject}&body=${body}`
-    })
-  }
+        const subject = encodeURIComponent('订阅萤火录')
+        const body = encodeURIComponent(`请把这个邮箱加入订阅：${input.value}`)
+        location.href = `mailto:${to}?subject=${subject}&body=${body}`
+      })
+    }
+  })
 </script>

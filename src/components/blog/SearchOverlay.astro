@@ -40,27 +40,29 @@ import { Icon } from 'astro-icon/components'
 </div>
 
 <script>
-  const overlay = document.querySelector<HTMLElement>('[data-search-overlay]')
-  const input = document.querySelector<HTMLInputElement>('[data-search-input]')
-  const results = document.querySelector<HTMLElement>('[data-search-results]')
+  // 客户端路由：overlay/input/results 每次换页都是新的，由 astro:page-load 刷新引用；
+  // 全局快捷键和 pagefind 实例留在模块层（只挂/只加载一次，跨页复用）。
+  let overlay: HTMLElement | null = null
+  let input: HTMLInputElement | null = null
+  let results: HTMLElement | null = null
 
-  if (overlay && input && results) {
-    let pagefind: { search: (q: string) => Promise<{ results: { data: () => Promise<PageData> }[] }> }
-    type PageData = {
-      url: string
-      meta?: { title?: string; date?: string }
-      excerpt: string
-    }
+  let pagefind: { search: (q: string) => Promise<{ results: { data: () => Promise<PageData> }[] }> }
+  type PageData = {
+    url: string
+    meta?: { title?: string; date?: string }
+    excerpt: string
+  }
 
-    const note = (text: string) => {
-      results.innerHTML = ''
-      const p = document.createElement('p')
-      p.className = 'px-[8px] py-[10px] text-[13px] text-ink-muted'
-      p.textContent = text
-      results.append(p)
-    }
+  const note = (text: string) => {
+    if (!results) return
+    results.innerHTML = ''
+    const p = document.createElement('p')
+    p.className = 'px-[8px] py-[10px] text-[13px] text-ink-muted'
+    p.textContent = text
+    results.append(p)
+  }
 
-    async function load() {
+  async function load() {
       if (pagefind) return pagefind
       try {
         /*
@@ -82,23 +84,42 @@ import { Icon } from 'astro-icon/components'
       }
     }
 
-    const open = async () => {
-      overlay.hidden = false
-      document.body.style.overflow = 'hidden'
-      input.focus()
-      await load()
-    }
+  const open = async () => {
+    if (!overlay || !input) return
+    overlay.hidden = false
+    document.body.style.overflow = 'hidden'
+    input.focus()
+    await load()
+  }
 
-    const close = () => {
-      overlay.hidden = true
-      document.body.style.overflow = ''
+  const close = () => {
+    if (!overlay) return
+    overlay.hidden = true
+    document.body.style.overflow = ''
+  }
+
+  // 全局快捷键只挂一次；元素引用每次换页都刷新，页面上没有搜索时是 no-op
+  addEventListener('keydown', (e) => {
+    if (!overlay) return
+    if (e.key === 'Escape' && !overlay.hidden) close()
+    // Ctrl/Cmd + K 唤起
+    if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      overlay.hidden ? open() : close()
     }
+  })
+
+  document.addEventListener('astro:page-load', () => {
+    overlay = document.querySelector<HTMLElement>('[data-search-overlay]')
+    input = document.querySelector<HTMLInputElement>('[data-search-input]')
+    results = document.querySelector<HTMLElement>('[data-search-results]')
+    if (!overlay || !input || !results) return
 
     let timer: number
     input.addEventListener('input', () => {
       clearTimeout(timer)
       timer = window.setTimeout(async () => {
-        const query = input.value.trim()
+        const query = input!.value.trim()
         if (!query) return note('输入关键词开始搜索')
 
         const api = await load()
@@ -108,6 +129,7 @@ import { Icon } from 'astro-icon/components'
         if (found.results.length === 0) return note(`没有匹配「${query}」的文章`)
 
         const pages = await Promise.all(found.results.slice(0, 8).map((r) => r.data()))
+        if (!results) return
         results.innerHTML = ''
         for (const page of pages) {
           const link = document.createElement('a')
@@ -139,13 +161,5 @@ import { Icon } from 'astro-icon/components'
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) close()
     })
-    addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !overlay.hidden) close()
-      // Ctrl/Cmd + K 唤起
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        overlay.hidden ? open() : close()
-      }
-    })
-  }
+  })
 </script>

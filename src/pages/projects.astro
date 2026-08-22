@@ -107,34 +107,37 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
 </BaseLayout>
 
 <script>
-  const pills = [...document.querySelectorAll<HTMLElement>('[data-filter]')]
-  // 含主推卡：它也带 data-project，筛到别的技术栈时一起收起来
-  const cards = [...document.querySelectorAll<HTMLElement>('[data-project]')]
-  const grid = document.querySelector<HTMLElement>('[data-project-grid]')
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    const pills = [...document.querySelectorAll<HTMLElement>('[data-filter]')]
+    // 含主推卡：它也带 data-project，筛到别的技术栈时一起收起来
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-project]')]
+    const grid = document.querySelector<HTMLElement>('[data-project-grid]')
 
-  if (pills.length && cards.length) {
-    const ALL = pills[0]!.dataset.filter
+    if (pills.length && cards.length) {
+      const ALL = pills[0]!.dataset.filter
 
-    for (const pill of pills) {
-      pill.addEventListener('click', () => {
-        const want = pill.dataset.filter
-        for (const card of cards) {
-          card.hidden = !(want === ALL || card.dataset.stack === want)
-        }
-        for (const p of pills) p.setAttribute('aria-pressed', String(p.dataset.filter === want))
-      })
+      for (const pill of pills) {
+        pill.addEventListener('click', () => {
+          const want = pill.dataset.filter
+          for (const card of cards) {
+            card.hidden = !(want === ALL || card.dataset.stack === want)
+          }
+          for (const p of pills) p.setAttribute('aria-pressed', String(p.dataset.filter === want))
+        })
+      }
     }
-  }
 
-  // 网格 / 列表：只切容器上的 data-view，宽度由 group-data 变体接管
-  const toggles = [...document.querySelectorAll<HTMLElement>('[data-view-set]')]
-  if (grid && toggles.length) {
-    for (const toggle of toggles) {
-      toggle.addEventListener('click', () => {
-        const view = toggle.dataset.viewSet!
-        grid.dataset.view = view
-        for (const t of toggles) t.setAttribute('aria-pressed', String(t.dataset.viewSet === view))
-      })
+    // 网格 / 列表：只切容器上的 data-view，宽度由 group-data 变体接管
+    const toggles = [...document.querySelectorAll<HTMLElement>('[data-view-set]')]
+    if (grid && toggles.length) {
+      for (const toggle of toggles) {
+        toggle.addEventListener('click', () => {
+          const view = toggle.dataset.viewSet!
+          grid.dataset.view = view
+          for (const t of toggles) t.setAttribute('aria-pressed', String(t.dataset.viewSet === view))
+        })
+      }
     }
-  }
+  })
 </script>

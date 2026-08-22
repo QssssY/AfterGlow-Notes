@@ -38,31 +38,35 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
 }
 
 <script>
-  // 滚动高亮：取当前视口内最靠上的标题
-  const links = [...document.querySelectorAll<HTMLElement>('[data-toc-link]')]
+  // 滚动高亮：取当前视口内最靠上的标题。
+  // 客户端路由：scroll 监听只挂一次，换页后由 astro:page-load 刷新元素引用
+  let links: HTMLElement[] = []
+  let headings: HTMLElement[] = []
 
-  if (links.length > 0) {
-    const headings = links
+  const setActive = (slug: string) => {
+    for (const link of links) {
+      if (link.dataset.tocLink === slug) link.setAttribute('data-active', '')
+      else link.removeAttribute('data-active')
+    }
+  }
+
+  const update = () => {
+    if (headings.length === 0) return
+    let current = headings[0]?.id
+    for (const heading of headings) {
+      if (heading.getBoundingClientRect().top <= 120) current = heading.id
+      else break
+    }
+    if (current) setActive(current)
+  }
+
+  addEventListener('scroll', update, { passive: true })
+
+  document.addEventListener('astro:page-load', () => {
+    links = [...document.querySelectorAll<HTMLElement>('[data-toc-link]')]
+    headings = links
       .map((link) => document.getElementById(link.dataset.tocLink!))
       .filter((el): el is HTMLElement => el !== null)
-
-    const setActive = (slug: string) => {
-      for (const link of links) {
-        if (link.dataset.tocLink === slug) link.setAttribute('data-active', '')
-        else link.removeAttribute('data-active')
-      }
-    }
-
-    const update = () => {
-      let current = headings[0]?.id
-      for (const heading of headings) {
-        if (heading.getBoundingClientRect().top <= 120) current = heading.id
-        else break
-      }
-      if (current) setActive(current)
-    }
-
-    addEventListener('scroll', update, { passive: true })
     update()
-  }
+  })
 </script>
