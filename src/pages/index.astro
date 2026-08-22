@@ -6,13 +6,13 @@ import Sidebar from '~/components/Sidebar.astro'
 import ArtCard from '~/components/home/ArtCard.astro'
 import ClockCard from '~/components/home/ClockCard.astro'
 import GreetingCard from '~/components/home/GreetingCard.astro'
+import HotPostsCard from '~/components/home/HotPostsCard.astro'
 import LikeWidget from '~/components/home/LikeWidget.astro'
 import NowCard from '~/components/home/NowCard.astro'
 import NowPlayingCard from '~/components/home/NowPlayingCard.astro'
 import ProjectsSection from '~/components/home/ProjectsSection.astro'
 import ReadingCard from '~/components/home/ReadingCard.astro'
 import SnapshotStrip from '~/components/home/SnapshotStrip.astro'
-import TagCloudCard from '~/components/home/TagCloudCard.astro'
 import ToolsBar from '~/components/home/ToolsBar.astro'
 import UptimeCard from '~/components/home/UptimeCard.astro'
 import FeaturedCard from '~/components/mobile/FeaturedCard.astro'
@@ -46,11 +46,12 @@ const enriched = posts.map((post) => {
 // 首页不再有文章列表（设计稿这轮换成了 此刻 Card），只有移动端末尾那张主推卡用得到
 const featured = enriched[0]
 
-const counts = new Map<string, number>()
-for (const post of posts) {
-  for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
-}
-const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+// 「大家在看」的备选池：全部文章（新→旧），slug 与文章页阅读上报用的一致（post.id）
+const hotPool = posts.map((post) => ({
+  slug: post.id,
+  title: post.data.title,
+  href: `/posts/${post.id}`,
+}))
 
 // 桌面区块间距：Body 顶 48（设计稿是 72，用户嫌顶上空得慌，全站统一收到 48）；
 // Body 底 → Projects 34；Projects 底 → Footer 30（取自设计稿绝对坐标差）
@@ -74,7 +75,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
     <div class="flex flex-1 flex-col items-start gap-[24px] self-stretch">
       <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" grow />
       <NowCard />
-      <TagCloudCard tags={tags} />
+      {/* 原「常写的标签」换成阅读榜（用户点名标签计数没意义），数据是 Go 后端真实聚合 */}
+      <HotPostsCard posts={hotPool} />
       <ToolsBar />
     </div>
 

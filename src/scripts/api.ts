@@ -58,3 +58,11 @@ export const postView = (slug: string) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ slug, visitor: visitorId() }),
   })
+
+export interface HotItem {
+  slug: string
+  count: number
+}
+
+/** 阅读数最高的前 N 篇（首页「大家在看」卡） */
+export const getHot = (limit = 3) => req<{ items: HotItem[] }>(`/api/hot?limit=${limit}`)

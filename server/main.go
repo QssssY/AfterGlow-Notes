@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -99,6 +100,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/likes", s.cors(s.handleLikes))
 	mux.HandleFunc("/api/views", s.cors(s.handleViews))
+	mux.HandleFunc("/api/hot", s.cors(s.handleHot))
 	mux.HandleFunc("/api/github", s.cors(s.handleGithub))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("ok"))
@@ -360,4 +362,44 @@ func (s *server) handleViews(w http.ResponseWriter, r *http.Request) {
 	default:
 		fail(w, http.StatusMethodNotAllowed, "只支持 GET / POST")
 	}
+}
+
+// ---- 热门文章 ----
+
+// handleHot 返回阅读数最高的前 N 篇（首页「大家在看」卡用）。
+// 只出聚合计数，不带任何 visitor 维度；'site' 是全站点赞的保留 slug，不算文章。
+func (s *server) handleHot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		fail(w, http.StatusMethodNotAllowed, "只支持 GET")
+		return
+	}
+	limit := 3
+	if q := r.URL.Query().Get("limit"); q != "" {
+		if n, err := strconv.Atoi(q); err == nil && n >= 1 && n <= 10 {
+			limit = n
+		}
+	}
+	rows, err := s.db.Query(
+		`SELECT slug, COUNT(*) AS n FROM views WHERE slug != 'site'
+		 GROUP BY slug ORDER BY n DESC, slug LIMIT ?`, limit)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "查询失败")
+		return
+	}
+	defer rows.Close()
+
+	type hotItem struct {
+		Slug  string `json:"slug"`
+		Count int    `json:"count"`
+	}
+	items := []hotItem{}
+	for rows.Next() {
+		var it hotItem
+		if err := rows.Scan(&it.Slug, &it.Count); err != nil {
+			fail(w, http.StatusInternalServerError, "查询失败")
+			return
+		}
+		items = append(items, it)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }

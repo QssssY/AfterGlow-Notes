@@ -119,19 +119,47 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
       <BilibiliIcon class="size-[15px] shrink-0 text-ink-soft" />
     </a>
 
-    <a
-      href={`mailto:${email}`}
-      aria-label="写信给我"
-      title={`写信给我 · ${email}`}
-      class="hairline-box flex h-[30px] w-fit shrink-0 flex-row items-center justify-center rounded-[12px] px-[8px]"
+    <!-- 点击复制邮箱（用户点名，比拉起邮件客户端友好）；复制成功图标换对勾 1.6s，
+         剪贴板不可用（非 HTTPS / 被拒）时退回 mailto 老行为 -->
+    <button
+      type="button"
+      data-copy-mail
+      aria-label="复制邮箱"
+      title={`点击复制邮箱 · ${email}`}
+      class="hairline-box flex h-[30px] w-fit shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] px-[8px]"
     >
-      <Icon name="lucide:mail" class="size-[15px] shrink-0 text-ink-soft" />
-    </a>
+      <Icon name="lucide:mail" data-mail-icon class="size-[15px] shrink-0 text-ink-soft" />
+      <Icon name="lucide:check" data-mail-ok class="hidden size-[15px] shrink-0 text-brand-ink" />
+    </button>
   </div>
 
   <script>
+  import { email } from '~/config'
+
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
+      // 邮件钮 = 复制邮箱：成功换对勾 1.6s；剪贴板不可用退回 mailto
+      for (const btn of document.querySelectorAll<HTMLElement>('[data-copy-mail]')) {
+        const mailIcon = btn.querySelector<HTMLElement>('[data-mail-icon]')
+        const okIcon = btn.querySelector<HTMLElement>('[data-mail-ok]')
+        let timer = 0
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(email)
+          } catch {
+            location.href = `mailto:${email}`
+            return
+          }
+          mailIcon?.classList.add('hidden')
+          okIcon?.classList.remove('hidden')
+          clearTimeout(timer)
+          timer = window.setTimeout(() => {
+            okIcon?.classList.add('hidden')
+            mailIcon?.classList.remove('hidden')
+          }, 1600)
+        })
+      }
+
       // 滑动高亮：hover / focus 到哪个条目，胶囊就弹到哪；离开整组淡出
       for (const navEl of document.querySelectorAll<HTMLElement>('[data-nav]')) {
         const glow = navEl.querySelector<HTMLElement>('[data-nav-glow]')

@@ -1,0 +1,116 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  /** 全部文章（新→旧），slug 与阅读上报用的一致（post.id） */
+  posts: { slug: string; title: string; href: string }[]
+}
+
+const { posts } = Astro.props
+const initial = posts.slice(0, 3)
+// 内联 JSON 给脚本换榜用；转义 '<' 防止标题里出现 '</script>' 截断文档
+const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
+---
+
+<!--
+  大家在看 · 首页中栏（取代原「常写的标签」—— 标签计数没有信息量，用户点名换掉）。
+  阅读数是 Go 后端的真实聚合（/api/hot）：先按最新三篇服务端渲染兜底，
+  数据到了再原位换成阅读榜；后端不在 / 数据不足时保持兜底且不显示数字 —— 不编数字。
+-->
+<div
+  data-hot
+  class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[30px] p-[24px]"
+>
+  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">大家在看</span>
+
+  <div class="-mx-[10px] flex w-[calc(100%+20px)] shrink-0 flex-col items-start gap-[2px]">
+    {
+      initial.map((post, i) => (
+        <a
+          data-hot-row
+          href={post.href}
+          class="box-border flex w-full flex-row items-center gap-[10px] rounded-[14px] px-[10px] py-[7px] transition-colors hover:bg-chip"
+        >
+          <span
+            class:list={[
+              'w-[18px] shrink-0 text-[11px] font-bold tabular-nums',
+              i === 0 ? 'text-brand-ink' : 'text-ink-muted',
+            ]}
+          >
+            {`0${i + 1}`}
+          </span>
+          <span data-hot-title class="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
+            {post.title}
+          </span>
+          <span
+            data-hot-views
+            hidden
+            class="flex shrink-0 flex-row items-center gap-[4px] text-[11px] tabular-nums text-ink-muted"
+          >
+            <Icon name="lucide:eye" class="size-[12px] shrink-0" />
+            <span data-hot-count />
+          </span>
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<script type="application/json" data-hot-posts set:html={blob} />
+
+<script>
+  import { getHot } from '~/scripts/api'
+
+  interface PostRef {
+    slug: string
+    title: string
+    href: string
+  }
+
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    const card = document.querySelector<HTMLElement>('[data-hot]')
+    const blob = document.querySelector<HTMLScriptElement>('script[data-hot-posts]')
+    if (!card || !blob) return
+
+    let posts: PostRef[] = []
+    try {
+      posts = JSON.parse(blob.textContent ?? '[]')
+    } catch {
+      return
+    }
+    const rows = [...card.querySelectorAll<HTMLAnchorElement>('[data-hot-row]')]
+    if (rows.length === 0 || posts.length === 0) return
+
+    getHot(rows.length).then((res) => {
+      if (!res || res.items.length === 0) return // 后端不在：保持最新三篇兜底
+
+      // 榜单里可能有已删除文章的 slug（构建里没有对应页），跳过；
+      // 不足三条时拿最新文章补位，补位的不显示数字
+      const bySlug = new Map(posts.map((p) => [p.slug, p]))
+      const list: (PostRef & { count: number })[] = []
+      for (const item of res.items) {
+        const post = bySlug.get(item.slug)
+        if (post && item.count > 0) list.push({ ...post, count: item.count })
+      }
+      for (const post of posts) {
+        if (list.length >= rows.length) break
+        if (!list.some((x) => x.slug === post.slug)) list.push({ ...post, count: 0 })
+      }
+
+      rows.forEach((row, i) => {
+        const item = list[i]
+        if (!item) return
+        row.href = item.href
+        const title = row.querySelector<HTMLElement>('[data-hot-title]')
+        if (title) title.textContent = item.title
+        const views = row.querySelector<HTMLElement>('[data-hot-views]')
+        const count = row.querySelector<HTMLElement>('[data-hot-count]')
+        if (views && count && item.count > 0) {
+          count.textContent = item.count.toLocaleString('en-US')
+          views.hidden = false
+        }
+      })
+    })
+  })
+</script>

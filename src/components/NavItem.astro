@@ -25,17 +25,21 @@ const { label, icon: iconName, href, active = false, full = false } = Astro.prop
   ]}
   aria-current={active ? 'page' : undefined}
 >
+  <!-- 悬停配色照搬 YYsuni nav-card：图标染品牌色、文字加深加粗（与激活态同款），
+       胶囊只给底色，颜色变化由条目自己给 —— 之前 ink-soft→ink 的差距肉眼看不出（用户点名） -->
   <Icon
     name={`lucide:${iconName}`}
     class:list={[
       'size-[26px] shrink-0 transition-colors',
-      active ? 'text-brand' : 'text-ink-soft group-hover/nav:text-ink',
+      active ? 'text-brand' : 'text-ink-soft group-hover/nav:text-brand',
     ]}
   />
   <span
     class:list={[
       'text-[15px] whitespace-nowrap transition-colors',
-      active ? 'font-medium text-ink' : 'font-normal text-ink-soft group-hover/nav:text-ink',
+      active
+        ? 'font-medium text-ink'
+        : 'font-normal text-ink-soft group-hover/nav:font-medium group-hover/nav:text-ink',
     ]}>{label}</span
   >
 </a>

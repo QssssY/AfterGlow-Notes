@@ -212,7 +212,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
    * 所以 UI 引用是「绑定组」数组：所有卡共享这一个 Audio，状态全量广播 ——
    * 谁可见谁就是播放器，切设备宽度也不丢状态。
    */
-  type LrcLine = { t: number; text: string }
+  /** end 是这句「唱完」的时刻（见 loadLrc 里的估算），亮字渐变只跑 t→end 这段 */
+  type LrcLine = { t: number; text: string; end: number }
   /** offset：这首歌词整体快/慢时的微调（秒），正值=歌词推迟出现（管理端可改） */
   type Track = { title: string; artist?: string; src: string; lrc?: string; offset?: number }
 
@@ -294,7 +295,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
             for (const row of text.split('\n')) {
               const m = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/.exec(row.trim())
               if (m && m[3]!.trim())
-                raw.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim() })
+                raw.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim(), end: 0 })
             }
             raw.sort((a, b) => a.t - b.t)
             // QQ/网易导出的 lrc 尾部常挂人员表滚屏（Engineered by…/乐手名单），
@@ -305,7 +306,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
             if (raw.length - k >= 3) raw.length = k
             // 首尾散兵：冒号两侧带空格的「key : value」（真歌词几乎不这么写）、
             // 中文制作字段紧贴冒号（监制：Alvin）、/ ℗ © 开头的版权续行
-            return raw.filter(
+            const lines = raw.filter(
               (l) =>
                 !/ [:：] /.test(l.text) &&
                 !/^(作词|作曲|编曲|制作人|监制|录音|混音|母带|和声|出品|发行|OP|SP)[:：]/i.test(
@@ -313,6 +314,24 @@ const trackLabel = (t: { title: string; artist?: string }) =>
                 ) &&
                 !/^[/℗©]/.test(l.text),
             )
+            // 每句的「唱完时刻」end：正常句到下一句开始为止（跟真实演唱最贴）；
+            // 间隙明显超出这句该唱的时长（按本曲中位「每字秒速」估）就认定后面是
+            // 间奏/尾奏，亮字只跑演唱段 —— 否则最后一句会把整段尾奏都当成还在唱，
+            // 渐变慢速爬完全曲、跑马也跟着慢吞吞（用户点名的结尾走向不对）
+            const rates: number[] = []
+            for (let i = 0; i + 1 < lines.length; i += 1) {
+              const gap = lines[i + 1]!.t - lines[i]!.t
+              if (gap > 0.8 && gap < 8) rates.push(gap / Math.max(1, lines[i]!.text.length))
+            }
+            rates.sort((a, b) => a - b)
+            const perChar = rates[Math.floor(rates.length / 2)] ?? 0.42
+            for (let i = 0; i < lines.length; i += 1) {
+              const line = lines[i]!
+              const est = Math.max(2, line.text.length * perChar)
+              const gap = i + 1 < lines.length ? lines[i + 1]!.t - line.t : Infinity
+              line.end = line.t + (gap <= est * 1.8 ? gap : est)
+            }
+            return lines
           })
           .catch(() => []),
       )
@@ -322,7 +341,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       // 缓存里存原始时间轴，per-track 的歌词偏移在这里现算（管理端可调）
       if (tracks[cur]!.lrc === track.lrc) {
         const off = Number(track.offset) || 0
-        lrcLines = off ? lines.map((l) => ({ t: l.t + off, text: l.text })) : lines
+        lrcLines = off ? lines.map((l) => ({ t: l.t + off, text: l.text, end: l.end + off })) : lines
       }
       return lines
     })
@@ -377,12 +396,17 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       return
     }
     const curLine = lrcLines[idx]!
+    // 尾奏：最后一句唱完（亮满）停留 4s 后回显曲名 —— 与前奏对称，
+    // 明确告诉人「后面是伴奏，不是还在唱」；拖回句内会自然重新显示歌词
+    if (idx === lrcLines.length - 1 && now > curLine.end + 4) {
+      swapLine(trackLabel(tracks[cur]!))
+      return
+    }
     swapLine(curLine.text, true)
     // 只有正在展示这句时才推进度（淡切的 150ms 里 shownText 已是新句）
     if (shownText !== curLine.text) return
-    const next =
-      lrcLines[idx + 1]?.t ?? (Number.isFinite(player.duration) ? player.duration : curLine.t + 8)
-    const pct = Math.min(1, Math.max(0, (now - curLine.t) / Math.max(0.5, next - curLine.t)))
+    // 亮字与跑马只跑 t→end 的演唱段；间奏/尾奏里句子保持亮满，不再慢速爬
+    const pct = Math.min(1, Math.max(0, (now - curLine.t) / Math.max(0.5, curLine.end - curLine.t)))
     const sung = `${(pct * 100).toFixed(1)}%`
     for (const b of binds) {
       if (!b.lineText) continue
