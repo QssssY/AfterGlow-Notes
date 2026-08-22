@@ -11,9 +11,11 @@ interface Props {
   tone: 'fire' | 'leaf'
   /** 供筛选脚本读取 */
   category: string
+  /** 分页首屏之外的条目服务端先藏着，免得脚本接手前闪一整列 */
+  hidden?: boolean
 }
 
-const { title, desc, href, domain, icon, tone, category } = Astro.props
+const { title, desc, href, domain, icon, tone, category, hidden = false } = Astro.props
 ---
 
 <!-- Share Item · blog.pen FaObM -->
@@ -23,6 +25,7 @@ const { title, desc, href, domain, icon, tone, category } = Astro.props
   rel="noopener noreferrer"
   data-share-item
   data-category={category}
+  hidden={hidden}
   class="glass-row group box-border flex w-full flex-row items-center gap-[18px] rounded-[22px] p-[16px]"
 >
   <span
