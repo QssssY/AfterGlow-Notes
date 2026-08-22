@@ -1,31 +1,49 @@
 ---
 import { Icon } from 'astro-icon/components'
 import { nowPlaying } from '~/config'
+
+const tracks = nowPlaying.playlist
+const first = tracks[0]!
+const trackLabel = (t: { title: string; artist?: string }) =>
+  t.artist ? `${t.title} — ${t.artist}` : t.title
 ---
 
 <!--
-  Now Playing · blog.pen Home / Widget Row —— 现在是真的播放器。
+  Now Playing · blog.pen Home / Widget Row —— 播放列表版播放器。
 
-  视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 12 根等化条。
-  叠上去的能力（都不改布局）：
-  - 点卡播放 / 暂停（audio 实体在 BaseLayout，transition:persist 跨页不断播）
+  视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 等化条。
+  能力（都不改布局）：
+  - 点卡播放 / 暂停；多于一首时右上角出现「下一首」；放完自动接下一首、到底循环
   - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计稿的定格假谱
-  - 播放时曲名行逐句显示 LRC 歌词（淡切），暂停回到曲名
-  - 底部一条细进度线，点击 / 拖动调进度，hover 或播放时出现
-  - 播放态卡片带一圈品牌微光（见 global.css 的 [data-np] 规则）
+  - 曲名行播放时逐句显示 LRC 歌词，卡拉OK式从左往右点亮（唱到哪亮到哪）；
+    渐变挂在贴文本宽的内层 span 上 —— 挂整行容器会按容器宽算，分界线跑得比人声快
+  - 底部细进度线，点击 / 拖动调进度
 -->
 <div
   data-np
   role="button"
   tabindex="0"
   aria-pressed="false"
-  aria-label={`播放 ${nowPlaying.track}`}
+  aria-label={`播放 ${trackLabel(first)}`}
   title="点击播放 / 暂停"
   class="glass group/np relative box-border flex h-fit w-full shrink-0 cursor-pointer flex-col items-start justify-center gap-[10px] overflow-hidden rounded-[30px] p-[20px]"
 >
   <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
     <Icon name="lucide:audio-lines" class="size-[18px] shrink-0 text-brand" />
     <span class="flex-1 text-[12px] font-normal text-ink-soft">正在听</span>
+    {
+      tracks.length > 1 && (
+        <button
+          type="button"
+          data-np-next
+          aria-label="下一首"
+          title="下一首"
+          class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip"
+        >
+          <Icon name="lucide:skip-forward" class="size-[13px] shrink-0" />
+        </button>
+      )
+    }
     <!-- 播放/暂停的小提示角标，跟随状态换图标 -->
     <Icon
       name="lucide:play"
@@ -37,12 +55,13 @@ import { nowPlaying } from '~/config'
     />
   </div>
 
-  <!-- 播放时这一行变成当前歌词句（淡切），暂停回到曲名 -->
+  <!-- 外层管淡切与截断；内层贴文本宽，是卡拉OK渐变的载体 -->
   <span
     data-np-line
     class="w-full truncate text-[14px] font-medium text-ink transition-opacity duration-300"
-    >{nowPlaying.track}</span
   >
+    <span data-np-text>{trackLabel(first)}</span>
+  </span>
 
   <!-- 条形高度循环设计稿定格的那 12 个值（卡片占满整行后 12 根太稀，铺到 24 根）。
        未播放：CSS 假律动；播放（data-live）：JS 用实时频谱写 scaleY，见 global.css -->
@@ -77,23 +96,28 @@ import { nowPlaying } from '~/config'
    * 播放器控制层。音频实体是模块级的 new Audio() —— 不进 DOM：
    * Astro 换页 swap 后会重建 body 里所有媒体元素（reifyMediaElements），
    * 连 transition:persist 的都保不住；游离对象则完全不受影响，跨页不断播。
-   * 模块级状态（AudioContext / 频谱 / 歌词缓存）同理跨页存活，
+   * 模块级状态（曲目索引 / AudioContext / 频谱 / 各曲歌词缓存）同理跨页存活，
    * 每次 astro:page-load 只重绑当前页的 UI。
    */
   type LrcLine = { t: number; text: string }
+  type Track = { title: string; artist?: string; src: string; lrc?: string }
 
-  const player = new Audio(nowPlaying.src)
+  const tracks: readonly Track[] = nowPlaying.playlist
+  const trackLabel = (t: Track) => (t.artist ? `${t.title} — ${t.artist}` : t.title)
+
+  let cur = 0
+  const player = new Audio(tracks[0]!.src)
   player.preload = 'none'
 
   let audioCtx: AudioContext | undefined
   let analyser: AnalyserNode | undefined
   let freq: Uint8Array<ArrayBuffer> | undefined
-  let lrcPromise: Promise<LrcLine[]> | undefined
   let raf = 0
 
   // 当前页的 UI 引用（每次 page-load 刷新；不在首页时全为 null，各处自然 no-op）
   let card: HTMLElement | null = null
   let line: HTMLElement | null = null
+  let lineText: HTMLElement | null = null
   let bars: HTMLElement[] = []
   let progress: HTMLElement | null = null
 
@@ -115,54 +139,65 @@ import { nowPlaying } from '~/config'
     freq = new Uint8Array(analyser.frequencyBinCount)
   }
 
-  // 解析好的歌词常驻模块层，tick 每帧直接查，不用等 promise
+  // 歌词按曲缓存；lrcLines 始终是「当前曲」解析好的行，tick 每帧直接查
+  const lrcCache = new Map<string, Promise<LrcLine[]>>()
   let lrcLines: LrcLine[] = []
 
-  const loadLrc = () => {
-    lrcPromise ??= fetch(nowPlaying.lrc)
-      .then((res) => (res.ok ? res.text() : ''))
-      .then((text) => {
-        const lines: LrcLine[] = []
-        for (const row of text.split('\n')) {
-          const m = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/.exec(row.trim())
-          if (m && m[3]!.trim()) lines.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim() })
-        }
-        lrcLines = lines.sort((a, b) => a.t - b.t)
-        return lrcLines
-      })
-      .catch(() => [])
-    return lrcPromise
+  const loadLrc = (track: Track) => {
+    if (!track.lrc) {
+      lrcLines = []
+      return Promise.resolve([] as LrcLine[])
+    }
+    if (!lrcCache.has(track.lrc)) {
+      lrcCache.set(
+        track.lrc,
+        fetch(track.lrc)
+          .then((res) => (res.ok ? res.text() : ''))
+          .then((text) => {
+            const lines: LrcLine[] = []
+            for (const row of text.split('\n')) {
+              const m = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/.exec(row.trim())
+              if (m && m[3]!.trim())
+                lines.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim() })
+            }
+            return lines.sort((a, b) => a.t - b.t)
+          })
+          .catch(() => []),
+      )
+    }
+    return lrcCache.get(track.lrc)!.then((lines) => {
+      // 异步返回时可能已经切到别的歌了，别把旧歌词塞给新曲
+      if (tracks[cur]!.lrc === track.lrc) lrcLines = lines
+      return lines
+    })
   }
 
   /**
    * 歌词淡切：先淡出，换字后淡入。
-   * karaoke=true 时给这行挂上「唱到哪亮到哪」的渐变（见 global.css），
+   * karaoke=true 时给内层文本挂「唱到哪亮到哪」的渐变（见 global.css），
    * 每换一句从 0% 重新涨；显示曲名时摘掉渐变回普通墨色。
    */
   let shownText = ''
   const swapLine = (text: string, karaoke = false) => {
-    if (!line || shownText === text) return
+    if (!lineText || shownText === text) return
     shownText = text
-    line.style.opacity = '0'
+    if (line) line.style.opacity = '0'
     setTimeout(() => {
-      if (!line) return
-      line.textContent = text
-      line.style.setProperty('--sung', '0%')
-      line.toggleAttribute('data-karaoke', karaoke)
+      if (!line || !lineText) return
+      lineText.textContent = text
+      lineText.style.setProperty('--sung', '0%')
+      lineText.toggleAttribute('data-karaoke', karaoke)
       line.style.opacity = '1'
     }, 200)
   }
 
   /**
-   * 播放循环：每帧做两件事 ——
-   * ① 等化条映射低中频段（无频谱数据时条形回静态高度）
-   * ② 歌词：按当前时间定位句子，句内线性插值推进 --sung 渐变
-   *   （LRC 只有句级时间轴，拿不到逐字轴；均匀推进就是 QQ 音乐那种
-   *    「唱到哪亮到哪」的近似，句首句尾是准的）
+   * 播放循环：每帧 ① 等化条映射低中频段 ② 歌词定位当前句、
+   * 句内线性插值推进 --sung（LRC 只有句级时间轴，句首句尾精准、句中匀速）。
    */
   const tick = () => {
     const el = audio()
-    if (!el || el.paused) return
+    if (el.paused) return
     if (analyser && freq) {
       analyser.getByteFrequencyData(freq)
       const usable = Math.floor(freq.length * 0.7) // 高频段基本是空的，砍掉
@@ -176,7 +211,7 @@ import { nowPlaying } from '~/config'
       }
     }
 
-    if (line && lrcLines.length > 0) {
+    if (lineText && lrcLines.length > 0) {
       const now = el.currentTime
       let idx = -1
       for (let i = 0; i < lrcLines.length; i += 1) {
@@ -184,13 +219,14 @@ import { nowPlaying } from '~/config'
         else break
       }
       if (idx >= 0) {
-        const cur = lrcLines[idx]!
-        swapLine(cur.text, true)
+        const curLine = lrcLines[idx]!
+        swapLine(curLine.text, true)
         // 只有正在展示这句时才推进度（淡切的 200ms 里 shownText 已是新句）
-        if (shownText === cur.text) {
-          const next = lrcLines[idx + 1]?.t ?? (Number.isFinite(el.duration) ? el.duration : cur.t + 8)
-          const pct = Math.min(1, Math.max(0, (now - cur.t) / Math.max(0.5, next - cur.t)))
-          line.style.setProperty('--sung', `${(pct * 100).toFixed(1)}%`)
+        if (shownText === curLine.text) {
+          const next =
+            lrcLines[idx + 1]?.t ?? (Number.isFinite(el.duration) ? el.duration : curLine.t + 8)
+          const pct = Math.min(1, Math.max(0, (now - curLine.t) / Math.max(0.5, next - curLine.t)))
+          lineText.style.setProperty('--sung', `${(pct * 100).toFixed(1)}%`)
         }
       }
     }
@@ -204,13 +240,26 @@ import { nowPlaying } from '~/config'
     if (on) raf = requestAnimationFrame(tick)
     else {
       for (const bar of bars) bar.style.transform = ''
-      swapLine(nowPlaying.track)
+      swapLine(trackLabel(tracks[cur]!))
     }
+  }
+
+  /** 切到第 i 首（取模循环）。autoplay 用于自动接歌与「下一首」 */
+  const setTrack = (i: number, autoplay: boolean) => {
+    cur = ((i % tracks.length) + tracks.length) % tracks.length
+    const track = tracks[cur]!
+    lrcLines = []
+    shownText = ''
+    player.src = track.src
+    if (progress) progress.style.width = '0%'
+    card?.setAttribute('aria-label', `播放 ${trackLabel(track)}`)
+    swapLine(trackLabel(track))
+    loadLrc(track)
+    if (autoplay) player.play().catch(() => setLive(false))
   }
 
   const toggle = () => {
     const el = audio()
-    if (!el) return
     if (el.paused) {
       ensureGraph(el)
       el.play().catch(() => setLive(false))
@@ -222,16 +271,19 @@ import { nowPlaying } from '~/config'
   document.addEventListener('astro:page-load', () => {
     card = document.querySelector<HTMLElement>('[data-np]')
     line = card?.querySelector<HTMLElement>('[data-np-line]') ?? null
+    lineText = card?.querySelector<HTMLElement>('[data-np-text]') ?? null
     bars = card ? [...card.querySelectorAll<HTMLElement>('[data-eq] > span')] : []
     progress = card?.querySelector<HTMLElement>('[data-np-progress]') ?? null
     shownText = ''
 
-    const el = audio()
-    if (!card || !el) return
+    if (!card) return
 
-    // 回到首页时同步一次正在播放的状态
-    setLive(!el.paused)
-    if (!el.paused) loadLrc()
+    // 回到首页时同步一次正在播放的状态与当前曲名
+    setLive(!player.paused)
+    if (!player.paused) {
+      swapLine(trackLabel(tracks[cur]!))
+      loadLrc(tracks[cur]!)
+    }
 
     card.addEventListener('click', toggle)
     card.addEventListener('keydown', (e) => {
@@ -241,12 +293,18 @@ import { nowPlaying } from '~/config'
       }
     })
 
+    card.querySelector<HTMLElement>('[data-np-next]')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      ensureGraph(player)
+      setTrack(cur + 1, true)
+    })
+
     // 进度条：点击与拖动都走 pointer 事件；阻止冒泡以免触发整卡的播放切换
     const seek = card.querySelector<HTMLElement>('[data-np-seek]')
     if (seek) {
       const seekTo = (clientX: number) => {
         const a = audio()
-        if (!a || !Number.isFinite(a.duration) || a.duration <= 0) return
+        if (!Number.isFinite(a.duration) || a.duration <= 0) return
         const rect = seek.getBoundingClientRect()
         const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
         a.currentTime = ratio * a.duration
@@ -274,10 +332,10 @@ import { nowPlaying } from '~/config'
   // 音频实体是模块级常驻对象，事件只在模块层挂一次
   player.addEventListener('play', () => {
     setLive(true)
-    loadLrc()
+    loadLrc(tracks[cur]!)
   })
   player.addEventListener('pause', () => setLive(false))
-  player.addEventListener('ended', () => setLive(false))
+  player.addEventListener('ended', () => setTrack(cur + 1, true))
   // 歌词句切换和渐变推进都在 tick（rAF）里做；timeupdate 只管进度条 ——
   // 它在暂停状态下拖进度时也会触发，宽度不会失同步
   player.addEventListener('timeupdate', () => {

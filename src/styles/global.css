@@ -597,9 +597,10 @@
     0 0 18px 0 var(--sheen);
 }
 
-/* 歌词卡拉OK —— 已唱部分品牌色、未唱部分浅墨，分界由 --sung 从左向右推
-   （LRC 只有句级时间轴，句内线性插值；见 NowPlayingCard 的 tick） */
-[data-np-line][data-karaoke] {
+/* 歌词卡拉OK —— 已唱部分品牌色、未唱部分浅墨，分界由 --sung 从左向右推。
+   渐变挂在贴文本宽的内层（data-np-text）：挂 w-full 的整行容器时
+   背景按容器宽映射，文字没占满一行的话分界线会跑得比人声快。 */
+[data-np-text][data-karaoke] {
   background-image: linear-gradient(
     90deg,
     var(--brand-ink) var(--sung, 0%),

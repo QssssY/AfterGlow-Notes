@@ -80,7 +80,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       {/* 爱心缩成迷你圆钮挂在问候卡右上角，原 Widget Row 整行让给音乐卡 */}
       <div class="relative flex w-full flex-1 flex-col self-stretch">
         <GreetingCard avatar={avatar} grow />
-        <div class="absolute top-[14px] right-[14px]"><LikeWidget /></div>
+        {/* 位置往内收：角标探出按钮右上 6px，太贴边数字就顶到卡框了 */}
+        <div class="absolute top-[22px] right-[26px]"><LikeWidget /></div>
       </div>
       <NowPlayingCard />
       <ReadingCard />

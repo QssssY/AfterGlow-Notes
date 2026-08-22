@@ -196,14 +196,20 @@ export const finePrint = {
 } as const
 
 /**
- * Now Playing —— 现在是真的能放：音频与 LRC 在 public/music/。
- * 12 根等化条的静态高度取自设计稿（未播放时的「定格假谱」，
- * 播放时由 Web Audio 实时频谱接管）。想换歌：换文件、改这四行。
+ * Now Playing —— 真播放器，按播放列表走：一首放完自动下一首、到底循环。
+ * 加歌 = mp3（和可选的 LRC）丢进 public/music/，这里加一行；
+ * 没有 lrc 的歌只显示曲名，不做歌词跟随。多于一首时卡上会出现「下一首」按钮。
+ * bars 是未播放时等化条的「定格假谱」高度（取自设计稿），播放时由实时频谱接管。
  */
 export const nowPlaying = {
-  track: '十面埋伏 — 陈奕迅',
-  src: '/music/shimianmaifu.mp3',
-  lrc: '/music/shimianmaifu.lrc',
+  playlist: [
+    {
+      title: '十面埋伏',
+      artist: '陈奕迅',
+      src: '/music/shimianmaifu.mp3',
+      lrc: '/music/shimianmaifu.lrc',
+    },
+  ],
   bars: [8, 14, 6, 18, 11, 20, 9, 15, 7, 12, 17, 5],
 } as const
 
