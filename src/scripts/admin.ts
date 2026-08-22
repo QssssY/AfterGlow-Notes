@@ -8,7 +8,7 @@ import { apiBase } from '~/config'
 
 export const API = apiBase || 'http://127.0.0.1:8787'
 
-const TOKEN_KEY = 'firefly:admin:token'
+const TOKEN_KEY = 'hearth:admin:token'
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t)

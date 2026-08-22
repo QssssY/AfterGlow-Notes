@@ -99,6 +99,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
     <TopBar />
     <GreetingCard avatar={avatar} compact />
     <SocialRow />
+    {/* 移动端也能听歌：与桌面右栏那张共享同一个 Audio（NowPlayingCard 脚本按绑定组广播） */}
+    <NowPlayingCard />
     <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" compact />
     <MobileNowCard />
     {

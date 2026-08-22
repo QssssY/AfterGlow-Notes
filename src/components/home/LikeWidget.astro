@@ -53,7 +53,7 @@ import { Icon } from 'astro-icon/components'
   import { likeBurst } from '~/scripts/like-burst'
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
-    const KEY = 'firefly:liked'
+    const KEY = 'hearth:liked'
 
     // localStorage 在隐私模式或禁用 cookie 时会抛，包起来后点赞退化成本次会话有效
     const read = () => {

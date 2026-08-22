@@ -2,9 +2,11 @@
 /**
  * 浏览器端拉 GitHub star 数。只放脚本，不渲染任何东西。
  *
- * 为什么不在构建时拉：GitHub 匿名接口按 IP 限流 60 次/时，构建机是单 IP，
- * 而放到访客浏览器里每人各占自己的配额，反而不容易撞限流（Firefly 的做法）。
- * 代价是数字要等一个往返才刷新，所以构建时先渲染 config 里的兜底值。
+ * 优先走自家 Go 服务的 /api/github 代理（server/github.go）：全站访客共享
+ * 服务端的一份缓存，GitHub 每小时最多被打一次，谁都不会撞限流。
+ * 代理不在（没配 PUBLIC_API_BASE / 服务挂了）时退回访客浏览器直连 ——
+ * 匿名接口按 IP 限流 60 次/时，每人各占自己的配额，配合下面的本地缓存兜底。
+ * 数字要等一个往返才刷新，所以构建时先渲染 config 里的兜底值。
  *
  * 契约：带 data-gh="owner/repo" 的元素内，[data-gh-stars] 收 star 数，
  * 页面上的 [data-gh-total] 收所有仓库的 star 总和。
@@ -12,6 +14,8 @@
 ---
 
 <script>
+  import { apiBase } from '~/config'
+
   const fmt = new Intl.NumberFormat('en-US', { notation: 'compact' })
 
   /**
@@ -31,7 +35,7 @@
 
   const read = (repo: string): Hit | null => {
     try {
-      const raw = localStorage.getItem(`firefly:gh:${repo}`)
+      const raw = localStorage.getItem(`hearth:gh:${repo}`)
       return raw ? (JSON.parse(raw) as Hit) : null
     } catch {
       return null
@@ -39,9 +43,31 @@
   }
   const write = (repo: string, hit: Hit) => {
     try {
-      localStorage.setItem(`firefly:gh:${repo}`, JSON.stringify(hit))
+      localStorage.setItem(`hearth:gh:${repo}`, JSON.stringify(hit))
     } catch {
       // 隐私模式存不了：退化成每次整页加载拉一轮
+    }
+  }
+
+  /** 一次批量问自家代理；代理不在或响应不齐时返回 null，退回逐个直连 */
+  const fetchViaProxy = async (names: string[]) => {
+    if (!apiBase) return null
+    try {
+      const res = await fetch(`${apiBase}/api/github?repos=${encodeURIComponent(names.join(','))}`)
+      if (!res.ok) return null
+      const data = (await res.json()) as Record<string, { stars: number }>
+      const results: { repo: string; stars: number }[] = []
+      for (const repo of names) {
+        const info = data[repo]
+        if (info && typeof info.stars === 'number') {
+          write(repo, { stars: info.stars, at: Date.now() })
+          results.push({ repo, stars: info.stars })
+        }
+      }
+      // 代理答了但一个都没给（比如全部拉挂）：当没答，走直连兜底
+      return results.length > 0 ? results : null
+    } catch {
+      return null
     }
   }
 
@@ -67,34 +93,34 @@
     }
   }
 
-  document.addEventListener('astro:page-load', () => {
+  document.addEventListener('astro:page-load', async () => {
     const cards = [...document.querySelectorAll<HTMLElement>('[data-gh]')]
     if (cards.length === 0) return
 
     const names = [...new Set(cards.map((card) => card.dataset.gh!))]
 
-    Promise.all(names.map(fetchOne)).then((results) => {
-      let total = 0
-      let ok = 0
+    const results = (await fetchViaProxy(names)) ?? (await Promise.all(names.map(fetchOne)))
 
-      for (const result of results) {
-        if (!result) continue
-        ok++
-        total += result.stars
-        for (const card of cards) {
-          if (card.dataset.gh !== result.repo) continue
-          const slot = card.querySelector<HTMLElement>('[data-gh-stars]')
-          if (slot) slot.textContent = fmt.format(result.stars)
-        }
-      }
+    let total = 0
+    let ok = 0
 
-      // 只有全部拉到才改总数。少拉一个就写总和，会显示成比真实值更小的数字，
-      // 那比干脆不动更糟 —— 单张卡拉失败只是那张卡不刷新，总数仍然自洽。
-      if (ok === names.length) {
-        for (const slot of document.querySelectorAll<HTMLElement>('[data-gh-total]')) {
-          slot.textContent = fmt.format(total)
-        }
+    for (const result of results) {
+      if (!result) continue
+      ok++
+      total += result.stars
+      for (const card of cards) {
+        if (card.dataset.gh !== result.repo) continue
+        const slot = card.querySelector<HTMLElement>('[data-gh-stars]')
+        if (slot) slot.textContent = fmt.format(result.stars)
       }
-    })
+    }
+
+    // 只有全部拉到才改总数。少拉一个就写总和，会显示成比真实值更小的数字，
+    // 那比干脆不动更糟 —— 单张卡拉失败只是那张卡不刷新，总数仍然自洽。
+    if (ok === names.length) {
+      for (const slot of document.querySelectorAll<HTMLElement>('[data-gh-total]')) {
+        slot.textContent = fmt.format(total)
+      }
+    }
   })
 </script>

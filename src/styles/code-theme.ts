@@ -14,8 +14,8 @@ const KEYWORD = '#FFC98B'
 const VALUE = '#9FE0C8'
 const DIM = '#A2988E'
 
-export const fireflyCode = {
-  name: 'firefly',
+export const hearthCode = {
+  name: 'hearth',
   type: 'dark',
   colors: {
     'editor.background': BG,

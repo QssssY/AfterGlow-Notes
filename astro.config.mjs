@@ -7,7 +7,7 @@ import expressiveCode from 'astro-expressive-code'
 import icon from 'astro-icon'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
-import { fireflyCode } from './src/styles/code-theme.ts'
+import { hearthCode } from './src/styles/code-theme.ts'
 
 // 上线前把 site 换成真实域名：sitemap 和 RSS 依赖它生成绝对链接
 //
@@ -29,7 +29,7 @@ export default defineConfig({
     // expressiveCode 必须排在 mdx 之前
     // 设计稿的代码块在浅色和暗色下都是深色底，所以只挂一个主题
     expressiveCode({
-      themes: [fireflyCode],
+      themes: [hearthCode],
       useDarkModeMediaQuery: false,
       styleOverrides: {
         borderRadius: '18px',
