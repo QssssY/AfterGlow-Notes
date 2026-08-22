@@ -33,7 +33,27 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   class="glass group/np relative box-border flex h-fit w-full shrink-0 cursor-pointer flex-col items-start justify-center gap-[10px] rounded-[30px] p-[20px]"
 >
   <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
-    <Icon name="lucide:audio-lines" class="size-[18px] shrink-0 text-brand" />
+    <!-- 手写 lucide audio-lines 的等价形：官方图标六根线并在一条 path 里，
+         拆成六条独立 path 才能逐线错相位律动（global.css 的 np-icon-dance） -->
+    <svg
+      data-np-icon
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      class="size-[18px] shrink-0 text-brand"
+    >
+      <path d="M2 10v3" />
+      <path d="M6 6v11" />
+      <path d="M10 3v18" />
+      <path d="M14 8v7" />
+      <path d="M18 5v13" />
+      <path d="M22 10v3" />
+    </svg>
     <span class="flex-1 text-[12px] font-normal text-ink-soft">正在听</span>
     {
       tracks.length > 1 && (

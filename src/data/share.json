@@ -52,5 +52,95 @@
     "icon": "palette",
     "tone": "leaf",
     "category": "教程"
+  },
+  {
+    "title": "doocs/md — 微信 Markdown 编辑器",
+    "desc": "左边写 Markdown 右边即时排版，主题、字号、代码高亮都能配，一键复制直接贴进公众号后台不跑样。",
+    "href": "https://github.com/doocs/md",
+    "domain": "github.com",
+    "icon": "file-code",
+    "tone": "fire",
+    "category": "开源"
+  },
+  {
+    "title": "PowerToys — 微软官方的 Windows 增强包",
+    "desc": "FancyZones 自定义分屏、PowerRename 批量改名、屏幕取色、Alt+Space 快速启动，装一个顶一堆小工具。",
+    "href": "https://github.com/microsoft/PowerToys",
+    "domain": "github.com",
+    "icon": "wrench",
+    "tone": "leaf",
+    "category": "开源"
+  },
+  {
+    "title": "Files — 现代化的 Windows 文件管理器",
+    "desc": "标签页、双栏对拷、云盘同步状态徽标都有，资源管理器该长成的样子，开源社区替微软做出来了。",
+    "href": "https://github.com/files-community/Files",
+    "domain": "github.com",
+    "icon": "folder-open",
+    "tone": "fire",
+    "category": "开源"
+  },
+  {
+    "title": "LocalSend — 跨平台局域网互传",
+    "desc": "手机电脑互丢文件不过服务器、不用数据线，全平台客户端都有，是 AirDrop 的开源全平台平替。",
+    "href": "https://github.com/localsend/localsend",
+    "domain": "github.com",
+    "icon": "send",
+    "tone": "leaf",
+    "category": "开源"
+  },
+  {
+    "title": "Excalidraw — 手绘风白板",
+    "desc": "画架构图、流程草图自带松弛感，不用对齐到像素也好看；发个链接就能多人实时协作，导出 SVG 很干净。",
+    "href": "https://github.com/excalidraw/excalidraw",
+    "domain": "github.com",
+    "icon": "pen-tool",
+    "tone": "fire",
+    "category": "开源"
+  },
+  {
+    "title": "IT Tools — 开发者小工具合集",
+    "desc": "时间戳、JWT 解码、正则测试、Base64、UUID……上百个高频小工具收在一个页面里，还能自部署一份。",
+    "href": "https://github.com/CorentinTh/it-tools",
+    "domain": "github.com",
+    "icon": "pocket-knife",
+    "tone": "leaf",
+    "category": "开源"
+  },
+  {
+    "title": "Upscayl — 开源 AI 图片放大",
+    "desc": "老照片、糊图一键超分辨率，模型在本地跑不用上传，显卡一般也能出片，救过我好几张素材。",
+    "href": "https://github.com/upscayl/upscayl",
+    "domain": "github.com",
+    "icon": "image-plus",
+    "tone": "fire",
+    "category": "开源"
+  },
+  {
+    "title": "PicGo — 图床上传工具",
+    "desc": "截图拖进去自动传到 GitHub / 七牛 / SM.MS，剪贴板里直接是 Markdown 图片链接，写博客配图零摩擦。",
+    "href": "https://github.com/Molunerfinn/PicGo",
+    "domain": "github.com",
+    "icon": "upload",
+    "tone": "leaf",
+    "category": "开源"
+  },
+  {
+    "title": "Motrix — 清爽的全能下载器",
+    "desc": "HTTP、BT、磁力一个客户端全接，界面干净没有广告和捆绑，下载列表放着也赏心悦目。",
+    "href": "https://github.com/agalwood/Motrix",
+    "domain": "github.com",
+    "icon": "download",
+    "tone": "fire",
+    "category": "开源"
+  },
+  {
+    "title": "Penpot — 开源的设计协作工具",
+    "desc": "浏览器里的 Figma 平替，设计稿数据完全自持可自部署，输出直接是 SVG/CSS，对开发者格外友好。",
+    "href": "https://github.com/penpot/penpot",
+    "domain": "github.com",
+    "icon": "shapes",
+    "tone": "leaf",
+    "category": "开源"
   }
 ]

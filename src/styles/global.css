@@ -654,8 +654,15 @@
       transform: translateY(12px);
     }
   }
+  /* 组的几何动画掐掉：前后两页 page-content 的盒子高度/滚动位置不同，
+     默认的组插值会让整层内容明显平移一段（用户截到那帧，很不舒服）——
+     盒子直接就位，只留旧层即隐 + 新层轻抬浮现 */
+  :root::view-transition-group(page-content) {
+    animation: none;
+  }
   :root::view-transition-old(page-content) {
-    animation: vt-content-out 0.15s ease both;
+    animation: none;
+    opacity: 0;
   }
   :root::view-transition-new(page-content) {
     animation: vt-content-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -731,6 +738,15 @@ html.theme-vt::view-transition-old(root) {
 }
 html.theme-vt::view-transition-new(root) {
   animation: none;
+}
+/* 揭示进行中把页面上的 CSS 动画/过渡全部按停：等化条、时钟冒号、光标闪烁
+   哪怕动一下，新页的实时快照就得逐帧重新栅格化，圆形扩散必掉帧卡半程。
+   揭示本体是挂在伪元素上的 WAAPI 动画，不吃这两条，照常丝滑 */
+html.theme-vt *,
+html.theme-vt *::before,
+html.theme-vt *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
 }
 
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。
@@ -852,4 +868,81 @@ html.theme-vt::view-transition-new(root) {
   border-radius: 50%;
   border: none;
   background: var(--brand);
+}
+
+/* ─── 图标微动效（用户点名「动起来」）─── */
+
+/* 站名徽标的橙点呼吸：亮度和光晕缓慢起伏，像站点的心跳 */
+@keyframes site-dot-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 9px 0 var(--glow-fire);
+  }
+  50% {
+    transform: scale(1.28);
+    box-shadow: 0 0 16px 2px var(--glow-fire);
+  }
+}
+.site-dot {
+  animation: site-dot-breathe 2.6s ease-in-out infinite;
+}
+
+/* 「正在听」的音波 icon：几根线各自起伏（lucide 的 audio-lines 是一组 path，
+   transform-box: fill-box 让每根以自身为轴缩放），错开相位像在律动 */
+@keyframes np-icon-dance {
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+[data-np-icon] path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: np-icon-dance 1.15s ease-in-out infinite;
+}
+[data-np-icon] path:nth-child(2n) {
+  animation-delay: -0.4s;
+}
+[data-np-icon] path:nth-child(3n) {
+  animation-delay: -0.75s;
+}
+
+/* 图片微光扫描：hover 一道斜向高光扫过（用户点名提质感）。
+   挂在图片的 relative + overflow-hidden 容器上；伪元素用 ::before ——
+   ::after 已经归骨架屏的加载扫带了。触屏设备没有 hover，规则整体不下发 */
+@media (hover: hover) {
+  .img-sheen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.34) 50%,
+      transparent 60%
+    );
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+  .img-sheen:hover::before {
+    animation: img-sheen-sweep 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  @keyframes img-sheen-sweep {
+    to {
+      transform: translateX(130%);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-dot,
+  [data-np-icon] path,
+  .img-sheen::before {
+    animation: none;
+  }
 }

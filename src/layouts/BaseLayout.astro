@@ -210,7 +210,9 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
                 clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${Math.ceil(r)}px at ${x}px ${y}px)`],
               },
               {
-                duration: 520,
+                // 420ms：配合 theme-vt 按停页面动画（见 global.css）后快照不再逐帧
+                // 重栅格化，扩散全程满帧；原 520ms 略拖，收紧一点更利落
+                duration: 420,
                 easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
                 pseudoElement: '::view-transition-new(root)',
               },

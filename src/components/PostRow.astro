@@ -88,7 +88,7 @@ const indexLabel = typeof index === 'number' ? pad(index) : index
        直接变形成文章页的大图，换页有了「东西飞过去」的连续感 -->
   <span
     transition:name={slug ? `post-cover-${slug}` : undefined}
-    class="hidden h-[162px] w-[236px] shrink-0 flex-row items-center justify-center overflow-hidden rounded-[22px] bg-[linear-gradient(-124.467deg,#E8D3AE_14.645%,#C9DED6_85.355%)] xl:flex"
+    class="img-sheen relative hidden h-[162px] w-[236px] shrink-0 flex-row items-center justify-center overflow-hidden rounded-[22px] bg-[linear-gradient(-124.467deg,#E8D3AE_14.645%,#C9DED6_85.355%)] xl:flex"
   >
     <!--
       没有封面时的占位图标：52px、节点透明度 0.92。填色两个主题不同色相

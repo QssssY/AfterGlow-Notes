@@ -121,7 +121,7 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
           post.data.cover && (
             <span
               transition:name={`post-cover-${post.id}`}
-              class="skeleton block h-[300px] w-full shrink-0 overflow-hidden rounded-[22px]"
+              class="img-sheen skeleton relative block h-[300px] w-full shrink-0 overflow-hidden rounded-[22px]"
             >
               {/* 文章页的 LCP：eager + 高优先级；外层骨架屏在图渐显前撑住位置。
                   transition:name 与列表缩略图同名：从列表点进来时小图变形成这张大图 */}

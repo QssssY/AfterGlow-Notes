@@ -33,14 +33,17 @@ const { title, desc, stack, stars, href, full = false, repo, thumb } = Astro.pro
     full ? 'h-full w-full' : 'w-[260px]',
   ]}
 >
-  <!-- 配图在管理端「项目」页签上传（按仓库名存 images/projects/）；没传用品牌占位图 -->
-  <Image
-    src={thumb ?? placeholderArt}
-    alt=""
-    width={792}
-    height={396}
-    class="h-[132px] w-full shrink-0 rounded-[18px] object-cover"
-  />
+  <!-- 配图在管理端「项目」页签上传（按仓库名存 images/projects/）；没传用品牌占位图。
+       包一层做 hover 微光扫描（img 上放不了伪元素） -->
+  <span class="img-sheen relative block h-[132px] w-full shrink-0 overflow-hidden rounded-[18px]">
+    <Image
+      src={thumb ?? placeholderArt}
+      alt=""
+      width={792}
+      height={396}
+      class="h-full w-full object-cover"
+    />
+  </span>
 
   <span class="flex w-full shrink-0 flex-row items-center gap-[8px]">
     <span class="min-w-0 flex-1 truncate text-[16px] font-medium text-ink" title={title}>{title}</span>

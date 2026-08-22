@@ -35,14 +35,17 @@ const external = href?.startsWith('http')
   data-gh={repo}
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[24px] rounded-[32px] p-[20px] xl:flex-row xl:items-center"
 >
-  {/* 没给截图时用品牌占位图（scripts/gen-placeholder-art.mjs 生成），不再是一块素色 */}
-  <Image
-    src={thumb ?? placeholderArt}
-    alt=""
-    width={1080}
-    height={636}
-    class="h-[212px] w-full shrink-0 rounded-[22px] object-cover xl:w-[360px]"
-  />
+  {/* 没给截图时用品牌占位图（scripts/gen-placeholder-art.mjs 生成），不再是一块素色。
+      包一层做 hover 微光扫描（img 上放不了伪元素） */}
+  <span class="img-sheen relative block h-[212px] w-full shrink-0 overflow-hidden rounded-[22px] xl:w-[360px]">
+    <Image
+      src={thumb ?? placeholderArt}
+      alt=""
+      width={1080}
+      height={636}
+      class="h-full w-full object-cover"
+    />
+  </span>
 
   <span class="flex h-fit w-full flex-col items-start gap-[12px] xl:flex-1">
     <!-- 徽标这轮跟着设计稿从金色改成橙色：底 fire-tint、字 brand-ink，两个都是变量，
