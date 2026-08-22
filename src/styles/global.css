@@ -673,6 +673,13 @@
   }
 }
 
+/* 图就位后骨架屏立刻收工（BaseLayout 脚本挂 skeleton-done）：
+   扫带的基准位在容器外（translateX(-100%)），去掉动画即刻隐形，不用再做淡出。
+   没有图的占位块（快照没配 src 时）同样收工 —— 微光只属于「正在等图」。 */
+.skeleton-done::after {
+  animation: none;
+}
+
 /* 图片渐显（配 BaseLayout 的 img-pending 脚本）：解码完成前透明，露出骨架屏 */
 img {
   transition: opacity 0.45s ease;

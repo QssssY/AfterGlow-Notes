@@ -296,14 +296,23 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
 
     <script>
       // 图片渐显：还没解码完的图先隐着（底下是容器的骨架屏微光），
-      // 加载完 0.45s 淡入 —— 慢网下不再看到图片逐行蹦出来
-      const settle = (img: HTMLImageElement) => img.classList.remove('img-pending')
+      // 加载完 0.45s 淡入 —— 慢网下不再看到图片逐行蹦出来。
+      // 图一就位就给骨架容器挂 skeleton-done 停掉扫带（用户反馈：图都出来了还在扫，晃眼）
+      const settle = (img: HTMLImageElement) => {
+        img.classList.remove('img-pending')
+        img.closest('.skeleton')?.classList.add('skeleton-done')
+      }
       document.addEventListener('astro:page-load', () => {
         for (const img of document.images) {
           if (img.complete) continue
           img.classList.add('img-pending')
           img.addEventListener('load', () => settle(img), { once: true })
           img.addEventListener('error', () => settle(img), { once: true })
+        }
+        // 已经就位的图（缓存命中/换页回来）和压根没图的占位块：立刻收工
+        for (const box of document.querySelectorAll('.skeleton')) {
+          const img = box.querySelector('img')
+          if (!img || img.complete) box.classList.add('skeleton-done')
         }
       })
     </script>
