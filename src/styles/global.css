@@ -391,9 +391,33 @@
     scroll-behavior: smooth;
   }
 
-  /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版） */
+  /*
+   * 入场浮现 —— @starting-style 让玻璃卡首次渲染时从「透明 + 下移一点」过渡进来。
+   * 纯 CSS：引擎保证到达终态，headless / 后台标签页这类不出帧的环境直接显示终值，
+   * 不会像 JS 动画那样把内容可见性押在动画能否跑完上。
+   * 老浏览器不认识 @starting-style 就没有入场动画，内容照常显示。
+   */
+  .glass,
+  .glass-row,
+  .glass-panel {
+    transition:
+      opacity 0.55s ease,
+      translate 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @starting-style {
+    .glass,
+    .glass-row,
+    .glass-panel {
+      opacity: 0;
+      translate: 0 12px;
+    }
+  }
+
+  /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版）。
+     transition 是整条覆盖不是合并，所以这里要把入场用的 opacity 一并带上。 */
   :is(a, button):is(.glass, .glass-row, .glass-panel) {
     transition:
+      opacity 0.55s ease,
       translate 0.35s var(--spring),
       scale 0.35s var(--spring),
       box-shadow 0.35s ease;
