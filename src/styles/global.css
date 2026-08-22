@@ -193,26 +193,11 @@
   outline-offset: -0.5px;
 }
 
-/* 左栏钉住（桌面 8 页的 [data-rail]）：滚动时导航永远停在顶上。
- * 栏比视口高时不再「先滚完再贴底」（用户反馈那样仍像跟着滚），
- * 而是整栏钉在 48、在栏内自滚动（滚动条隐藏，滚到栏底自动接管回页面滚动）。
- *
- * 数字账：sticky top 24 + 上下 24 内边距 = 内容视觉顶 48，与页面顶部内边距对齐；
- * margin-block -24 抵消内边距的占位，静止时几何与改动前完全一致。
- * 这对负/正 24 同时是给玻璃卡上下投影留的绘制空间 —— overflow 会裁掉出界的阴影。
- * 左右不留：侧向只有 8% 透明度的阴影边缘，裁在卡边上看不出来。 */
-@utility rail-pin {
-  position: sticky;
-  top: 24px;
-  max-height: calc(100vh - 24px);
-  overflow-y: auto;
-  scrollbar-width: none;
-  margin-block: -24px;
-  padding-block: 24px;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
+/* 粘性策略（学 YYsuni/2025-blog-public，用户拍板）：从不钉超过一屏的东西。
+ * 导航侧栏在所有页面随内容自然滚走；只有长内容页（文章详情、归档）把
+ * 一屏装得下的功能面板组包成 xl:sticky top-48（见各页的 data-pin-group），
+ * 目录这类可能超长的模块在卡内限高自滚。整栏钉住 + 栏内滚动的
+ * rail-pin 方案已废弃 —— 静止布局会被视口高度裁切，和设计稿差太多。 */
 
 /* Aurora 背景层：每页一个。
  * 设计稿里这层只有模糊没有填充，内容是我按品牌色补的：

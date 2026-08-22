@@ -17,22 +17,29 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
         目录
       </span>
 
-      {items.map((heading, i) => (
-        <a
-          href={`#${heading.slug}`}
-          data-toc-link={heading.slug}
-          data-active={i === 0 ? '' : undefined}
-          class:list={[
-            'group flex h-fit w-full shrink-0 flex-row items-center gap-[10px]',
-            heading.depth === 3 && 'pl-[12px]',
-          ]}
-        >
-          <span class="h-[14px] w-[2px] shrink-0 rounded-[1px] bg-hairline transition-colors group-hover:bg-dot-idle group-data-active:bg-brand" />
-          <span class="flex-1 text-[13px] font-normal text-ink-soft transition-colors group-hover:text-ink group-data-active:font-medium group-data-active:text-ink">
-            {heading.text}
-          </span>
-        </a>
-      ))}
+      {/* 长文目录卡内限高自滚（YYsuni 同款 300），粘性组才能保证一屏装得下；
+          relative 是给脚本算 offsetTop 用的（把高亮项滚进视野中央） */}
+      <div
+        data-toc-box
+        class="relative flex max-h-[300px] w-full flex-col gap-[12px] overflow-y-auto [scrollbar-width:none]"
+      >
+        {items.map((heading, i) => (
+          <a
+            href={`#${heading.slug}`}
+            data-toc-link={heading.slug}
+            data-active={i === 0 ? '' : undefined}
+            class:list={[
+              'group flex h-fit w-full shrink-0 flex-row items-center gap-[10px]',
+              heading.depth === 3 && 'pl-[12px]',
+            ]}
+          >
+            <span class="h-[14px] w-[2px] shrink-0 rounded-[1px] bg-hairline transition-colors group-hover:bg-dot-idle group-data-active:bg-brand" />
+            <span class="flex-1 text-[13px] font-normal text-ink-soft transition-colors group-hover:text-ink group-data-active:font-medium group-data-active:text-ink">
+              {heading.text}
+            </span>
+          </a>
+        ))}
+      </div>
     </nav>
   )
 }
@@ -42,11 +49,22 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
   // 客户端路由：scroll 监听只挂一次，换页后由 astro:page-load 刷新元素引用
   let links: HTMLElement[] = []
   let headings: HTMLElement[] = []
+  let lastActive = ''
 
   const setActive = (slug: string) => {
+    if (slug === lastActive) return // 不重复写，免得和访客手动滚目录打架
+    lastActive = slug
     for (const link of links) {
-      if (link.dataset.tocLink === slug) link.setAttribute('data-active', '')
+      const on = link.dataset.tocLink === slug
+      if (on) link.setAttribute('data-active', '')
       else link.removeAttribute('data-active')
+      // 目录比 300 高时把高亮项带到盒子中央（只动盒内滚动，不碰页面）
+      if (on) {
+        const box = link.closest<HTMLElement>('[data-toc-box]')
+        if (box && box.scrollHeight > box.clientHeight + 4) {
+          box.scrollTop = Math.max(0, link.offsetTop - (box.clientHeight - link.offsetHeight) / 2)
+        }
+      }
     }
   }
 
@@ -67,6 +85,7 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
     headings = links
       .map((link) => document.getElementById(link.dataset.tocLink!))
       .filter((el): el is HTMLElement => el !== null)
+    lastActive = '' // 换页必须重置，否则新页首个高亮会被去重逻辑跳过
     update()
   })
 </script>

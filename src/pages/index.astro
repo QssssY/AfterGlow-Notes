@@ -61,47 +61,37 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
 <BaseLayout title={site.title}>
   {/* ── 桌面：1440 三栏 ──────────────────────────────────
       设计稿这轮删掉了右上角那排 Social Button，社交入口挪进了侧栏 Social Row。
-
-      结构：左栏（rail-pin 钉住）｜右侧包一层放 中+右两栏 + Projects ——
-      Projects 进包层后左栏的 sticky 行程覆盖整页，滚到项目区侧栏也不走
-      （原先 Projects 是行外的满宽块，行高恰好等于左栏高，粘住了也没有行程）。
-      代价是 Projects 比设计稿窄 328px（不再伸到侧栏底下），换 YYsuni 式常驻侧栏。 */}
+      首页是短内容页，不做任何粘性（用户拍板：只有长内容才钉）——
+      布局与设计稿完全一致，Projects 恢复满宽伸到侧栏底下。 */}
   <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">
-    <div data-rail class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px] xl:rail-pin">
+    <div class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px]">
       <Sidebar />
       <UptimeCard />
     </div>
 
-    <div class="flex min-w-0 flex-1 flex-col items-start">
-      {/* 三栏底边一条线：行高原先由左栏内容撑出来，左栏抽离后改成显式 min-h。
-          788 = 当前 Sidebar+Uptime 的实测高（Chrome 量的；设计稿标 798，实现差 10）。
-          左栏内容再增删要跟着调 —— E2E 有「一条线」断言盯着，漂了会报。
-          中、右两栏 self-stretch 拉到同高，差值分别由画卡和问候卡吸收 */}
-      <div class="flex min-h-[788px] w-full flex-row items-start gap-[48px]">
-        <div class="flex flex-1 flex-col items-start gap-[24px] self-stretch">
-          <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" grow />
-          <NowCard />
-          <TagCloudCard tags={tags} />
-          <ToolsBar />
-        </div>
+    {/* 三栏底边一条线：行高由左栏（Sidebar+Uptime ≈ 788）定，
+        中、右两栏 self-stretch 拉到同高，差值分别由画卡和问候卡吸收 */}
+    <div class="flex flex-1 flex-col items-start gap-[24px] self-stretch">
+      <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" grow />
+      <NowCard />
+      <TagCloudCard tags={tags} />
+      <ToolsBar />
+    </div>
 
-        <div class="flex w-[392px] shrink-0 flex-col items-start gap-[24px] self-stretch">
-          {/* 爱心缩成迷你圆钮挂在问候卡右上角，原 Widget Row 整行让给音乐卡 */}
-          <div class="relative flex w-full flex-1 flex-col self-stretch">
-            <GreetingCard avatar={avatar} grow />
-            {/* 位置往内收：角标探出按钮右上 6px，太贴边数字就顶到卡框了 */}
-            <div class="absolute top-[22px] right-[26px]"><LikeWidget /></div>
-          </div>
-          <NowPlayingCard />
-          <ReadingCard />
-          <SnapshotStrip images={[snapDusk, snapField, snapLantern]} />
-        </div>
+    <div class="flex w-[392px] shrink-0 flex-col items-start gap-[24px] self-stretch">
+      {/* 爱心缩成迷你圆钮挂在问候卡右上角，原 Widget Row 整行让给音乐卡 */}
+      <div class="relative flex w-full flex-1 flex-col self-stretch">
+        <GreetingCard avatar={avatar} grow />
+        {/* 位置往内收：角标探出按钮右上 6px，太贴边数字就顶到卡框了 */}
+        <div class="absolute top-[22px] right-[26px]"><LikeWidget /></div>
       </div>
-
-      <div class="mt-[34px] w-full"><ProjectsSection /></div>
+      <NowPlayingCard />
+      <ReadingCard />
+      <SnapshotStrip images={[snapDusk, snapField, snapLantern]} />
     </div>
   </div>
 
+  <div class="mt-[34px] hidden w-full xl:block"><ProjectsSection /></div>
   <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
 
   {/* ── 移动：390 单栏，顶栏 + 底部 Tab Bar，无 Footer ──── */}

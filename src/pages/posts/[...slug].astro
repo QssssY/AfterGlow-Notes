@@ -74,24 +74,28 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
 
   <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
     <!--
-      左栏（纯桌面）：Sidebar + 目录 + 本文 + 相关，rail-pin 整栏钉住，
-      超出视口的部分在栏内自滚动（滚动条隐藏）。
+      左栏（纯桌面）。粘性照 YYsuni 的路子：从不钉超过一屏的东西 ——
+      Sidebar 随页面自然滚走，真正跟手的是下面这组 目录+本文+相关
+      （目录内部限高 300 自滚，整组一屏装得下），钉在 top 48。
+      栏 self-stretch 到行高，粘性组才有跟随整篇文章的行程。
       移动端整栏不渲染：侧栏由底部 TabBar 代替，本文/相关摆到 390 下
       就成了正文前的一大段前言；目录单独在返回按钮之后再出一份（见下）。
     -->
-    <div
-      data-rail
-      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:rail-pin xl:flex"
-    >
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex xl:self-stretch">
       <Sidebar />
-      <TocCard headings={headings} />
-      <ArticleInfo
-        words={stats.words}
-        minutes={stats.minutes}
-        date={date}
-        updated={post.data.updated}
-      />
-      <RelatedCard posts={related} />
+      <div
+        data-pin-group
+        class="flex w-full flex-col items-start gap-[24px] xl:sticky xl:top-[48px]"
+      >
+        <TocCard headings={headings} />
+        <ArticleInfo
+          words={stats.words}
+          minutes={stats.minutes}
+          date={date}
+          updated={post.data.updated}
+        />
+        <RelatedCard posts={related} />
+      </div>
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1">

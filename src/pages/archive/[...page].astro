@@ -40,13 +40,17 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
     重复了，一并删掉）。左栏只剩 年表 + 订阅，间距也从 24 收到 16。
   */}
   <div class="flex w-full flex-row items-start gap-[48px]">
-    <div
-      data-rail
-      class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[16px] xl:rail-pin xl:flex"
-    >
+    {/* 长内容页的粘性（学 YYsuni）：Sidebar 自然滚走，翻长列表时有用的
+        年表+订阅 一屏装得下，钉在 48；栏 self-stretch 给粘性组行程 */}
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex xl:self-stretch">
       <Sidebar />
-      <ArchivePanel years={yearBars(all)} />
-      <SubscribePanel />
+      <div
+        data-pin-group
+        class="flex w-full flex-col items-start gap-[16px] xl:sticky xl:top-[48px]"
+      >
+        <ArchivePanel years={yearBars(all)} />
+        <SubscribePanel />
+      </div>
     </div>
 
     <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px]">
