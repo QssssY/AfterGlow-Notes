@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
@@ -532,6 +533,13 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	// 整个读进内存（上限 30MB）：插图要拿内容算 hash 做去重，其他类型也顺路统一写法
+	data, err := io.ReadAll(file)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "读取上传内容失败: "+err.Error())
+		return
+	}
+
 	ext := strings.ToLower(filepath.Ext(hdr.Filename))
 	kind := r.FormValue("kind")
 
@@ -561,10 +569,12 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 			fail(w, http.StatusBadRequest, "插图只收 png / jpg / webp / gif / avif")
 			return
 		}
-		sub := time.Now().Format("2006-01")
-		name := randomToken()[:8] + ext
-		dst = filepath.Join(s.admin.uploadsDir(), sub, name)
-		ret = "/images/uploads/" + sub + "/" + name
+		// 内容寻址：文件名 = 内容的 SHA-256 前 16 位。同一张图不管传多少次
+		// 都落到同一个文件，下面写盘前发现已存在就直接复用，不再攒重复文件
+		sum := sha256.Sum256(data)
+		name := hex.EncodeToString(sum[:8]) + ext
+		dst = filepath.Join(s.admin.uploadsDir(), name)
+		ret = "/images/uploads/" + name
 
 	case "avatar":
 		// 友链 / 朋友面板头像：按域名存进 images/blogroll/，前端 glob 按名对上。
@@ -606,17 +616,18 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 插图按内容命名：已存在就是同一张图，直接复用（封面/头像/音乐按名覆盖，照常写）
+	if kind == "image" {
+		if _, err := os.Stat(dst); err == nil {
+			writeJSON(w, http.StatusOK, map[string]string{"path": ret, "reused": "true"})
+			return
+		}
+	}
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		fail(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	out, err := os.Create(dst)
-	if err != nil {
-		fail(w, http.StatusInternalServerError, "创建文件失败: "+err.Error())
-		return
-	}
-	defer out.Close()
-	if _, err := io.Copy(out, file); err != nil {
+	if err := os.WriteFile(dst, data, 0o644); err != nil {
 		fail(w, http.StatusInternalServerError, "写入失败: "+err.Error())
 		return
 	}
