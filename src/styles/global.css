@@ -596,3 +596,16 @@
     0 0 26px 2px var(--fire-tint),
     0 0 18px 0 var(--sheen);
 }
+
+/* 歌词卡拉OK —— 已唱部分品牌色、未唱部分浅墨，分界由 --sung 从左向右推
+   （LRC 只有句级时间轴，句内线性插值；见 NowPlayingCard 的 tick） */
+[data-np-line][data-karaoke] {
+  background-image: linear-gradient(
+    90deg,
+    var(--brand-ink) var(--sung, 0%),
+    var(--ink-muted) var(--sung, 0%)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

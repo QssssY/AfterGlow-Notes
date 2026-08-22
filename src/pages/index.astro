@@ -77,11 +77,12 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
     </div>
 
     <div class="flex w-[392px] shrink-0 flex-col items-start gap-[24px] self-stretch">
-      <GreetingCard avatar={avatar} grow />
-      <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[16px]">
-        <LikeWidget />
-        <NowPlayingCard />
+      {/* 爱心缩成迷你圆钮挂在问候卡右上角，原 Widget Row 整行让给音乐卡 */}
+      <div class="relative flex w-full flex-1 flex-col self-stretch">
+        <GreetingCard avatar={avatar} grow />
+        <div class="absolute top-[14px] right-[14px]"><LikeWidget /></div>
       </div>
+      <NowPlayingCard />
       <ReadingCard />
       <SnapshotStrip images={[snapDusk, snapField, snapLantern]} />
     </div>

@@ -4,40 +4,35 @@ import { likes } from '~/config'
 ---
 
 <!--
-  Like Slot · blog.pen Home / Widget Row
-  设计稿只画了静态计数，也没画已赞态。这里做成 localStorage 记住的本机点赞：
-  能点、有反馈，但换个浏览器就没了 —— 真正的共享计数要后端，等接了再换数据源。
-  已赞态把心形描边加深（like-fill → like-ink，后者是设计稿文章页那颗心的颜色），
-  是设计稿之外补的最小状态，不动布局也不加新元素。
+  站点点赞 —— 迷你圆钮，挂在问候卡右上角。
+  设计稿 Widget Row 里那颗 76px 的大爱心让位给了整行的音乐卡（用户拍板），
+  交互原样保留：本机/服务端计数、已赞实心心、心形爆裂。
   注意不能用 fill：astro-icon 渲染成 symbol + use，路径自带 fill="none" 属性，
-  外部 CSS 选不进 use 的影子树；只有 color 这类继承属性能穿透（描边是 currentColor）。
+  外部 CSS 选不进 use 的影子树 —— 已赞态靠叠一颗内联实心路径。
 
   计数不加千分位：设计稿写的是 20118，不是 20,118。
 -->
-<div class="relative size-[104px] shrink-0">
+<div class="relative shrink-0">
   <button
     type="button"
     data-like
     data-like-base={likes}
     aria-pressed="false"
     aria-label="喜欢这个站点"
-    class="glass group/like absolute top-[16px] left-0 flex size-[76px] cursor-pointer flex-row items-center justify-center rounded-[38px]"
+    title="喜欢这个站点"
+    class="glass group/like flex size-[40px] cursor-pointer flex-row items-center justify-center rounded-full"
   >
     <span data-like-burst aria-hidden="true" class="pointer-events-none absolute inset-0"></span>
-    <span class="relative size-[30px] shrink-0 transition-transform group-active/like:scale-90">
+    <span class="relative size-[19px] shrink-0 transition-transform group-active/like:scale-90">
       <Icon
         name="lucide:heart"
-        class="absolute inset-0 size-[30px] text-like-fill transition-colors group-aria-pressed/like:text-like-ink"
+        class="absolute inset-0 size-[19px] text-like-fill transition-colors group-aria-pressed/like:text-like-ink"
       />
-      <!--
-        已赞态的实心心。lucide 图标经 astro-icon 渲染成 symbol+use，
-        路径自带 fill="none"，外部 CSS 穿不进影子树 —— 所以叠一颗内联的
-        实心路径（和 lucide heart 同形），aria-pressed 时弹现。
-      -->
+      <!-- 已赞态的实心心：lucide 的 use 影子树填不了色，叠同形内联路径 -->
       <svg
         viewBox="0 0 24 24"
         aria-hidden="true"
-        class="absolute inset-0 size-[30px] scale-50 fill-like-ink text-like-ink opacity-0 transition-[opacity,scale] duration-300 group-aria-pressed/like:scale-100 group-aria-pressed/like:opacity-100"
+        class="absolute inset-0 size-[19px] scale-50 fill-like-ink text-like-ink opacity-0 transition-[opacity,scale] duration-300 group-aria-pressed/like:scale-100 group-aria-pressed/like:opacity-100"
       >
         <path
           d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
@@ -47,9 +42,9 @@ import { likes } from '~/config'
   </button>
 
   <span
-    class="absolute top-[6px] left-[56px] flex h-fit w-fit flex-row items-center justify-center rounded-[12px] bg-fire-tint px-[8px] py-[4px]"
+    class="pointer-events-none absolute -top-[6px] left-[26px] flex h-fit w-fit flex-row items-center justify-center rounded-[10px] bg-fire-tint px-[6px] py-[2px]"
   >
-    <span data-like-count class="text-[11px] font-bold whitespace-nowrap text-brand-ink">
+    <span data-like-count class="text-[10px] font-bold whitespace-nowrap text-brand-ink">
       {likes}
     </span>
   </span>
