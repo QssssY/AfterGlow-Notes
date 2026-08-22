@@ -1,0 +1,38 @@
+[
+  {
+    "name": "阮一峰",
+    "desc": "周刊与入门教程",
+    "icon": "terminal",
+    "href": "https://www.ruanyifeng.com/blog/",
+    "domain": "ruanyifeng.com",
+    "from": "#E3D2B4",
+    "to": "#C9E0D8"
+  },
+  {
+    "name": "哔哩哔哩",
+    "desc": "技术区与纪录片",
+    "icon": "camera",
+    "href": "https://www.bilibili.com",
+    "domain": "bilibili.com",
+    "from": "#C6E0D6",
+    "to": "#E6D6BC"
+  },
+  {
+    "name": "张鑫旭",
+    "desc": "CSS 与前端细节",
+    "icon": "app-window",
+    "href": "https://www.zhangxinxu.com",
+    "domain": "zhangxinxu.com",
+    "from": "#E7D6B8",
+    "to": "#D6D2BE"
+  },
+  {
+    "name": "知乎",
+    "desc": "专栏与长文",
+    "icon": "book-open",
+    "href": "https://www.zhihu.com",
+    "domain": "zhihu.com",
+    "from": "#CFE0D2",
+    "to": "#E7D8C0"
+  }
+]

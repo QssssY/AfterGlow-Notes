@@ -1,31 +1,38 @@
 /** 站点级文案与导航 —— 取自 blog.pen 的 Sidebar / Footer / Banner */
 
 /*
- * 常改的内容（最近在读 / 此刻 / 播放列表 / 友链 / 项目 / 分享 / 在用）真身在
- * src/data/*.json —— 网页管理后台（/admin，写接口在 server/ 的 /api/admin）改的
- * 就是这些文件。dev 下保存即热更新；部署后改完要重新构建。
+ * 会改的内容真身全在 src/data/*.json —— 网页管理后台（/admin，写接口在
+ * server/ 的 /api/admin）改的就是这些文件。dev 下保存即热更新；部署后改完要重新构建。
  * 这里只负责 import 进来、补上 TS 类型，再原样导出给组件 —— 组件不感知来源。
+ * 留在本文件里的只剩结构性常量（导航、主题档位、uptime 起点这类）。
  */
+import aboutData from './data/about.json'
 import blogrollData from './data/blogroll.json'
+import changelogData from './data/changelog.json'
+import friendsData from './data/friends.json'
 import nowData from './data/now.json'
 import playlistData from './data/playlist.json'
 import readingData from './data/reading.json'
 import reposData from './data/repos.json'
 import shareData from './data/share.json'
+import siteData from './data/site.json'
+import socialsData from './data/socials.json'
+import stackData from './data/stack.json'
 import toolsData from './data/tools.json'
 
+/** 站名 / 作者 / 描述等站点文案 —— 管理端「站点信息」页可改（src/data/site.json） */
 export const site = {
   /** 侧栏 Wordmark */
-  title: '萤火录',
+  title: siteData.title,
   /** Banner Eyebrow 里的英文名 */
-  titleEn: 'FIREFLY NOTES',
-  author: 'Perfect_zzZ',
+  titleEn: siteData.titleEn,
+  author: siteData.author,
   /** 作者名后的橙色小标 */
-  authorBadge: '(开发中)',
-  description: '按时间倒叙的写作记录',
+  authorBadge: siteData.authorBadge,
+  description: siteData.description,
   /** Footer 版权行的起始年份 */
-  since: 2026,
-} as const
+  since: siteData.since,
+}
 
 /**
  * 动态数据服务（server/ 里的 Go 后端）的地址，如 https://api.example.com。
@@ -42,7 +49,7 @@ export const apiBase = ((import.meta.env.PUBLIC_API_BASE as string | undefined) 
  * 两处表单都没有后端，提交时打开访客自己的邮件客户端并预填内容；
  * 以后接了订阅服务或表单服务，改掉各自的 submit 处理即可。
  */
-export const email = '1795845968@qq.com'
+export const email = siteData.email
 
 /**
  * 导航 —— label 用于桌面侧栏，short 用于移动端 Tab Bar。
@@ -72,19 +79,17 @@ export function isNavActive(match: readonly string[], pathname: string) {
 }
 
 /**
- * 社交入口 —— 设计稿这轮把它们从首页顶部的 Header 挪进了侧栏 Social Row，
- * 首页那排大按钮已经不存在了。桌面侧栏取 github + bilibili + 邮箱三颗，
- * 移动端 Social Row 取前两颗（尺寸另一套，没复用）。
+ * 社交入口 —— 管理端「社交链接」页可改（src/data/socials.json）。
+ * 桌面侧栏取第一颗 dark + 第一颗 glass + 邮箱，移动端 Social Row 取前两颗。
  */
-export const socials = [
-  { label: 'Github', icon: 'github', href: 'https://github.com/QssssY', variant: 'dark' },
-  {
-    label: 'bilibili',
-    icon: 'tv',
-    href: 'https://space.bilibili.com/548357762',
-    variant: 'glass',
-  },
-] as const
+export interface Social {
+  label: string
+  icon: string
+  href: string
+  /** dark 深色主按钮（GitHub 位）/ glass 玻璃 */
+  variant: 'dark' | 'glass'
+}
+export const socials = socialsData as Social[]
 
 /** 外观切换器的三档 */
 export const themeChoices = [
@@ -114,14 +119,14 @@ export const uptime = {
  * 设计稿还有一行「构建耗时 18s」—— 同一次构建里没法自报耗时，删掉了。
  */
 export const build = {
-  status: '部署正常',
-  hosting: '未定',
-} as const
+  status: siteData.buildStatus,
+  hosting: siteData.hosting,
+}
 
 /** Greeting Card */
 export const greeting = {
-  bio: '记录、研究并延伸我所遇见、观察和思考的一切。',
-} as const
+  bio: siteData.bio,
+}
 
 /*
  * Like Widget 的基数：设计稿写的 20118 是虚构的，已删。
@@ -169,39 +174,37 @@ export const tools = toolsData as Tool[]
 export const snapshots = [{ alt: '' }, { alt: '' }, { alt: '' }] as const
 
 /**
- * 构成 STACK（项目页左栏）—— 语言占比。
+ * 构成 STACK（项目页左栏）—— 语言占比，管理端「构成」页可改（src/data/stack.json）。
  *
- * 不是设计稿那套 TypeScript/Rust/Astro：这是 repos 里三个真仓库的
- * GitHub 语言字节数聚合（共 5.93 MB，2026-08-21 取）。要刷新就重新跑
- * api.github.com/repos/<repo>/languages 把字节数加起来重算。
+ * 初始值是 repos 里三个真仓库的 GitHub 语言字节数聚合（共 5.93 MB，2026-08-21 取）。
+ * 要刷新就重新跑 api.github.com/repos/<repo>/languages 把字节数加起来重算。
  * accent：占比最高的一条走 fire，中间的走 leaf，「其他」走 dot-idle。
  */
-export const stack = [
-  { lang: 'Java', pct: 49, accent: 'fire' },
-  { lang: 'Vue', pct: 32, accent: 'leaf' },
-  { lang: 'JavaScript', pct: 16, accent: 'leaf' },
-  { lang: '其他', pct: 3, accent: 'idle' },
-] as const
+export interface StackRow {
+  lang: string
+  pct: number
+  accent: 'fire' | 'leaf' | 'idle'
+}
+export const stack = stackData as StackRow[]
 
 /**
- * 状态 NOW（项目页左栏）的末行说明。
+ * 状态 NOW（项目页左栏）的末行说明 —— 管理端「站点信息」页可改。
  *
  * 面板里每个仓库的状态不写死，按 repos[].pushed 实时判（见 NowPanel.astro），
  * 所以这句要跟那套判法对得上 —— 改判法记得改这句。
  */
-export const repoNote = '只列还在动的仓库，状态按最近一次提交算。维护不动的东西，挂着也是欠着。'
+export const repoNote = siteData.repoNote
 
 /**
- * 细则 FINE PRINT（关于页左栏）—— 说的是这个站真实的做法：
+ * 细则 FINE PRINT（关于页左栏）—— 管理端「站点信息」页可改。说的是这个站真实的做法：
  * 阅读与点赞只存匿名随机 id 的计数（见 server/main.go，不存 IP/UA）、
  * 评论走 mailto、字体和图片都自托管（见 global.css 顶部）。
- * 设计稿原句是「访问量只看服务端日志，不落库」——接了计数服务后不再属实，改掉。
  */
 export const finePrint = {
-  blurb: '没有埋点，没有广告，也不卖数据给任何人。',
-  points: ['阅读数只记匿名总数，不记来路', '评论用邮件代替，不另存一份人', '字体和图片全部自托管'],
-  reply: '来信一般三天内回，长信回得慢些。',
-} as const
+  blurb: siteData.finePrintBlurb,
+  points: siteData.finePrintPoints,
+  reply: siteData.finePrintReply,
+}
 
 /**
  * Now Playing —— 真播放器，按播放列表走：一首放完自动下一首、到底循环。
@@ -301,3 +304,43 @@ export const repos = reposData as Repo[]
 
 /** 仓库地址由 repo 拼出来，不单独存 href */
 export const repoUrl = (repo: string) => `https://github.com/${repo}`
+
+/**
+ * 关于页的自我介绍卡 —— 管理端「关于页」页可改（src/data/about.json）。
+ * JSON 里两个清单存成平铺的 label/items 两组（管理端表单好摆），这里拼回组件要的形状。
+ */
+export const aboutMe = {
+  role: aboutData.role,
+  paragraphs: aboutData.paragraphs,
+  chips: aboutData.chips,
+  lists: [
+    { label: aboutData.listALabel, items: aboutData.listAItems },
+    { label: aboutData.listBLabel, items: aboutData.listBItems },
+  ],
+}
+
+/** 站点更新日志（关于页时间线）—— 管理端「更新日志」页可改，新条目放最上面 */
+export interface ChangelogEntry {
+  title: string
+  date: string
+  desc: string
+  current?: boolean
+  badge?: string
+}
+export const changelog = changelogData as ChangelogEntry[]
+
+/**
+ * 关于页的「友链 FRIENDS」小面板 —— 管理端「关于页友链」页可改（src/data/friends.json）。
+ * 头像不进 JSON：按 domain 从 images/blogroll/ 找（utils/blogroll-avatars.ts），
+ * 和友链页共用同一批图，传一次两边都换。
+ */
+export interface Friend {
+  name: string
+  desc: string
+  icon: string
+  href: string
+  domain: string
+  from: string
+  to: string
+}
+export const friends = friendsData as Friend[]

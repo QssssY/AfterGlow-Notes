@@ -4,6 +4,7 @@ description: 第一篇测试文章，用来确认 Markdown 渲染链路正常。
 date: 2026-08-20
 tags: [随笔]
 category: 杂记
+draft: true
 ---
 
 这是一篇用来验证渲染链路的测试文章，确认 Markdown、代码高亮、标题锚点都工作正常。

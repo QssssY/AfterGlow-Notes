@@ -1,44 +1,64 @@
 ---
-title: 用 Astro 重写博客：从 64px 圆角到一条墨线
-description: 把三年积累的样式重新梳理一遍，才发现真正需要保留的只有版式与呼吸感。
-date: 2026-08-12
-updated: 2026-08-14
-tags: [前端, Astro, 设计]
-category: 前端工程
+title: 把博客做成纯静态：Astro 说服我的三件事
+description: 建站第一天的技术选型记录：为什么最后是 Astro，而不是熟门熟路的 Vue 单页应用。
+date: 2026-08-21
+tags: [Astro, 建站, 前端]
+category: 建站笔记
 cover: ./_covers/rewrite-blog-with-astro.png
 ---
 
-过去两年我一直在想一个问题：如果界面不再由人一格一格摆出来，而是由意图直接生长出来，那么工具应该长成什么样子。答案大概不是又一个属性面板，而是一块可以随时被推翻重来的画布。
+我主力写 Java，前端用 Vue。所以决定做个人博客的时候，第一反应其实是 Vue 一把梭：Vite 起项目、vue-router 管路由、文章塞进 Markdown 再用插件转组件——每一步都熟。
 
-## 为什么要重写
+最后没这么干。博客这个东西，本质上是**一堆几乎不变的文档**，访客来了读完就走。为这样的内容跑一个单页应用，等于让每个访客先下载一套运行时、再在浏览器里现场把页面拼出来。读者要的只是文字，我却先发给他一个应用程序。
 
-画布的好处在于它天然容纳「未完成」。你可以把三个互相矛盾的方案并排放着，过两天再回来决定留下哪个。这种宽容度是表单式界面很难提供的。
+调研了一圈之后选了 Astro。说服我的是三件事。
 
-> 工具的上限不是它能做多少事，而是它允许你犯多少次错。
+## 一、默认零 JavaScript
 
-## 从图层到语义
+Astro 的组件写起来像 JSX，但默认只在**构建时**运行，产物是纯 HTML 和 CSS。页面上一行 JavaScript 都没有，除非你明确要求：
 
-传统设计文件里，一个按钮是「圆角矩形 + 居中文本」。而在语义化的画布里，它就是一个按钮：它知道自己有主次状态，知道被点击后应该给出反馈。渲染只是它的一种表现形式。
+```astro title="src/pages/index.astro"
+---
+// 这里的代码只在构建时跑，浏览器永远看不到
+const posts = await getCollection('posts')
+---
+<ul>
+  {posts.map((post) => <li><a href={`/posts/${post.id}`}>{post.data.title}</a></li>)}
+</ul>
+```
 
-```ts title="canvas/node.ts"
-const button = canvas.node({
-  role: 'action',
-  label: '提交',
-  // 呈现交给渲染器决定
-  variant: 'primary',
+需要交互的地方（比如首页那个能真放歌的音乐卡）再单独写 `<script>`，Astro 会把它打成一个小模块。默认静态、按需动态，这个方向和博客的性质完全对得上。
+
+## 二、内容集合是带类型的
+
+文章放在 `src/content/posts/` 下的 Markdown 文件里，配一份 schema：
+
+```ts title="src/content.config.ts"
+const posts = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      date: z.coerce.date(),
+      tags: z.array(z.string()).default([]),
+      cover: image().optional(),
+      draft: z.boolean().default(false),
+    }),
 })
 ```
 
-节点只描述意图，具体呈现交给渲染器决定。
+front-matter 少写个字段、日期格式打错，构建直接失败并指出是哪个文件。写 Java 的人对这种"编译期就把错挡住"的体验毫无抵抗力。`image()` 还会把封面接进 Astro 的图片管线，构建时自动压缩、生成响应式尺寸。
 
-### 一次失败的尝试
+## 三、产物随便放哪
 
-最早我试过把样式全部塞进 `class` 字符串里，结果三个月后没人看得懂。教训是：**能用变量表达的东西，就不要写死**。
+`pnpm build` 出来的 `dist/` 就是一个文件夹，里面是 HTML、CSS 和图片。Nginx 能伺候、对象存储能伺候、任何静态托管都能伺候，没有 Node 进程要养，没有冷启动，没有服务端依赖要升级。
 
-- 颜色、圆角、字族这类会复用的，进设计 token
-- 手调出来的一次性数值，原样写死反而更诚实
-- 介于两者之间的，先写死，等出现第三次再抽象
+> 静态站最大的运维优势是：它没有运维。
 
-## 接下来做什么
+## 没选什么，为什么
 
-下半年准备把这套想法做成一个能真正用起来的原型：先解决多方案并置与版本回溯，再考虑把交互也纳入同一套语义描述里。做不完也没关系，反正画布上从来不缺空地。
+- **Next / Nuxt**：能力过剩。SSR、中间件、API 路由我一个都用不上，却要为它们养一台跑 Node 的机器。
+- **Hexo / Hugo**：主题生态很好，但我的设计稿是自己画的（Pencil 里一比一），需要完全掌控每一个像素，模板语言改起来不如组件顺手。
+- **纯手写 HTML**：认真考虑过。放弃的原因是想要图片自动压缩和内容 schema 校验，这两样手写维护起来太苦。
+
+至于点赞、阅读数这类必须动态的东西，静态站自己做不了——后面用 Go 写了个小服务，另开一篇记。

@@ -4,29 +4,15 @@ import NavBar from '~/components/NavBar.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import StatsPageHead from '~/components/StatsPageHead.astro'
 import ApplyPanel from '~/components/blogroll/ApplyPanel.astro'
-import type { ImageMetadata } from 'astro'
 import BlogCard from '~/components/blogroll/BlogCard.astro'
 import { blogroll } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
-import avBilibili from '../../images/blogroll/bilibili.com.png'
-import avJuejin from '../../images/blogroll/juejin.cn.png'
-import avRuanyifeng from '../../images/blogroll/ruanyifeng.com.png'
-import avSspai from '../../images/blogroll/sspai.com.png'
-import avZhangxinxu from '../../images/blogroll/zhangxinxu.com.png'
-import avZhihu from '../../images/blogroll/zhihu.com.png'
+import { blogrollAvatar } from '~/utils/blogroll-avatars'
 
-/**
- * 各站真实头像：站方 icon / 博主本人照片，抓取自各站自己发布的资源。
- * config 里的渐变配色保留作退路 —— 以后新增友链没头像也不会缺角。
+/*
+ * 头像按 domain 从 images/blogroll/ 里 glob（utils/blogroll-avatars.ts）：
+ * 管理端新增友链后传一张同域名的图就有头像，没图退回首字 + 渐变，不缺角。
  */
-const avatars: Record<string, ImageMetadata> = {
-  'ruanyifeng.com': avRuanyifeng,
-  'zhangxinxu.com': avZhangxinxu,
-  'sspai.com': avSspai,
-  'bilibili.com': avBilibili,
-  'juejin.cn': avJuejin,
-  'zhihu.com': avZhihu,
-}
 
 // 设计稿写的是 18 个 / 9 年；按真实数据算
 const total = blogroll.length
@@ -72,7 +58,7 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
                   domain={blog.domain}
                   desc={blog.desc}
                   tags={blog.tags}
-                  avatar={avatars[blog.domain]}
+                  avatar={blogrollAvatar(blog.domain)}
                   from={blog.from}
                   to={blog.to}
                   initialColor={blog.initialColor}

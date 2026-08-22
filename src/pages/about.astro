@@ -9,40 +9,14 @@ import FriendsPanel from '~/components/about/FriendsPanel.astro'
 import PrivacyPanel from '~/components/about/PrivacyPanel.astro'
 import SideStack from '~/components/about/SideStack.astro'
 import { loadPosts } from '~/components/blog/data'
-import { email, repos } from '~/config'
+import { aboutMe, changelog, email, friends as friendsData, repos } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
-import avBilibili from '../../images/blogroll/bilibili.com.png'
-import avRuanyifeng from '../../images/blogroll/ruanyifeng.com.png'
-import avZhangxinxu from '../../images/blogroll/zhangxinxu.com.png'
-import avZhihu from '../../images/blogroll/zhihu.com.png'
-
-// 设计稿 About 页自带的数据，暂放页面文件里（见 report：建议之后并入 src/config.ts）
-// 文案与首页 config.tools / config.now 一个口径：只说这个人和这个仓库真有的事，
-// 设计稿原稿的「三维 / 画布 / Blender」人设是虚构的，已换掉。
-const paragraphs = [
-  '主力写 Java，前端用 Vue。这个站是最近的业余项目：从 Pencil 设计稿开始一比一还原成 Astro 代码，点赞和阅读的计数服务也是自己用 Go 写的。',
-  '文章多是过程记录而不是结论。不太擅长长期计划，但擅长在半途发现更有意思的岔路。如果你也在做类似的事，欢迎写信来聊。',
-]
-
-const chips = ['Java', 'Vue', 'Astro', 'Tailwind', 'Go']
+import { blogrollAvatar } from '~/utils/blogroll-avatars'
 
 /**
- * About Me 里 chips 下方新加的两列清单（设计稿这轮加的）。
- *
- * 设计稿原文是 Neovim / Blender 4.2 / Obsidian，和首页「在用」那条对不上。
- * 两处说的是同一件事，写成两套迟早互相打脸，所以这里跟着 config.tools 的口径，
- * 只写这个仓库里真能查到的东西。想换成你自己的，改这里和 config.tools。
+ * 页面文案（自我介绍 / 清单 / 更新日志 / 朋友面板）真身在 src/data 的
+ * about.json / changelog.json / friends.json —— 管理端可改，这里只做取用与组装。
  */
-const lists = [
-  {
-    label: '我在用的东西',
-    items: ['Astro 7 + Tailwind 4，全站静态', 'Pencil 画设计稿，代码照着还原', 'pnpm + Git，部署还没定'],
-  },
-  {
-    label: '我关心的方向',
-    items: ['把设计稿一比一还原成代码', '中文排版里那些小细节', '静态站的构建与字体体积'],
-  },
-]
 
 /**
  * 站点数据 —— 全是真的：篇数按内容集合数、项目数按 config.repos 数，
@@ -63,40 +37,8 @@ const contacts = [
   { icon: 'rss', value: '订阅 RSS（/rss.xml）', href: '/rss.xml' },
 ]
 
-/**
- * 更新日志 —— 全部对应仓库里真实的提交（git log 可查），
- * 设计稿那套 2023-2025 的站史（Live2D / 语义化画布）是虚构人设，已换掉。
- */
-const changelog = [
-  {
-    title: '交互与真实数据',
-    date: '2026.08.22',
-    desc: '首页音乐卡能放歌、跟歌词；全站换客户端路由丝滑换页；面板上的数字全部换成真实数据。',
-    current: true,
-    badge: '当前',
-  },
-  {
-    title: '自建计数服务',
-    date: '2026.08.22',
-    desc: '点赞与阅读计数换成自己用 Go 写的小服务，只存匿名总数，不记 IP 和 UA。',
-  },
-  {
-    title: '从设计稿到代码',
-    date: '2026.08.21',
-    desc: 'blog.pen 设计稿定稿，Astro 项目初始化，首页与各栏目逐块一比一还原。',
-  },
-]
-
-/**
- * 关于页的友链面板 —— 取友链页六条里的四条，头像用各站真实图
- * （images/blogroll/，和友链页同一批素材）；icon + 渐变留作没头像时的退路。
- */
-const friends = [
-  { name: '阮一峰', desc: '周刊与入门教程', icon: 'terminal', href: 'https://www.ruanyifeng.com/blog/', from: '#E3D2B4', to: '#C9E0D8', avatar: avRuanyifeng },
-  { name: '哔哩哔哩', desc: '技术区与纪录片', icon: 'camera', href: 'https://www.bilibili.com', from: '#C6E0D6', to: '#E6D6BC', avatar: avBilibili },
-  { name: '张鑫旭', desc: 'CSS 与前端细节', icon: 'app-window', href: 'https://www.zhangxinxu.com', from: '#E7D6B8', to: '#D6D2BE', avatar: avZhangxinxu },
-  { name: '知乎', desc: '专栏与长文', icon: 'book-open', href: 'https://www.zhihu.com', from: '#CFE0D2', to: '#E7D8C0', avatar: avZhihu },
-]
+/** 头像按 domain 从 images/blogroll/ 取（和友链页共用），没图退回 icon + 渐变 */
+const friends = friendsData.map((f) => ({ ...f, avatar: blogrollAvatar(f.domain) }))
 ---
 
 <BaseLayout title="关于网站" rail={false}>
@@ -130,10 +72,10 @@ const friends = [
       <!-- Row 1 -->
       <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:flex-row">
         <AboutMe
-          role="Java / Vue / 业余把想法做成能跑的小东西"
-          paragraphs={paragraphs}
-          chips={chips}
-          lists={lists}
+          role={aboutMe.role}
+          paragraphs={aboutMe.paragraphs}
+          chips={aboutMe.chips}
+          lists={aboutMe.lists}
         />
         <SideStack stats={stats} contacts={contacts} />
       </div>

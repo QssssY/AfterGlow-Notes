@@ -8,8 +8,10 @@ import NavItem from './NavItem.astro'
 
 const pathname = Astro.url.pathname
 
-const github = socials.find((s) => s.variant === 'dark')!
-const bilibili = socials.find((s) => s.variant === 'glass')!
+// 社交按钮从管理端可改的 socials 里挑：第一颗深色款进 GitHub 位、
+// 第一颗玻璃款进 bilibili 位；对应款式缺席时按顺序兜底，不让构建崩
+const github = socials.find((s) => s.variant === 'dark') ?? socials[0]!
+const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.length - 1]!
 ---
 
 <!-- Sidebar · blog.pen I23TnW

@@ -3,8 +3,9 @@
 // 设计取向：博客本体是纯静态 + git 是唯一事实源，所以这里不建内容数据库，
 // 所有「改内容」都落成仓库里的文件：
 //   - 文章        → src/content/posts/<slug>.md（YAML front-matter + 正文）
-//   - 站点数据    → src/data/<name>.json（最近在读 / 此刻 / 播放列表 / 友链 / 项目 / 分享 / 在用）
-//   - 上传        → 封面进 src/content/posts/_covers/，插图进 public/images/uploads/，音乐进 public/music/
+//   - 站点数据    → src/data/<name>.json（站点文案 / 关于页 / 项目 / 友链 / 播放列表等）
+//   - 上传        → 封面进 src/content/posts/_covers/，插图进 public/images/uploads/，
+//                   友链头像按域名进 images/blogroll/，音乐进 public/music/
 //
 // dev 模式下 astro dev 监听这些文件，保存即热更新；部署后改完要重新构建
 // （/api/admin/build 可配一条构建命令，没配就提示手动构建）。
@@ -68,18 +69,29 @@ func (a *adminState) uploadsDir() string {
 }
 func (a *adminState) musicDir() string { return filepath.Join(a.blogDir, "public", "music") }
 
+// 友链头像目录：文件名 = 域名，前端按域名 glob（src/utils/blogroll-avatars.ts）
+func (a *adminState) blogAvatarsDir() string {
+	return filepath.Join(a.blogDir, "images", "blogroll")
+}
+
 // 站点数据文件白名单 —— 新增一种内容 = 这里加一行 + src/data 放文件 + config.ts 引入
 var dataFiles = map[string]struct {
 	kind     string // array | object
 	minItems int    // 组件会取 [0] 的集合不许清空（repos Featured 卡、播放器）
 }{
-	"reading":  {"array", 0},
-	"now":      {"object", 0},
-	"playlist": {"array", 1},
-	"blogroll": {"array", 0},
-	"repos":    {"array", 1},
-	"share":    {"array", 0},
-	"tools":    {"array", 0},
+	"reading":   {"array", 0},
+	"now":       {"object", 0},
+	"playlist":  {"array", 1},
+	"blogroll":  {"array", 0},
+	"repos":     {"array", 1},
+	"share":     {"array", 0},
+	"tools":     {"array", 0},
+	"site":      {"object", 0},
+	"about":     {"object", 0},
+	"changelog": {"array", 1},
+	"friends":   {"array", 0},
+	"socials":   {"array", 1},
+	"stack":     {"array", 1},
 }
 
 var (
@@ -501,6 +513,7 @@ var (
 	imageExts = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".gif": true, ".avif": true}
 	musicExts = map[string]bool{".mp3": true, ".m4a": true, ".ogg": true, ".flac": true, ".lrc": true}
 	nameSan   = regexp.MustCompile(`[^a-z0-9-]+`)
+	domainRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{0,62}$`) // 友链头像按域名命名
 )
 
 func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
@@ -553,6 +566,27 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		dst = filepath.Join(s.admin.uploadsDir(), sub, name)
 		ret = "/images/uploads/" + sub + "/" + name
 
+	case "avatar":
+		// 友链 / 朋友面板头像：按域名存进 images/blogroll/，前端 glob 按名对上。
+		// 存进 Astro 资产目录（不是 public/），构建时会压缩并生成响应式尺寸。
+		domain := strings.ToLower(strings.TrimSpace(r.FormValue("name")))
+		if !domainRe.MatchString(domain) {
+			fail(w, http.StatusBadRequest, "头像上传要带域名（如 ruanyifeng.com），文件按它命名")
+			return
+		}
+		if !imageExts[ext] {
+			fail(w, http.StatusBadRequest, "头像只收 png / jpg / webp / gif / avif")
+			return
+		}
+		// 同域名的旧头像（可能是别的扩展名）先清掉，glob 命中才唯一
+		for old := range imageExts {
+			if old != ext {
+				os.Remove(filepath.Join(s.admin.blogAvatarsDir(), domain+old))
+			}
+		}
+		dst = filepath.Join(s.admin.blogAvatarsDir(), domain+ext)
+		ret = "images/blogroll/" + domain + ext
+
 	case "music":
 		if !musicExts[ext] {
 			fail(w, http.StatusBadRequest, "音乐只收 mp3 / m4a / ogg / flac / lrc")
@@ -568,7 +602,7 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		ret = "/music/" + base + ext
 
 	default:
-		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / music")
+		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / music")
 		return
 	}
 

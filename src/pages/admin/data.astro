@@ -33,6 +33,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     </div>
     <input type="file" data-upload-file accept=".mp3,.m4a,.ogg,.flac,.lrc" hidden />
   </section>
+
+  <input type="file" data-avatar-file accept="image/*" hidden />
 </AdminLayout>
 
 <script>
@@ -43,13 +45,28 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   interface Field {
     key: string
     label: string
-    input?: 'text' | 'textarea' | 'number' | 'date' | 'checkbox' | 'select' | 'color' | 'csv'
+    input?:
+      | 'text'
+      | 'textarea'
+      | 'number'
+      | 'date'
+      | 'datetime'
+      | 'checkbox'
+      | 'select'
+      | 'color'
+      | 'csv'
+      | 'lines'
+      | 'avatar'
     options?: string[]
     hint?: string
     /** 空值时从 JSON 里省略这个键 */
     optional?: boolean
     /** 表单里占整行 */
     wide?: boolean
+    /** avatar 型控件：从条目的哪个字段取文件名（域名） */
+    nameFrom?: string
+    /** 只是个操作控件，不往 JSON 里写值（avatar 用） */
+    virtual?: boolean
   }
 
   interface Spec {
@@ -58,16 +75,166 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     kind: 'array' | 'object'
     /** object 模式的顶层字段 */
     fields?: Field[]
-    /** 条目字段（array 本体 / object 里 listKey 指向的数组） */
+    /** 条目字段（array 本体 / object 里 listKey 指向的数组）；纯 object 留空数组 */
     item: Field[]
     listKey?: string
     minItems?: number
     upload?: 'music'
+    /** 条目工具行里的额外按钮（上移/下移/删除之外） */
+    itemTools?: { act: string; label: string }[]
   }
 
   const ICON_HINT = 'lucide 图标名（去 lucide.dev 查，如 hammer）'
+  const AVATAR_HINT = '按域名存进 images/blogroll/，友链页和关于页共用；不传就用首字 + 渐变'
 
   const SPECS: Record<string, Spec> = {
+    site: {
+      label: '站点信息',
+      desc: '站名、作者、邮箱这些全站文案，以及关于页的构建 / 细则两块小字。',
+      kind: 'object',
+      fields: [
+        { key: 'title', label: '站名' },
+        { key: 'titleEn', label: '英文名（Banner 眉题用）' },
+        { key: 'author', label: '作者名' },
+        { key: 'authorBadge', label: '作者名旁的小标（可空）', optional: true },
+        { key: 'description', label: '站点描述（SEO 与 RSS）', wide: true },
+        { key: 'bio', label: '首页问候卡的一句话', input: 'textarea', wide: true },
+        { key: 'email', label: '联系邮箱' },
+        { key: 'since', label: '版权起始年份', input: 'number' },
+        { key: 'buildStatus', label: '构建状态（关于页）' },
+        { key: 'hosting', label: '托管平台（关于页）' },
+        { key: 'repoNote', label: '项目页「状态」面板末行', input: 'textarea', wide: true },
+        { key: 'finePrintBlurb', label: '细则开场白', wide: true },
+        { key: 'finePrintPoints', label: '细则条目（一行一条）', input: 'lines', wide: true },
+        { key: 'finePrintReply', label: '细则末行（回信约定）', wide: true },
+      ],
+      item: [],
+    },
+    about: {
+      label: '关于页',
+      desc: '关于页的自我介绍卡：身份、两段介绍、技能标签和两个小清单。',
+      kind: 'object',
+      fields: [
+        { key: 'role', label: '一句话身份', wide: true },
+        { key: 'paragraphs', label: '自我介绍（一行一段）', input: 'lines', wide: true },
+        { key: 'chips', label: '技能标签（逗号分隔）', input: 'csv', wide: true },
+        { key: 'listALabel', label: '清单一标题' },
+        { key: 'listAItems', label: '清单一条目（一行一条）', input: 'lines', wide: true },
+        { key: 'listBLabel', label: '清单二标题' },
+        { key: 'listBItems', label: '清单二条目（一行一条）', input: 'lines', wide: true },
+      ],
+      item: [],
+    },
+    changelog: {
+      label: '更新日志',
+      desc: '关于页右下的时间线。新条目放最上面；「当前」高亮只标一条。',
+      kind: 'array',
+      minItems: 1,
+      item: [
+        { key: 'title', label: '标题' },
+        { key: 'date', label: '日期', hint: '写成 2026.08.22' },
+        { key: 'desc', label: '说明', input: 'textarea', wide: true },
+        { key: 'current', label: '当前版本（橙色高亮）', input: 'checkbox' },
+        { key: 'badge', label: '角标文字（可空）', optional: true },
+      ],
+    },
+    friends: {
+      label: '关于页友链',
+      desc: '关于页的「友链 FRIENDS」小面板，四位正好两行。头像按域名和友链页共用，传一次两边都换。',
+      kind: 'array',
+      item: [
+        { key: 'name', label: '站名' },
+        { key: 'desc', label: '一句话' },
+        { key: 'href', label: '链接' },
+        { key: 'domain', label: '域名', hint: '用来对上头像文件，如 ruanyifeng.com' },
+        { key: 'icon', label: '备用图标', hint: ICON_HINT },
+        { key: 'from', label: '渐变起', input: 'color' },
+        { key: 'to', label: '渐变止', input: 'color' },
+        { key: 'avatar', label: '头像', input: 'avatar', nameFrom: 'domain', virtual: true, hint: AVATAR_HINT },
+      ],
+    },
+    blogroll: {
+      label: '友链',
+      desc: '「优秀博客」页的站点列表。头像传了用真图，没传退回首字 + 渐变底。',
+      kind: 'array',
+      item: [
+        { key: 'name', label: '站名' },
+        { key: 'initial', label: '头像字（一个字）' },
+        { key: 'href', label: '链接' },
+        { key: 'domain', label: '域名（展示用）' },
+        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
+        { key: 'tags', label: '标签（逗号分隔）', input: 'csv' },
+        { key: 'since', label: '上线年份', input: 'number' },
+        { key: 'from', label: '渐变起', input: 'color' },
+        { key: 'to', label: '渐变止', input: 'color' },
+        { key: 'initialColor', label: '首字颜色', input: 'color' },
+        { key: 'avatar', label: '头像', input: 'avatar', nameFrom: 'domain', virtual: true, hint: AVATAR_HINT },
+      ],
+    },
+    repos: {
+      label: '项目',
+      desc: '项目页与首页共用。第一条是 Featured 大卡，至少保留一条。星数、推送时间不用手填 —— 每条下面有「从 GitHub 同步」。',
+      kind: 'array',
+      minItems: 1,
+      itemTools: [{ act: 'gh', label: '⟳ 从 GitHub 同步' }],
+      item: [
+        { key: 'repo', label: 'GitHub 链接', hint: '直接粘贴仓库网址，或写 作者/仓库名（如 QssssY/offCat）', wide: true },
+        { key: 'name', label: '显示名' },
+        { key: 'stack', label: '主语言' },
+        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
+        { key: 'stars', label: '星数（兜底值）', input: 'number', hint: '浏览器端会拉最新的覆盖' },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+        { key: 'badge', label: '角标（可空，只有第一条显示）', optional: true },
+        { key: 'pushed', label: '最后推送时间', input: 'datetime', hint: '项目页按它标「在推进 / 搁置」，点同步自动填' },
+      ],
+    },
+    stack: {
+      label: '构成',
+      desc: '项目页左栏的语言占比条。占比手填，加起来别超 100。',
+      kind: 'array',
+      minItems: 1,
+      item: [
+        { key: 'lang', label: '语言' },
+        { key: 'pct', label: '占比 %', input: 'number' },
+        { key: 'accent', label: '颜色', input: 'select', options: ['fire', 'leaf', 'idle'], hint: 'fire 橙 / leaf 绿 / idle 灰' },
+      ],
+    },
+    socials: {
+      label: '社交链接',
+      desc: '侧栏与移动端的社交按钮。深色款是主按钮（GitHub 位），玻璃款排它旁边。',
+      kind: 'array',
+      minItems: 1,
+      item: [
+        { key: 'label', label: '名称' },
+        { key: 'href', label: '链接', wide: true },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+        { key: 'variant', label: '样式', input: 'select', options: ['dark', 'glass'], hint: 'dark 深色主按钮 / glass 玻璃' },
+      ],
+    },
+    share: {
+      label: '推荐分享',
+      desc: '「推荐分享」页的条目。分类随便写，筛选档位会自动按出现过的分类生成。',
+      kind: 'array',
+      item: [
+        { key: 'title', label: '标题' },
+        { key: 'href', label: '链接' },
+        { key: 'domain', label: '域名（展示用）' },
+        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+        { key: 'tone', label: '配色', input: 'select', options: ['fire', 'leaf'], hint: 'fire 橙 / leaf 绿' },
+        { key: 'category', label: '分类', hint: '工具 / 文章 / 播客 / 教程，或新起一个' },
+      ],
+    },
+    tools: {
+      label: '在用',
+      desc: '首页中栏末位的「在用」工具行，一行四件正好。',
+      kind: 'array',
+      item: [
+        { key: 'name', label: '名称' },
+        { key: 'meta', label: '说明' },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+      ],
+    },
     reading: {
       label: '最近在读',
       desc: '首页右栏的「最近在读」卡。progress 是读完的百分比。',
@@ -110,70 +277,13 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         { key: 'lrc', label: '歌词地址（可空）', optional: true, hint: '/music/xxx.lrc，没有就不显示歌词' },
       ],
     },
-    blogroll: {
-      label: '友链',
-      desc: '「优秀博客」页的站点列表。头像是首字 + 渐变底，渐变两端和字色按条手调。',
-      kind: 'array',
-      item: [
-        { key: 'name', label: '站名' },
-        { key: 'initial', label: '头像字（一个字）' },
-        { key: 'href', label: '链接' },
-        { key: 'domain', label: '域名（展示用）' },
-        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
-        { key: 'tags', label: '标签（逗号分隔）', input: 'csv' },
-        { key: 'since', label: '上线年份', input: 'number' },
-        { key: 'from', label: '渐变起', input: 'color' },
-        { key: 'to', label: '渐变止', input: 'color' },
-        { key: 'initialColor', label: '首字颜色', input: 'color' },
-      ],
-    },
-    repos: {
-      label: '项目',
-      desc: '项目页与首页共用。第一条是 Featured 大卡，至少保留一条。星数是兜底值，浏览器端会拉 GitHub 最新的覆盖。',
-      kind: 'array',
-      minItems: 1,
-      item: [
-        { key: 'repo', label: 'GitHub 仓库', hint: '如 QssssY/offCat' },
-        { key: 'name', label: '显示名' },
-        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
-        { key: 'stack', label: '主语言' },
-        { key: 'stars', label: '兜底星数', input: 'number' },
-        { key: 'icon', label: '图标', hint: ICON_HINT },
-        { key: 'badge', label: '角标（可空，只有第一条显示）', optional: true },
-        { key: 'pushed', label: '最后推送时间', hint: 'ISO 格式，如 2026-08-19T15:06:27Z（项目页按它标「还在动」）' },
-      ],
-    },
-    share: {
-      label: '推荐分享',
-      desc: '「推荐分享」页的条目。分类随便写，筛选档位会自动按出现过的分类生成。',
-      kind: 'array',
-      item: [
-        { key: 'title', label: '标题' },
-        { key: 'href', label: '链接' },
-        { key: 'domain', label: '域名（展示用）' },
-        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
-        { key: 'icon', label: '图标', hint: ICON_HINT },
-        { key: 'tone', label: '配色', input: 'select', options: ['fire', 'leaf'], hint: 'fire 橙 / leaf 绿' },
-        { key: 'category', label: '分类', hint: '工具 / 文章 / 播客 / 教程，或新起一个' },
-      ],
-    },
-    tools: {
-      label: '在用',
-      desc: '首页中栏末位的「在用」工具行，一行四件正好。',
-      kind: 'array',
-      item: [
-        { key: 'name', label: '名称' },
-        { key: 'meta', label: '说明' },
-        { key: 'icon', label: '图标', hint: ICON_HINT },
-      ],
-    },
   }
 
   // ---- 状态 ----
 
   type Item = Record<string, unknown>
 
-  let current = 'reading'
+  let current = 'site'
   let value: unknown = null
   let dirty = false
 
@@ -182,28 +292,72 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   const editor = $('[data-editor]')
 
   const spec = () => SPECS[current]!
-  const list = (): Item[] =>
-    (spec().kind === 'array' ? value : (value as Item)?.[spec().listKey!]) as Item[]
+  /** 这一组有没有「条目列表」：纯 object（站点信息 / 关于页）没有 */
+  const hasList = (sp: Spec) => sp.kind === 'array' || !!sp.listKey
+  const list = (): Item[] => {
+    const sp = spec()
+    if (!hasList(sp)) return []
+    return (sp.kind === 'array' ? value : (value as Item)?.[sp.listKey!]) as Item[]
+  }
 
   window.addEventListener('beforeunload', (e) => {
     if (dirty) e.preventDefault()
   })
+
+  // ---- 值的两头转换 ----
+
+  const pad2 = (n: number) => String(n).padStart(2, '0')
+
+  /** JSON 里的 ISO（UTC，如 2026-08-19T15:06:27Z）→ datetime-local 要的本地时间串 */
+  function isoToLocal(iso: string): string {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ''
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+  }
+
+  /** datetime-local → ISO（UTC Z）；空或没填完先原样留着 */
+  function localToIso(v: string): string {
+    if (!v) return ''
+    const d = new Date(v)
+    if (Number.isNaN(d.getTime())) return v
+    return d.toISOString().replace(/\.\d{3}Z$/, 'Z')
+  }
+
+  /** 粘贴的 GitHub 网址收敛成 作者/仓库名；不像网址就原样返回 */
+  function normalizeRepo(input: string): string {
+    const s = input.trim()
+    const m = s.match(/^https?:\/\/(?:www\.)?github\.com\/([^/\s]+\/[^/\s#?]+)/i)
+    if (!m) return s
+    return m[1]!.replace(/\.git$/, '').replace(/\/+$/, '')
+  }
+
+  const REPO_RE = /^[\w.-]+\/[\w.-]+$/
 
   // ---- 渲染 ----
 
   function fieldHtml(f: Field, v: unknown, scope: string): string {
     const attrs = `data-k="${f.key}" data-scope="${scope}"`
     const s = v == null ? '' : String(v)
+    const hint = f.hint ? `<span class="ad-hint">${esc(f.hint)}</span>` : ''
     let control: string
     switch (f.input) {
       case 'textarea':
         control = `<textarea class="ad-textarea" rows="2" ${attrs}>${esc(s)}</textarea>`
+        break
+      case 'lines':
+        control = `<textarea class="ad-textarea" rows="3" ${attrs}>${esc(
+          Array.isArray(v) ? v.join('\n') : s,
+        )}</textarea>`
         break
       case 'number':
         control = `<input class="ad-input" type="number" ${attrs} value="${esc(s)}">`
         break
       case 'date':
         control = `<input class="ad-input" type="date" ${attrs} value="${esc(s)}">`
+        break
+      case 'datetime':
+        control = `<input class="ad-input" type="datetime-local" ${attrs} value="${esc(isoToLocal(s))}">`
         break
       case 'color':
         control = `<input class="ad-input" type="color" ${attrs} value="${esc(s || '#d9812b')}">`
@@ -220,10 +374,16 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       case 'csv':
         control = `<input class="ad-input" ${attrs} value="${esc(Array.isArray(v) ? v.join(', ') : s)}">`
         break
+      case 'avatar':
+        // 操作控件：图按域名传给服务端，不往 JSON 写值
+        return `<div class="flex flex-col gap-[4px]">
+          <span class="ad-label">${esc(f.label)}</span>
+          <button type="button" class="ad-btn-ghost" data-act="avatar" data-idx="${scope}" data-from="${esc(f.nameFrom ?? 'domain')}">上传头像图</button>
+          ${hint}
+        </div>`
       default:
         control = `<input class="ad-input" ${attrs} value="${esc(s)}">`
     }
-    const hint = f.hint ? `<span class="ad-hint">${esc(f.hint)}</span>` : ''
     return `<label class="flex flex-col gap-[4px] ${f.wide ? 'ad-field--wide' : ''}">
       <span class="ad-label">${esc(f.label)}</span>${control}${hint}
     </label>`
@@ -232,7 +392,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   function render() {
     const sp = spec()
     $('[data-desc]').textContent = sp.desc
-    $('[data-add]').hidden = false
+    $('[data-add]').hidden = !hasList(sp)
     $('[data-upload-box]').hidden = sp.upload !== 'music'
 
     for (const btn of tabs.querySelectorAll('button')) {
@@ -245,18 +405,23 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         .map((f) => fieldHtml(f, (value as Item)[f.key], 'top'))
         .join('')}</div></div>`
     }
-    html += list()
-      .map(
-        (item, i) => `<div class="ad-item" data-idx="${i}">
-          <div class="ad-item-grid">${sp.item.map((f) => fieldHtml(f, item[f.key], String(i))).join('')}</div>
-          <div class="ad-item-tools">
-            <button type="button" data-act="up" data-idx="${i}">上移</button>
-            <button type="button" data-act="down" data-idx="${i}">下移</button>
-            <button type="button" data-act="del" data-idx="${i}" class="ad-danger">删除</button>
-          </div>
-        </div>`,
-      )
-      .join('')
+    if (hasList(sp)) {
+      html += list()
+        .map(
+          (item, i) => `<div class="ad-item" data-idx="${i}">
+            <div class="ad-item-grid">${sp.item.map((f) => fieldHtml(f, item[f.key], String(i))).join('')}</div>
+            <div class="ad-item-tools">
+              ${(sp.itemTools ?? [])
+                .map((t) => `<button type="button" data-act="${t.act}" data-idx="${i}">${esc(t.label)}</button>`)
+                .join('')}
+              <button type="button" data-act="up" data-idx="${i}">上移</button>
+              <button type="button" data-act="down" data-idx="${i}">下移</button>
+              <button type="button" data-act="del" data-idx="${i}" class="ad-danger">删除</button>
+            </div>
+          </div>`,
+        )
+        .join('')
+    }
     editor.innerHTML = html
   }
 
@@ -275,21 +440,54 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     let v: unknown = el.value
     if (f.input === 'checkbox') v = el.checked
     else if (f.input === 'number') v = el.value === '' ? 0 : Number(el.value)
+    else if (f.input === 'datetime') v = localToIso(el.value)
     else if (f.input === 'csv')
       v = el.value
         .split(/[,，]/)
         .map((t) => t.trim())
         .filter(Boolean)
+    else if (f.input === 'lines')
+      v = el.value
+        .split('\n')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    // 项目的 GitHub 链接：粘贴完整网址自动收敛成 作者/仓库名
+    if (current === 'repos' && key === 'repo' && typeof v === 'string') v = normalizeRepo(v)
     target[key] = v
     dirty = true
   })
 
-  editor.addEventListener('click', (e) => {
+  // 失焦时把收敛后的值写回输入框（打字过程中不动它，免得光标乱跳）
+  editor.addEventListener(
+    'change',
+    (e) => {
+      const el = e.target as HTMLInputElement
+      if (current === 'repos' && el.dataset.k === 'repo') {
+        const item = list()[Number(el.dataset.scope)]
+        if (item) el.value = String(item.repo ?? '')
+      }
+    },
+    true,
+  )
+
+  // ---- 条目操作（上移 / 下移 / 删除 / GitHub 同步 / 头像）----
+
+  editor.addEventListener('click', async (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')
     if (!btn) return
     const i = Number(btn.dataset.idx)
-    const items = list()
     const act = btn.dataset.act
+
+    if (act === 'avatar') {
+      pickAvatar(i, btn.dataset.from || 'domain')
+      return
+    }
+    if (act === 'gh') {
+      await syncFromGitHub(i, btn)
+      return
+    }
+
+    const items = list()
     if (act === 'del') {
       if (items.length <= (spec().minItems ?? 0)) {
         toast(`这一组至少要留 ${spec().minItems} 条`, false)
@@ -308,9 +506,10 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   $('[data-add]').addEventListener('click', () => {
     const item: Item = {}
     for (const f of spec().item) {
+      if (f.virtual) continue
       if (f.input === 'checkbox') item[f.key] = false
       else if (f.input === 'number') item[f.key] = 0
-      else if (f.input === 'csv') item[f.key] = []
+      else if (f.input === 'csv' || f.input === 'lines') item[f.key] = []
       else if (f.input === 'select') item[f.key] = f.options?.[0] ?? ''
       else if (f.input === 'color') item[f.key] = '#d9812b'
       else if (f.input === 'date') item[f.key] = today()
@@ -322,12 +521,88 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     editor.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   })
 
+  // ---- GitHub 同步：一键拉星数 / 推送时间 / 主语言 ----
+
+  async function syncFromGitHub(i: number, btn: HTMLElement) {
+    const item = list()[i]
+    if (!item) return
+    const repo = normalizeRepo(String(item.repo ?? ''))
+    if (!REPO_RE.test(repo)) {
+      toast('先把 GitHub 链接填好 —— 仓库网址或 作者/仓库名 都行', false)
+      return
+    }
+    const original = btn.textContent
+    btn.textContent = '同步中…'
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}`)
+      if (res.status === 404) throw new Error(`GitHub 上没有 ${repo}（私有仓库拉不到）`)
+      if (res.status === 403) throw new Error('GitHub 限流了，过几分钟再试')
+      if (!res.ok) throw new Error(`GitHub 拒绝了（HTTP ${res.status}）`)
+      const gh = (await res.json()) as {
+        name?: string
+        stargazers_count?: number
+        pushed_at?: string
+        language?: string | null
+        description?: string | null
+      }
+      item.repo = repo
+      if (typeof gh.stargazers_count === 'number') item.stars = gh.stargazers_count
+      if (gh.pushed_at) item.pushed = gh.pushed_at
+      if (gh.language) item.stack = gh.language
+      if (!String(item.name ?? '').trim() && gh.name) item.name = gh.name
+      if (!String(item.desc ?? '').trim() && gh.description) item.desc = gh.description
+      dirty = true
+      render()
+      toast(`已同步 ${repo}：★ ${gh.stargazers_count ?? '?'} · 最后推送 ${gh.pushed_at?.slice(0, 10) ?? '?'}，记得保存`)
+    } catch (err) {
+      btn.textContent = original
+      report(err)
+    }
+  }
+
+  // ---- 头像上传（友链 / 关于页友链共用，按域名命名）----
+
+  const avFile = $<HTMLInputElement>('[data-avatar-file]')
+  let avName = ''
+
+  function pickAvatar(i: number, nameFrom: string) {
+    const item = list()[i]
+    if (!item) return
+    const name = String(item[nameFrom] ?? '')
+      .trim()
+      .toLowerCase()
+    if (!name) {
+      toast('先把域名填好 —— 头像文件按域名命名', false)
+      return
+    }
+    avName = name
+    avFile.click()
+  }
+
+  avFile.addEventListener('change', async () => {
+    const file = avFile.files?.[0]
+    if (!file) return
+    const fd = new FormData()
+    fd.append('kind', 'avatar')
+    fd.append('name', avName)
+    fd.append('file', file)
+    try {
+      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      toast(`头像已存进 ${res.path} —— dev 站热更新，正式站要重新构建`)
+    } catch (err) {
+      report(err)
+    } finally {
+      avFile.value = ''
+    }
+  })
+
   // ---- 存取 ----
 
   function cleaned(): unknown {
     const strip = (item: Item, fields: Field[]) => {
       const out: Item = {}
       for (const f of fields) {
+        if (f.virtual) continue
         const v = item[f.key]
         if (f.optional && (v == null || (typeof v === 'string' && v.trim() === ''))) continue
         out[f.key] = typeof v === 'string' ? v.trim() : v
@@ -335,6 +610,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       return out
     }
     const sp = spec()
+    if (sp.kind === 'object' && !sp.listKey) return strip(value as Item, sp.fields!)
     const items = list().map((it) => strip(it, sp.item))
     if (sp.kind === 'array') return items
     const top = strip(value as Item, sp.fields!)
@@ -371,7 +647,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     load(btn.dataset.name!).catch(report)
   })
 
-  load('reading').catch(report)
+  load('site').catch(report)
 
   // ---- 音乐上传 ----
 

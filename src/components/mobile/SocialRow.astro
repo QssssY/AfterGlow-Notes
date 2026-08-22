@@ -3,8 +3,9 @@ import { Icon } from 'astro-icon/components'
 import BilibiliIcon from '~/components/BilibiliIcon.astro'
 import { socials } from '~/config'
 
-const github = socials.find((s) => s.variant === 'dark')!
-const second = socials.find((s) => s.variant === 'glass')!
+// 款式缺席时按顺序兜底（socials 可在管理端增删），不让构建崩
+const github = socials.find((s) => s.variant === 'dark') ?? socials[0]!
+const second = socials.find((s) => s.variant === 'glass') ?? socials[socials.length - 1]!
 ---
 
 <!-- Social Row · blog.pen Mobile 首页（尺寸与桌面 Social Button 不同，故未复用） -->
