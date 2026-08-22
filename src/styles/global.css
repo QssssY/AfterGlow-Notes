@@ -32,7 +32,10 @@
 
 :root {
   --cream: #f7f1e7;
-  --card: #ffffff99;
+  /* 卡底从 60% 白降到 35%（毛玻璃质感第二轮）：60% 时模糊吸进来的
+     背景全被白底盖住，用户反馈"没区别"。轮廓靠 card-border + 投影撑，
+     可读性靠大半径 blur 保底。 */
+  --card: #ffffff59;
   --card-solid: #ffffffe0;
   --card-border: #ffffffcc;
   --hairline: #5b423f1a;
@@ -160,12 +163,13 @@
  * 毛玻璃质感升级（用户点名参考苹果）：原来 blur(4px) 基本等于没有。
  * 苹果玻璃的三件套 —— 大半径模糊（背景光晕被吸进卡里）、saturate 提饱和
  * （透进来的颜色鲜亮而不浑浊）、顶缘 1px 内侧高光（玻璃的受光边）。
- * 底色透明度不动（blog.pen 的值），质感全靠滤镜和高光。 */
+ * 第二轮又把卡底 60%→35% 白、aurora 光晕 0.16→0.26：
+ * 第一轮只动滤镜时用户反馈"没区别"——玻璃要透，先得让背后有东西可透。 */
 @utility glass {
   background-color: var(--card);
   outline: 1.5px solid var(--card-border);
   outline-offset: -0.75px;
-  backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(170%);
   box-shadow:
     inset 0 1px 0 0 var(--glass-edge),
     0 24px 44px -16px var(--shadow-soft),
@@ -177,7 +181,7 @@
   background-color: var(--card);
   outline: 1.5px solid var(--card-border);
   outline-offset: -0.75px;
-  backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(26px) saturate(170%);
   box-shadow:
     inset 0 1px 0 0 var(--glass-edge),
     0 14px 28px -12px var(--shadow-soft),
@@ -189,7 +193,7 @@
   background-color: var(--card);
   outline: 1.5px solid var(--card-border);
   outline-offset: -0.75px;
-  backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(26px) saturate(170%);
   box-shadow:
     inset 0 1px 0 0 var(--glass-edge),
     0 16px 32px -14px var(--shadow-soft),
@@ -228,11 +232,13 @@
     radial-gradient(30% 22% at 80% 10%, var(--leaf) 0%, transparent 68%),
     radial-gradient(44% 30% at 66% 58%, var(--color-gold) 0%, transparent 70%),
     radial-gradient(34% 24% at 12% 76%, var(--fire-warm) 0%, transparent 70%);
-  opacity: 0.16;
+  /* 0.16 → 0.26（毛玻璃第二轮）：玻璃透了之后背后得有东西可透 ——
+     光晕太淡的话透过来的只是奶油色，模糊再大也看不出流动感 */
+  opacity: 0.26;
 }
 
 .dark .aurora {
-  opacity: 0.1;
+  opacity: 0.16;
 }
 
 /* 断点跟 xl (80rem) 对齐：全站桌面/移动布局都在这里切，
