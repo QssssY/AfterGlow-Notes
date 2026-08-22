@@ -5,7 +5,7 @@ export const site = {
   title: '萤火录',
   /** Banner Eyebrow 里的英文名 */
   titleEn: 'FIREFLY NOTES',
-  author: '清川',
+  author: 'Perfect_zzZ',
   /** 作者名后的橙色小标 */
   authorBadge: '(开发中)',
   description: '按时间倒叙的写作记录',

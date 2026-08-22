@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets'
 import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
+import placeholderArt from '../../../images/placeholder-art.png'
 
 interface Props {
   badge: string
@@ -33,17 +34,14 @@ const external = href?.startsWith('http')
   data-gh={repo}
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[24px] rounded-[32px] p-[20px] xl:flex-row xl:items-center"
 >
-  {
-    thumb ? (
-      <Image
-        src={thumb}
-        alt=""
-        class="h-[212px] w-full shrink-0 rounded-[22px] object-cover xl:w-[360px]"
-      />
-    ) : (
-      <span class="h-[212px] w-full shrink-0 rounded-[22px] bg-avatar-bg xl:w-[360px]" />
-    )
-  }
+  {/* 没给截图时用品牌占位图（scripts/gen-placeholder-art.mjs 生成），不再是一块素色 */}
+  <Image
+    src={thumb ?? placeholderArt}
+    alt=""
+    width={1080}
+    height={636}
+    class="h-[212px] w-full shrink-0 rounded-[22px] object-cover xl:w-[360px]"
+  />
 
   <span class="flex h-fit w-full flex-col items-start gap-[12px] xl:flex-1">
     <!-- 徽标这轮跟着设计稿从金色改成橙色：底 fire-tint、字 brand-ink，两个都是变量，

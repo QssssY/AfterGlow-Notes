@@ -21,8 +21,11 @@ import TopBar from '~/components/mobile/TopBar.astro'
 import { site } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 import { postStats } from '~/utils/post'
-import avatarDesktop from '../../images/generated-1787211089413.png'
-import avatarMobile from '../../images/generated-1787212262935.png'
+import artBg from '../../images/bg.png'
+import avatar from '../../images/cat001.jpg'
+import snapDusk from '../../images/snapshot-dusk.png'
+import snapField from '../../images/snapshot-field.png'
+import snapLantern from '../../images/snapshot-lantern.png'
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
@@ -64,21 +67,23 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       <UptimeCard />
     </div>
 
-    <div class="flex h-fit flex-1 flex-col items-start gap-[24px]">
-      <ArtCard />
+    {/* self-stretch + ArtCard grow：真实内容比设计稿短一截时，
+        让画卡吸收差值，中栏底边和两侧对齐，不留一段生硬的空白 */}
+    <div class="flex flex-1 flex-col items-start gap-[24px] self-stretch">
+      <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" grow />
       <NowCard />
       <TagCloudCard tags={tags} />
       <ToolsBar />
     </div>
 
     <div class="flex h-fit w-[392px] shrink-0 flex-col items-start gap-[24px]">
-      <GreetingCard avatar={avatarDesktop} />
+      <GreetingCard avatar={avatar} />
       <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[16px]">
         <LikeWidget />
         <NowPlayingCard />
       </div>
       <ReadingCard />
-      <SnapshotStrip />
+      <SnapshotStrip images={[snapDusk, snapField, snapLantern]} />
     </div>
   </div>
 
@@ -88,9 +93,9 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
   {/* ── 移动：390 单栏，顶栏 + 底部 Tab Bar，无 Footer ──── */}
   <div class="flex w-full flex-col items-start gap-[14px] xl:hidden">
     <TopBar />
-    <GreetingCard avatar={avatarMobile} compact />
+    <GreetingCard avatar={avatar} compact />
     <SocialRow />
-    <ArtCard compact />
+    <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" compact />
     <MobileNowCard />
     {
       featured && (

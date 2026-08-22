@@ -1,5 +1,7 @@
 ---
+import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
+import placeholderArt from '../../images/placeholder-art.png'
 
 interface Props {
   title: string
@@ -27,7 +29,15 @@ const { title, desc, stack, stars, href, full = false, repo } = Astro.props
     full ? 'w-full' : 'w-[260px]',
   ]}
 >
-  <span class="h-[132px] w-full shrink-0 rounded-[18px] bg-avatar-bg"></span>
+  <!-- 还没有项目截图：先用品牌占位图（scripts/gen-placeholder-art.mjs 生成），
+       以后有真图就在这里换成对应的 import -->
+  <Image
+    src={placeholderArt}
+    alt=""
+    width={792}
+    height={396}
+    class="h-[132px] w-full shrink-0 rounded-[18px] object-cover"
+  />
 
   <span class="flex w-full shrink-0 flex-row items-center gap-[8px]">
     <span class="min-w-0 flex-1 truncate text-[16px] font-medium text-ink" title={title}>{title}</span>
