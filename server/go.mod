@@ -1,4 +1,4 @@
-module github.com/QssssY/blog/server
+module github.com/QssssY/afterglow/server
 
 go 1.27
 
