@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
 
 interface Props {
@@ -8,13 +10,15 @@ interface Props {
   domain: string
   desc: string
   tags: readonly string[]
+  /** 各站的真实头像（images/blogroll/），没有时退回首字 + 渐变 */
+  avatar?: ImageMetadata | undefined
   /** 头像渐变的两端色；角度与色标位置全站一致 */
   from: string
   to: string
   initialColor: string
 }
 
-const { name, initial, href, domain, desc, tags, from, to, initialColor } = Astro.props
+const { name, initial, href, domain, desc, tags, avatar, from, to, initialColor } = Astro.props
 ---
 
 <!-- Blog Card · blog.pen r9Dt3 -->
@@ -25,14 +29,26 @@ const { name, initial, href, domain, desc, tags, from, to, initialColor } = Astr
   class="glass group box-border flex h-fit w-full flex-col items-start gap-[14px] rounded-[28px] p-[20px] xl:flex-1"
 >
   <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
-    <span
-      class="flex size-[44px] shrink-0 flex-row items-center justify-center rounded-[14px] outline-1 -outline-offset-[0.5px] outline-sheen"
-      style={`background-image:linear-gradient(-135deg,${from} 14.645%,${to} 85.355%)`}
-    >
-      <span class="font-display text-[19px]/[19px] font-normal" style={`color:${initialColor}`}>
-        {initial}
-      </span>
-    </span>
+    {
+      avatar ? (
+        <Image
+          src={avatar}
+          alt={name}
+          width={96}
+          height={96}
+          class="size-[44px] shrink-0 rounded-[14px] object-cover outline-1 -outline-offset-[0.5px] outline-sheen"
+        />
+      ) : (
+        <span
+          class="flex size-[44px] shrink-0 flex-row items-center justify-center rounded-[14px] outline-1 -outline-offset-[0.5px] outline-sheen"
+          style={`background-image:linear-gradient(-135deg,${from} 14.645%,${to} 85.355%)`}
+        >
+          <span class="font-display text-[19px]/[19px] font-normal" style={`color:${initialColor}`}>
+            {initial}
+          </span>
+        </span>
+      )
+    }
 
     <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[3px]">
       <span class="w-full truncate text-[15px]/[20px] font-medium text-ink">{name}</span>
