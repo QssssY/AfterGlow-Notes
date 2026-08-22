@@ -4,5 +4,65 @@
     "artist": "陈奕迅",
     "src": "/music/shimianmaifu.mp3",
     "lrc": "/music/shimianmaifu.lrc"
+  },
+  {
+    "title": "富士山下",
+    "artist": "陈奕迅",
+    "src": "/music/富士山下.mp3",
+    "lrc": "/music/陈奕迅 - 富士山下.lrc"
+  },
+  {
+    "title": "葡萄成熟时",
+    "artist": "陈奕迅",
+    "src": "/music/葡萄成熟时.mp3",
+    "lrc": "/music/陈奕迅 - 葡萄成熟时.lrc"
+  },
+  {
+    "title": "陀飞轮",
+    "artist": "陈奕迅",
+    "src": "/music/陀飞轮.mp3",
+    "lrc": "/music/陈奕迅 - 陀飞轮.lrc"
+  },
+  {
+    "title": "任我行",
+    "artist": "陈奕迅",
+    "src": "/music/任我行.mp3",
+    "lrc": "/music/陈奕迅 - 任我行.lrc"
+  },
+  {
+    "title": "单车",
+    "artist": "陈奕迅",
+    "src": "/music/单车.mp3",
+    "lrc": "/music/陈奕迅 - 单车.lrc"
+  },
+  {
+    "title": "最佳损友",
+    "artist": "陈奕迅",
+    "src": "/music/最佳损友.mp3",
+    "lrc": "/music/陈奕迅 - 最佳损友.lrc"
+  },
+  {
+    "title": "苦瓜",
+    "artist": "陈奕迅",
+    "src": "/music/苦瓜.mp3",
+    "lrc": "/music/陈奕迅 - 苦瓜.lrc"
+  },
+  {
+    "title": "爱情讯息",
+    "artist": "郭静",
+    "src": "/music/爱情讯息.mp3",
+    "lrc": "/music/郭静 - 爱情讯息.lrc"
+  },
+  {
+    "title": "不怕",
+    "artist": "赵蓓 / 赵蕾",
+    "src": "/music/不怕.mp3",
+    "lrc": "/music/赵蓓_赵蕾 - 不怕.lrc"
+  },
+  {
+    "title": "The Way I Still Love You",
+    "artist": "Reynard Silva",
+    "src": "/music/The Way I Still Love You.mp3",
+    "lrc": "/music/ReynardSilva - The Way I Still Love You.lrc"
   }
 ]

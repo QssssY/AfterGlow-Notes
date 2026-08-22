@@ -799,3 +799,27 @@ html.theme-vt::view-transition-new(root) {
   background-clip: text;
   color: transparent;
 }
+
+/* 长歌词跑马（QQ 音乐式）：句子超出卡宽时挂 data-scroll ——
+   截断从省略号换成硬裁 + 两端羽化，位移由脚本按句内进度写 translateX */
+[data-np-line][data-scroll] {
+  text-overflow: clip;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 14px,
+    #000 calc(100% - 14px),
+    transparent 100%
+  );
+}
+
+/* 播放列表弹层：在玻璃卡内部，嵌套 backdrop-filter 不再取样（Chrome 的
+   backdrop root 规则），模糊指望不上 —— 同色叠两层把 70% 抬到 ~91% 实底，
+   两个主题共用 --card-solid。顺带一条低调的细滚动条 */
+[data-np-list] {
+  background:
+    linear-gradient(var(--card-solid), var(--card-solid)),
+    linear-gradient(var(--card-solid), var(--card-solid));
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-muted) transparent;
+}
