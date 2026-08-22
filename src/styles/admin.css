@@ -271,3 +271,59 @@
   opacity: 0;
   translate: -50% 8px;
 }
+
+/* ---- 编辑器 Markdown 预览（快速排版检查，正式效果以文章页为准）---- */
+.ad-prose {
+  padding: 4px 6px;
+  font-size: 14.5px;
+  line-height: 1.9;
+  color: var(--ink);
+  overflow-wrap: break-word;
+}
+.ad-prose h1,
+.ad-prose h2,
+.ad-prose h3,
+.ad-prose h4 {
+  margin: 1.4em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.ad-prose h1 { font-size: 22px; }
+.ad-prose h2 { font-size: 19px; }
+.ad-prose h3 { font-size: 16.5px; }
+.ad-prose p { margin: 0.7em 0; }
+.ad-prose a { color: var(--brand-ink); text-decoration: underline; }
+.ad-prose code {
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  background: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  font-size: 0.88em;
+}
+.ad-prose pre {
+  margin: 0.9em 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--card-solid);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  overflow-x: auto;
+}
+.ad-prose pre code { padding: 0; background: none; outline: none; }
+.ad-prose blockquote {
+  margin: 0.9em 0;
+  padding: 2px 16px;
+  border-left: 3px solid var(--brand);
+  color: var(--ink-soft);
+}
+.ad-prose ul, .ad-prose ol { margin: 0.7em 0; padding-left: 1.6em; }
+.ad-prose li { margin: 0.25em 0; }
+.ad-prose img { max-width: 100%; border-radius: 12px; }
+.ad-prose hr { margin: 1.4em 0; border: none; border-top: 1px solid var(--hairline); }
+.ad-prose table { margin: 0.9em 0; border-collapse: collapse; }
+.ad-prose th, .ad-prose td {
+  padding: 6px 12px;
+  border: 1px solid var(--hairline);
+  font-size: 13.5px;
+}

@@ -81,6 +81,16 @@ func (a *adminState) projectThumbsDir() string {
 	return filepath.Join(a.blogDir, "images", "projects")
 }
 
+// 站点级图片目录：固定几个名字（头像/画卡/快照），前端 glob 兜底默认图（src/utils/site-images.ts）
+func (a *adminState) siteImagesDir() string {
+	return filepath.Join(a.blogDir, "images", "site")
+}
+
+// 站点图片的合法名字白名单 —— 前端 helper 只认这几个
+var siteImageNames = map[string]bool{
+	"avatar": true, "art": true, "snapshot-1": true, "snapshot-2": true, "snapshot-3": true,
+}
+
 // 站点数据文件白名单 —— 新增一种内容 = 这里加一行 + src/data 放文件 + config.ts 引入
 var dataFiles = map[string]struct {
 	kind     string // array | object
@@ -624,6 +634,25 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		dst = filepath.Join(s.admin.projectThumbsDir(), name+ext)
 		ret = "images/projects/" + name + ext
 
+	case "site":
+		// 站点级图片：博主头像 / 首页画卡 / 三张快照，名字只认白名单里那几个
+		name := strings.ToLower(strings.TrimSpace(r.FormValue("name")))
+		if !siteImageNames[name] {
+			fail(w, http.StatusBadRequest, "name 只能是 avatar / art / snapshot-1 / snapshot-2 / snapshot-3")
+			return
+		}
+		if !imageExts[ext] {
+			fail(w, http.StatusBadRequest, "图片只收 png / jpg / webp / gif / avif")
+			return
+		}
+		for old := range imageExts {
+			if old != ext {
+				os.Remove(filepath.Join(s.admin.siteImagesDir(), name+old))
+			}
+		}
+		dst = filepath.Join(s.admin.siteImagesDir(), name+ext)
+		ret = "images/site/" + name + ext
+
 	case "music":
 		if !musicExts[ext] {
 			fail(w, http.StatusBadRequest, "音乐只收 mp3 / m4a / ogg / flac / lrc")
@@ -639,7 +668,7 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		ret = "/music/" + base + ext
 
 	default:
-		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / project / music")
+		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / project / site / music")
 		return
 	}
 

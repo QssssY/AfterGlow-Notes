@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
 import { isNavActive, nav, site } from '~/config'
-import avatarSrc from '../../images/cat001.jpg'
+import { siteAvatar as avatarSrc } from '~/utils/site-images'
 
 const pathname = Astro.url.pathname
 ---

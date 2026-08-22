@@ -69,6 +69,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     <div class="flex flex-wrap items-center justify-between gap-[10px]">
       <span class="text-[14px] font-medium text-ink">正文（Markdown）</span>
       <div class="flex items-center gap-[8px]">
+        <button type="button" class="ad-btn-ghost" data-preview-toggle aria-pressed="false">预览</button>
         <button type="button" class="ad-btn-ghost" data-img-pick>插入图片</button>
         <input type="file" data-img-file accept="image/*" hidden />
       </div>
@@ -77,14 +78,17 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       class="ad-textarea ad-mono min-h-[56vh]"
       data-f="body"
       placeholder="## 从这里开始写&#10;&#10;支持全部 Markdown 语法，代码块、引用、图片都行。"></textarea>
+    <div data-preview hidden class="ad-prose min-h-[56vh]"></div>
     <p class="ad-hint">
       语法备忘：<code>## 小标题</code>、<code>**加粗**</code>、<code>[文字](链接)</code>、
       <code>```ts</code> 开代码块、<code>&gt; 引用</code>。图片用上面的按钮传，会自动插到光标处。
+      预览是快速排版检查（marked 渲染），正式效果以文章页为准。
     </p>
   </section>
 </AdminLayout>
 
 <script>
+  import { marked } from 'marked'
   import { api, report, SLUG_RE, toast, today } from '~/scripts/admin'
   import type { PostMeta } from '~/scripts/admin'
 
@@ -220,6 +224,21 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     cover = ''
     dirty = true
     showCover()
+  })
+
+  // ---- Markdown 预览（写作时的快速排版检查；正式渲染以文章页为准）----
+  const previewBox = $('[data-preview]')
+  const previewBtn = $('[data-preview-toggle]')
+  previewBtn.addEventListener('click', () => {
+    const showing = previewBox.hidden
+    if (showing) {
+      // 自己的内容自己预览，marked 直接渲染；expressive-code 的代码块特效这里没有
+      previewBox.innerHTML = marked.parse(field('body').value, { async: false })
+    }
+    previewBox.hidden = !showing
+    field('body').hidden = showing
+    previewBtn.setAttribute('aria-pressed', String(showing))
+    previewBtn.textContent = showing ? '继续写' : '预览'
   })
 
   // ---- 正文插图 ----

@@ -3,8 +3,19 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 ---
 
 <AdminLayout title="文章" active="posts">
-  <div class="flex items-center justify-between">
+  <div class="flex flex-wrap items-center gap-[12px]">
     <h1 class="font-display text-[22px] text-ink">文章</h1>
+    <span class="flex-1"></span>
+    <input
+      data-search
+      class="ad-input w-[220px]"
+      type="search"
+      placeholder="搜标题 / 标签 / slug…"
+    />
+    <label class="flex items-center gap-[6px] text-[13px] text-ink">
+      <input type="checkbox" class="ad-check" data-drafts-only />
+      只看草稿
+    </label>
     <a href="/admin/editor" class="ad-btn-primary">写新文章</a>
   </div>
 
@@ -18,6 +29,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   import type { PostListItem } from '~/scripts/admin'
 
   const list = document.querySelector<HTMLElement>('[data-list]')!
+  const searchInput = document.querySelector<HTMLInputElement>('[data-search]')!
+  const draftsOnly = document.querySelector<HTMLInputElement>('[data-drafts-only]')!
 
   function row(p: PostListItem): string {
     const tags = p.tags.map((t) => `<span class="ad-chip">${esc(t)}</span>`).join('')
@@ -42,13 +55,35 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     </div>`
   }
 
-  async function load() {
-    const posts = await api<PostListItem[]>('/api/admin/posts')
-    if (!posts.length) {
-      list.innerHTML = '<span class="ad-hint">还没有文章，点右上角写第一篇。</span>'
+  let posts: PostListItem[] = []
+
+  function show() {
+    const q = searchInput.value.trim().toLowerCase()
+    const filtered = posts.filter((p) => {
+      if (draftsOnly.checked && !p.draft) return false
+      if (!q) return true
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.slug.includes(q) ||
+        (p.category ?? '').toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q))
+      )
+    })
+    if (!filtered.length) {
+      list.innerHTML = posts.length
+        ? '<span class="ad-hint">没有匹配的文章。</span>'
+        : '<span class="ad-hint">还没有文章，点右上角写第一篇。</span>'
       return
     }
-    list.innerHTML = posts.map(row).join('')
+    list.innerHTML = filtered.map(row).join('')
+  }
+
+  searchInput.addEventListener('input', show)
+  draftsOnly.addEventListener('change', show)
+
+  async function load() {
+    posts = await api<PostListItem[]>('/api/admin/posts')
+    show()
   }
   load().catch((err) => {
     list.innerHTML = ''
@@ -63,6 +98,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     if (!confirm(`确定删除「${slug}」？文件会从仓库里移除（git 里还能找回来）。`)) return
     try {
       await api(`/api/admin/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' })
+      posts = posts.filter((p) => p.slug !== slug)
       card.remove()
       toast('已删除')
     } catch (err) {

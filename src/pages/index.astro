@@ -4,6 +4,7 @@ import Footer from '~/components/Footer.astro'
 import RepoStars from '~/components/RepoStars.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import ArtCard from '~/components/home/ArtCard.astro'
+import ClockCard from '~/components/home/ClockCard.astro'
 import GreetingCard from '~/components/home/GreetingCard.astro'
 import LikeWidget from '~/components/home/LikeWidget.astro'
 import NowCard from '~/components/home/NowCard.astro'
@@ -21,11 +22,8 @@ import TopBar from '~/components/mobile/TopBar.astro'
 import { site } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 import { postStats } from '~/utils/post'
-import artBg from '../../images/bg.png'
-import avatar from '../../images/cat001.jpg'
-import snapDusk from '../../images/snapshot-dusk.png'
-import snapField from '../../images/snapshot-field.png'
-import snapLantern from '../../images/snapshot-lantern.png'
+// 头像/画卡/快照可在管理端「站点信息」页签换图（utils/site-images.ts glob 兜底）
+import { siteArt as artBg, siteAvatar as avatar, siteSnapshots } from '~/utils/site-images'
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
@@ -66,6 +64,9 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
   <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">
     <div class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px]">
       <Sidebar />
+      {/* 大时钟（学 YYsuni，用户点名）：放导航之下 —— 「现在几点」和下面
+          Uptime 的「站活了多少天」是同一气质的氛围件，恰好凑成一组 */}
+      <ClockCard />
       <UptimeCard />
     </div>
 
@@ -87,7 +88,7 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       </div>
       <NowPlayingCard />
       <ReadingCard />
-      <SnapshotStrip images={[snapDusk, snapField, snapLantern]} />
+      <SnapshotStrip images={siteSnapshots} />
     </div>
   </div>
 
@@ -101,6 +102,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
     <SocialRow />
     {/* 移动端也能听歌：与桌面右栏那张共享同一个 Audio（NowPlayingCard 脚本按绑定组广播） */}
     <NowPlayingCard />
+    {/* 大时钟移动端同样一份，脚本按 data-clock-digit 分组广播两处 */}
+    <ClockCard />
     <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" compact />
     <MobileNowCard />
     {

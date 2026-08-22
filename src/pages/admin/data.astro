@@ -65,8 +65,10 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     wide?: boolean
     /** avatar 型控件：从条目的哪个字段取文件名（域名 / 仓库名） */
     nameFrom?: string
-    /** avatar 型控件走哪种上传（服务端 kind）：avatar 友链头像 / project 项目配图 */
-    uploadKind?: 'avatar' | 'project'
+    /** avatar 型控件的固定文件名（站点图片这类不跟条目走的位置用，优先于 nameFrom） */
+    fixedName?: string
+    /** avatar 型控件走哪种上传（服务端 kind）：avatar 友链头像 / project 项目配图 / site 站点图片 */
+    uploadKind?: 'avatar' | 'project' | 'site'
     /** 只是个操作控件，不往 JSON 里写值（avatar 用） */
     virtual?: boolean
   }
@@ -109,6 +111,11 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         { key: 'finePrintBlurb', label: '细则开场白', wide: true },
         { key: 'finePrintPoints', label: '细则条目（一行一条）', input: 'lines', wide: true },
         { key: 'finePrintReply', label: '细则末行（回信约定）', wide: true },
+        { key: '_avatar', label: '博主头像', input: 'avatar', uploadKind: 'site', fixedName: 'avatar', virtual: true, hint: '侧栏 / 图标条 / 首页问候卡 / 关于页共用一张' },
+        { key: '_art', label: '首页画卡大图', input: 'avatar', uploadKind: 'site', fixedName: 'art', virtual: true, hint: '首页中栏那张大图' },
+        { key: '_snap1', label: '快照一', input: 'avatar', uploadKind: 'site', fixedName: 'snapshot-1', virtual: true, hint: '首页右栏快照条第一张' },
+        { key: '_snap2', label: '快照二', input: 'avatar', uploadKind: 'site', fixedName: 'snapshot-2', virtual: true },
+        { key: '_snap3', label: '快照三', input: 'avatar', uploadKind: 'site', fixedName: 'snapshot-3', virtual: true },
       ],
       item: [],
     },
@@ -378,10 +385,10 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         control = `<input class="ad-input" ${attrs} value="${esc(Array.isArray(v) ? v.join(', ') : s)}">`
         break
       case 'avatar':
-        // 操作控件：图按域名/仓库名传给服务端，不往 JSON 写值
+        // 操作控件：图按域名/仓库名/固定名传给服务端，不往 JSON 写值
         return `<div class="flex flex-col gap-[4px]">
           <span class="ad-label">${esc(f.label)}</span>
-          <button type="button" class="ad-btn-ghost" data-act="avatar" data-idx="${scope}" data-from="${esc(f.nameFrom ?? 'domain')}" data-kind="${esc(f.uploadKind ?? 'avatar')}">上传图片</button>
+          <button type="button" class="ad-btn-ghost" data-act="avatar" data-idx="${scope}" data-from="${esc(f.nameFrom ?? 'domain')}" data-fixed="${esc(f.fixedName ?? '')}" data-kind="${esc(f.uploadKind ?? 'avatar')}">上传图片</button>
           ${hint}
         </div>`
       default:
@@ -482,7 +489,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     const act = btn.dataset.act
 
     if (act === 'avatar') {
-      pickAvatar(i, btn.dataset.from || 'domain', btn.dataset.kind || 'avatar')
+      pickAvatar(i, btn.dataset.from || 'domain', btn.dataset.kind || 'avatar', btn.dataset.fixed || '')
       return
     }
     if (act === 'gh') {
@@ -569,14 +576,17 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   let avName = ''
   let avKind = 'avatar'
 
-  function pickAvatar(i: number, nameFrom: string, kind: string) {
-    const item = list()[i]
-    if (!item) return
-    // 项目配图的来源字段是 owner/repo：取仓库名段；域名不含斜杠，不受影响
-    const name = (String(item[nameFrom] ?? '').trim().toLowerCase().split('/').pop() ?? '')
+  function pickAvatar(i: number, nameFrom: string, kind: string, fixed: string) {
+    let name = fixed // 站点图片这类固定名位置不依赖条目
     if (!name) {
-      toast(`先把${kind === 'project' ? ' GitHub 链接' : '域名'}填好 —— 图片按它命名`, false)
-      return
+      const item = list()[i]
+      if (!item) return
+      // 项目配图的来源字段是 owner/repo：取仓库名段；域名不含斜杠，不受影响
+      name = String(item[nameFrom] ?? '').trim().toLowerCase().split('/').pop() ?? ''
+      if (!name) {
+        toast(`先把${kind === 'project' ? ' GitHub 链接' : '域名'}填好 —— 图片按它命名`, false)
+        return
+      }
     }
     avName = name
     avKind = kind
@@ -669,6 +679,23 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
       upPath.textContent = res.path
       upCopy.hidden = false
+      // 顺手填进歌单：.lrc 进第一个缺歌词的条目，音频进第一个缺地址的条目（没有就新增一条）
+      if (current === 'playlist') {
+        const isLrc = res.path.endsWith('.lrc')
+        const key = isLrc ? 'lrc' : 'src'
+        let target = list().find((it) => !String(it[key] ?? '').trim())
+        if (!target && !isLrc) {
+          target = { title: '', artist: '', src: '', lrc: '' }
+          list().push(target)
+        }
+        if (target) {
+          target[key] = res.path
+          dirty = true
+          render()
+          toast(`已上传并填进歌单的「${isLrc ? '歌词' : '音频'}地址」，补好曲名记得保存`)
+          return
+        }
+      }
       toast('已上传，把地址填进歌单里')
     } catch (err) {
       report(err)
