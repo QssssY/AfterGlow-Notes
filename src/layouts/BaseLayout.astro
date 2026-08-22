@@ -122,6 +122,11 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
 
     {tabBar && <TabBar />}
 
+    <!-- 播放器没有 <audio> 标签：Astro 换页 swap 后会把 body 里所有媒体元素
+         重建一遍（reifyMediaElements），连 transition:persist 的也保不住。
+         音频实体在 NowPlayingCard 的脚本里 new Audio() —— 模块级对象
+         不进 DOM，客户端路由怎么换页都碰不到它，音乐跨页不断。 -->
+
     <script>
       // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的明暗直切按钮
       const query = matchMedia('(prefers-color-scheme: dark)')

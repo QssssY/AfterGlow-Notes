@@ -3,25 +3,255 @@ import { Icon } from 'astro-icon/components'
 import { nowPlaying } from '~/config'
 ---
 
-<!-- Now Playing · blog.pen Home / Widget Row -->
-<div class="glass box-border flex h-fit flex-1 flex-col items-start justify-center gap-[10px] rounded-[30px] p-[20px]">
+<!--
+  Now Playing · blog.pen Home / Widget Row —— 现在是真的播放器。
+
+  视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 12 根等化条。
+  叠上去的能力（都不改布局）：
+  - 点卡播放 / 暂停（audio 实体在 BaseLayout，transition:persist 跨页不断播）
+  - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计稿的定格假谱
+  - 播放时曲名行逐句显示 LRC 歌词（淡切），暂停回到曲名
+  - 底部一条细进度线，点击 / 拖动调进度，hover 或播放时出现
+  - 播放态卡片带一圈品牌微光（见 global.css 的 [data-np] 规则）
+-->
+<div
+  data-np
+  role="button"
+  tabindex="0"
+  aria-pressed="false"
+  aria-label={`播放 ${nowPlaying.track}`}
+  class="glass group/np relative box-border flex h-fit flex-1 cursor-pointer flex-col items-start justify-center gap-[10px] overflow-hidden rounded-[30px] p-[20px]"
+>
   <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
     <Icon name="lucide:audio-lines" class="size-[18px] shrink-0 text-brand" />
     <span class="flex-1 text-[12px] font-normal text-ink-soft">正在听</span>
+    <!-- 播放/暂停的小提示角标，跟随状态换图标 -->
+    <Icon
+      name="lucide:play"
+      class="size-[13px] shrink-0 text-ink-muted transition-opacity group-aria-pressed/np:hidden"
+    />
+    <Icon
+      name="lucide:pause"
+      class="hidden size-[13px] shrink-0 text-brand-ink group-aria-pressed/np:block"
+    />
   </div>
 
-  <span class="w-full text-[14px] font-medium text-ink">{nowPlaying.track}</span>
+  <!-- 播放时这一行变成当前歌词句（淡切），暂停回到曲名 -->
+  <span
+    data-np-line
+    class="w-full truncate text-[14px] font-medium text-ink transition-opacity duration-300"
+    >{nowPlaying.track}</span
+  >
 
-  <!-- 条形高度是设计稿定格的一帧；律动只做 scaleY 收缩，峰值仍是这些高度。
-       节拍参数（时长三档、负延迟错相）内联给动效层的 eq 关键帧用。 -->
+  <!-- 条形高度是设计稿定格的一帧。未播放：CSS 假律动；
+       播放（data-live）：JS 用实时频谱写 scaleY，见 global.css -->
   <div data-eq class="flex h-[20px] w-fit shrink-0 flex-row items-end gap-[4px]">
     {
       nowPlaying.bars.map((h, i) => (
         <span
-          class="w-[3px] shrink-0 rounded-[2px] bg-brand opacity-[0.55]"
+          class="w-[3px] shrink-0 origin-bottom rounded-[2px] bg-brand opacity-[0.55]"
           style={`height:${h}px;--eq-dur:${(0.8 + (i % 3) * 0.18).toFixed(2)}s;--eq-delay:${(-i * 0.13).toFixed(2)}s`}
         />
       ))
     }
   </div>
+
+  <!-- 进度条：hover 或播放时出现；点击/拖动跳转。挡住卡片自身的播放切换 -->
+  <div
+    data-np-seek
+    class="absolute inset-x-[20px] bottom-[8px] h-[10px] cursor-pointer opacity-0 transition-opacity duration-300 group-hover/np:opacity-100 group-aria-pressed/np:opacity-100"
+  >
+    <div class="absolute inset-x-0 top-[4px] h-[3px] overflow-hidden rounded-[2px] bg-hairline">
+      <div data-np-progress class="h-full w-0 rounded-[2px] bg-brand"></div>
+    </div>
+  </div>
 </div>
+
+<script>
+  import { nowPlaying } from '~/config'
+
+  /**
+   * 播放器控制层。音频实体是模块级的 new Audio() —— 不进 DOM：
+   * Astro 换页 swap 后会重建 body 里所有媒体元素（reifyMediaElements），
+   * 连 transition:persist 的都保不住；游离对象则完全不受影响，跨页不断播。
+   * 模块级状态（AudioContext / 频谱 / 歌词缓存）同理跨页存活，
+   * 每次 astro:page-load 只重绑当前页的 UI。
+   */
+  type LrcLine = { t: number; text: string }
+
+  const player = new Audio(nowPlaying.src)
+  player.preload = 'none'
+
+  let audioCtx: AudioContext | undefined
+  let analyser: AnalyserNode | undefined
+  let freq: Uint8Array<ArrayBuffer> | undefined
+  let lrcPromise: Promise<LrcLine[]> | undefined
+  let raf = 0
+
+  // 当前页的 UI 引用（每次 page-load 刷新；不在首页时全为 null，各处自然 no-op）
+  let card: HTMLElement | null = null
+  let line: HTMLElement | null = null
+  let bars: HTMLElement[] = []
+  let progress: HTMLElement | null = null
+
+  const audio = () => player
+
+  /** 首次播放时才建立 Web Audio 链路（需要用户手势，正好在 click 里） */
+  const ensureGraph = (el: HTMLAudioElement) => {
+    if (audioCtx) {
+      audioCtx.resume()
+      return
+    }
+    audioCtx = new AudioContext()
+    const source = audioCtx.createMediaElementSource(el)
+    analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 128
+    analyser.smoothingTimeConstant = 0.75
+    source.connect(analyser)
+    analyser.connect(audioCtx.destination)
+    freq = new Uint8Array(analyser.frequencyBinCount)
+  }
+
+  const loadLrc = () => {
+    lrcPromise ??= fetch(nowPlaying.lrc)
+      .then((res) => (res.ok ? res.text() : ''))
+      .then((text) => {
+        const lines: LrcLine[] = []
+        for (const row of text.split('\n')) {
+          const m = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/.exec(row.trim())
+          if (m && m[3]!.trim()) lines.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim() })
+        }
+        return lines.sort((a, b) => a.t - b.t)
+      })
+      .catch(() => [])
+    return lrcPromise
+  }
+
+  /** 歌词淡切：先淡出，换字后淡入 */
+  let shownText = ''
+  const swapLine = (text: string) => {
+    if (!line || shownText === text) return
+    shownText = text
+    line.style.opacity = '0'
+    setTimeout(() => {
+      if (!line) return
+      line.textContent = text
+      line.style.opacity = '1'
+    }, 200)
+  }
+
+  /** 12 根条映射低中频段；无频谱数据时落回 1（条形回静态高度） */
+  const tick = () => {
+    const el = audio()
+    if (!el || el.paused) return
+    if (analyser && freq) {
+      analyser.getByteFrequencyData(freq)
+      const usable = Math.floor(freq.length * 0.7) // 高频段基本是空的，砍掉
+      for (let i = 0; i < bars.length; i += 1) {
+        const start = Math.floor((i / bars.length) * usable)
+        const end = Math.max(start + 1, Math.floor(((i + 1) / bars.length) * usable))
+        let sum = 0
+        for (let j = start; j < end; j += 1) sum += freq[j]!
+        const level = sum / (end - start) / 255
+        bars[i]!.style.transform = `scaleY(${(0.25 + level * 0.95).toFixed(3)})`
+      }
+    }
+    raf = requestAnimationFrame(tick)
+  }
+
+  const setLive = (on: boolean) => {
+    card?.setAttribute('aria-pressed', String(on))
+    card?.querySelector('[data-eq]')?.toggleAttribute('data-live', on)
+    cancelAnimationFrame(raf)
+    if (on) raf = requestAnimationFrame(tick)
+    else {
+      for (const bar of bars) bar.style.transform = ''
+      swapLine(nowPlaying.track)
+    }
+  }
+
+  const toggle = () => {
+    const el = audio()
+    if (!el) return
+    if (el.paused) {
+      ensureGraph(el)
+      el.play().catch(() => setLive(false))
+    } else {
+      el.pause()
+    }
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    card = document.querySelector<HTMLElement>('[data-np]')
+    line = card?.querySelector<HTMLElement>('[data-np-line]') ?? null
+    bars = card ? [...card.querySelectorAll<HTMLElement>('[data-eq] > span')] : []
+    progress = card?.querySelector<HTMLElement>('[data-np-progress]') ?? null
+    shownText = ''
+
+    const el = audio()
+    if (!card || !el) return
+
+    // 回到首页时同步一次正在播放的状态
+    setLive(!el.paused)
+    if (!el.paused) loadLrc()
+
+    card.addEventListener('click', toggle)
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        toggle()
+      }
+    })
+
+    // 进度条：点击与拖动都走 pointer 事件；阻止冒泡以免触发整卡的播放切换
+    const seek = card.querySelector<HTMLElement>('[data-np-seek]')
+    if (seek) {
+      const seekTo = (clientX: number) => {
+        const a = audio()
+        if (!a || !Number.isFinite(a.duration) || a.duration <= 0) return
+        const rect = seek.getBoundingClientRect()
+        const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+        a.currentTime = ratio * a.duration
+      }
+      seek.addEventListener('click', (e) => e.stopPropagation())
+      seek.addEventListener('pointerdown', (e) => {
+        e.stopPropagation()
+        try {
+          seek.setPointerCapture(e.pointerId)
+        } catch {
+          // 合成事件（测试）没有真实 pointerId，捕获不了也不影响点击跳转
+        }
+        seekTo(e.clientX)
+        const move = (ev: PointerEvent) => seekTo(ev.clientX)
+        const up = () => {
+          seek.removeEventListener('pointermove', move)
+          seek.removeEventListener('pointerup', up)
+        }
+        seek.addEventListener('pointermove', move)
+        seek.addEventListener('pointerup', up)
+      })
+    }
+  })
+
+  // 音频实体是模块级常驻对象，事件只在模块层挂一次
+  player.addEventListener('play', () => {
+    setLive(true)
+    loadLrc()
+  })
+  player.addEventListener('pause', () => setLive(false))
+  player.addEventListener('ended', () => setLive(false))
+  player.addEventListener('timeupdate', async () => {
+    if (progress && Number.isFinite(player.duration) && player.duration > 0) {
+      progress.style.width = `${(player.currentTime / player.duration) * 100}%`
+    }
+    if (!player.paused && line) {
+      const lines = await loadLrc()
+      let current: string | undefined
+      for (const row of lines) {
+        if (row.t <= player.currentTime) current = row.text
+        else break
+      }
+      if (current) swapLine(current)
+    }
+  })
+</script>

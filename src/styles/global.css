@@ -421,7 +421,7 @@
 
   /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版）。
      transition 是整条覆盖不是合并，所以这里要把入场用的 opacity 一并带上。 */
-  :is(a, button):is(.glass, .glass-row, .glass-panel) {
+  :is(a, button, [role='button']):is(.glass, .glass-row, .glass-panel) {
     transition:
       opacity 0.55s ease,
       translate 0.35s var(--spring),
@@ -429,14 +429,14 @@
       box-shadow 0.35s ease;
   }
   @media (hover: hover) {
-    :is(a, button):is(.glass, .glass-row, .glass-panel):hover {
+    :is(a, button, [role='button']):is(.glass, .glass-row, .glass-panel):hover {
       translate: 0 -3px;
       box-shadow:
         0 30px 52px -18px var(--shadow-soft),
         0 0 24px 0 var(--sheen);
     }
   }
-  :is(a, button):is(.glass, .glass-row, .glass-panel):active {
+  :is(a, button, [role='button']):is(.glass, .glass-row, .glass-panel):active {
     translate: 0 -1px;
     scale: 0.98;
   }
@@ -537,6 +537,11 @@
     transform-origin: bottom;
     animation: eq var(--eq-dur, 1s) ease-in-out var(--eq-delay, 0s) infinite alternate;
   }
+  /* 播放中：JS 用实时频谱逐帧写 scaleY，假律动必须让位
+     （animation 在层叠里压过内联 style，不关掉的话 JS 写了也白写） */
+  [data-eq][data-live] > * {
+    animation: none;
+  }
 
   /* 侧栏导航的滑动高亮（YYsuni nav-hover 胶囊的 CSS 版，位置由脚本摆） */
   [data-nav-glow] {
@@ -579,4 +584,15 @@
       color 0.35s ease,
       box-shadow 0.35s ease !important;
   }
+}
+
+/* 正在听 —— 播放态给卡一圈品牌微光，呼吸感由阴影过渡给 */
+[data-np] {
+  transition: box-shadow 0.6s ease;
+}
+[data-np][aria-pressed='true'] {
+  box-shadow:
+    0 14px 28px -12px var(--shadow-soft),
+    0 0 26px 2px var(--fire-tint),
+    0 0 18px 0 var(--sheen);
 }

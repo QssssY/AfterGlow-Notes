@@ -190,9 +190,15 @@ export const finePrint = {
   reply: '来信一般三天内回，长信回得慢些。',
 } as const
 
-/** Now Playing —— 12 根等化条的高度取自设计稿 */
+/**
+ * Now Playing —— 现在是真的能放：音频与 LRC 在 public/music/。
+ * 12 根等化条的静态高度取自设计稿（未播放时的「定格假谱」，
+ * 播放时由 Web Audio 实时频谱接管）。想换歌：换文件、改这四行。
+ */
 export const nowPlaying = {
-  track: 'Weightless — Marconi Union',
+  track: '十面埋伏 — 陈奕迅',
+  src: '/music/shimianmaifu.mp3',
+  lrc: '/music/shimianmaifu.lrc',
   bars: [8, 14, 6, 18, 11, 20, 9, 15, 7, 12, 17, 5],
 } as const
 
