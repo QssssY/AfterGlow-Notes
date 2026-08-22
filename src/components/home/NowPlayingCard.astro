@@ -13,13 +13,14 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 
   视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 等化条。
   能力（都不改布局）：
-  - 点卡播放 / 暂停；多于一首时出现 上一首 / 下一首 / 播放列表 三个钮；
-    放完自动接下一首、到底循环；列表是卡下方的玻璃弹层，点歌直接切
+  - 点卡播放 / 暂停；多于一首时出现 上一首 / 下一首 / 播放列表 钮，音量钮常驻；
+    放完自动接下一首、到底循环；列表和音量是卡下方的玻璃弹层（互斥），点歌直接切
   - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计稿的定格假谱
   - 曲名行播放时逐句显示 LRC 歌词，卡拉OK式从左往右点亮（唱到哪亮到哪）；
     渐变挂在贴文本宽的内层 span 上 —— 挂整行容器会按容器宽算，分界线跑得比人声快；
-    句子长过卡宽时学 QQ 音乐横向跑马：唱过的字往左让位，位移量按句内进度算
-  - 底部细进度线，点击 / 拖动调进度
+    句子长过卡宽时学 QQ 音乐横向跑马：唱过的字往左让位，位移量按句内进度算；
+    同步学 APlayer 双入口：播放中 rAF 每帧对时 + seeked 事件兜底（暂停拖条也跟）
+  - 底部细进度线，点击 / 拖动调进度；音量记 localStorage
 -->
 <div
   data-np
@@ -66,6 +67,16 @@ const trackLabel = (t: { title: string; artist?: string }) =>
         </>
       )
     }
+    <button
+      type="button"
+      data-np-vol-btn
+      aria-label="音量"
+      title="音量"
+      class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
+    >
+      <Icon name="lucide:volume-2" data-np-vol-on class="size-[13px] shrink-0" />
+      <Icon name="lucide:volume-x" data-np-vol-off class="hidden size-[13px] shrink-0" />
+    </button>
     <!-- 播放/暂停的小提示角标，跟随状态换图标 -->
     <Icon
       name="lucide:play"
@@ -141,6 +152,28 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       </div>
     )
   }
+
+  <!-- 音量弹层：与播放列表同款、互斥（实底也走 global.css 的同色双叠，
+       嵌套 backdrop-filter 糊不动）；音量记在 localStorage，跨页跨曲不丢 -->
+  <div
+    data-np-vol
+    hidden
+    class="glass absolute inset-x-[6px] top-[calc(100%+10px)] z-10 box-border cursor-default rounded-[20px] px-[16px] py-[13px] shadow-[0_26px_52px_-22px_var(--shadow-soft)]"
+  >
+    <div class="flex w-full flex-row items-center gap-[12px]">
+      <Icon name="lucide:volume-1" class="size-[14px] shrink-0 text-ink-muted" />
+      <input
+        data-np-vol-range
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        aria-label="音量"
+        class="min-w-0 flex-1 cursor-pointer"
+      />
+      <span data-np-vol-pct class="w-[36px] shrink-0 text-right text-[11px] tabular-nums text-ink-muted"></span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -158,7 +191,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
    * 谁可见谁就是播放器，切设备宽度也不丢状态。
    */
   type LrcLine = { t: number; text: string }
-  type Track = { title: string; artist?: string; src: string; lrc?: string }
+  /** offset：这首歌词整体快/慢时的微调（秒），正值=歌词推迟出现（管理端可改） */
+  type Track = { title: string; artist?: string; src: string; lrc?: string; offset?: number }
 
   const tracks: readonly Track[] = nowPlaying.playlist
   const trackLabel = (t: Track) => (t.artist ? `${t.title} — ${t.artist}` : t.title)
@@ -166,6 +200,14 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   let cur = 0
   const player = new Audio(tracks[0]!.src)
   player.preload = 'none'
+
+  // 音量跨页跨曲记忆；没存过保持默认 1（Number(null)=0 会静音，必须判 null）
+  const VOLUME_KEY = 'afterglow:volume'
+  const savedVol = localStorage.getItem(VOLUME_KEY)
+  if (savedVol !== null) {
+    const v = Number(savedVol)
+    if (Number.isFinite(v)) player.volume = Math.min(1, Math.max(0, v))
+  }
 
   let audioCtx: AudioContext | undefined
   let analyser: AnalyserNode | undefined
@@ -181,6 +223,11 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     progress: HTMLElement | null
     list: HTMLElement | null
     items: HTMLElement[]
+    vol: HTMLElement | null
+    volRange: HTMLInputElement | null
+    volPct: HTMLElement | null
+    volOn: HTMLElement | null
+    volOff: HTMLElement | null
     /** 歌词跑马的量测缓存：换句时量一次，tick 每帧只做乘法 */
     textW: number
     boxW: number
@@ -249,8 +296,12 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       )
     }
     return lrcCache.get(track.lrc)!.then((lines) => {
-      // 异步返回时可能已经切到别的歌了，别把旧歌词塞给新曲
-      if (tracks[cur]!.lrc === track.lrc) lrcLines = lines
+      // 异步返回时可能已经切到别的歌了，别把旧歌词塞给新曲。
+      // 缓存里存原始时间轴，per-track 的歌词偏移在这里现算（管理端可调）
+      if (tracks[cur]!.lrc === track.lrc) {
+        const off = Number(track.offset) || 0
+        lrcLines = off ? lines.map((l) => ({ t: l.t + off, text: l.text })) : lines
+      }
       return lines
     })
   }
@@ -284,9 +335,45 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   }
 
   /**
-   * 播放循环：每帧 ① 等化条映射低中频段 ② 歌词定位当前句、
-   * 句内线性插值推进 --sung（LRC 只有句级时间轴，句首句尾精准、句中匀速）。
+   * 歌词同步：定位当前句 → 淡切句子 → 句内线性插值推进 --sung 与跑马位移。
+   * 学 APlayer 的双入口：播放中由 tick（rAF）每帧驱动；seeked 事件兜底 ——
+   * 暂停状态下拖进度条也立刻换句，不用等恢复播放。
+   * 切句提前 0.15s = 淡出时长，新句淡入的起点正好踩在时间戳上；
+   * --sung 渐变仍按真实时间推，亮字不抢拍。
    */
+  const syncLyric = (now: number) => {
+    if (binds.length === 0 || lrcLines.length === 0) return
+    const ahead = now + 0.15
+    let idx = -1
+    for (let i = 0; i < lrcLines.length; i += 1) {
+      if (lrcLines[i]!.t <= ahead) idx = i
+      else break
+    }
+    if (idx < 0) {
+      // 还没到第一句（前奏 / 拖回了开头）：回显曲名
+      swapLine(trackLabel(tracks[cur]!))
+      return
+    }
+    const curLine = lrcLines[idx]!
+    swapLine(curLine.text, true)
+    // 只有正在展示这句时才推进度（淡切的 150ms 里 shownText 已是新句）
+    if (shownText !== curLine.text) return
+    const next =
+      lrcLines[idx + 1]?.t ?? (Number.isFinite(player.duration) ? player.duration : curLine.t + 8)
+    const pct = Math.min(1, Math.max(0, (now - curLine.t) / Math.max(0.5, next - curLine.t)))
+    const sung = `${(pct * 100).toFixed(1)}%`
+    for (const b of binds) {
+      if (!b.lineText) continue
+      b.lineText.style.setProperty('--sung', sung)
+      // 长句跑马：亮字过了卡宽 42% 就开始左移，唱完时句尾刚好贴右缘
+      if (b.over > 0) {
+        const shift = Math.min(b.over, Math.max(0, pct * b.textW - b.boxW * 0.42))
+        b.lineText.style.transform = `translateX(${(-shift).toFixed(1)}px)`
+      }
+    }
+  }
+
+  /** 播放循环：每帧 ① 等化条映射低中频段 ② 歌词同步 */
   const tick = () => {
     const el = audio()
     if (el.paused) return
@@ -306,37 +393,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       }
     }
 
-    if (binds.length > 0 && lrcLines.length > 0) {
-      const now = el.currentTime
-      // 切句提前 0.4s：抵消淡切耗时，句子先落位、渐变仍卡真实时间轴 ——
-      // 不提前的话新句要等「淡出+换字+淡入」走完才可读，视觉上就是慢半拍
-      const ahead = now + 0.4
-      let idx = -1
-      for (let i = 0; i < lrcLines.length; i += 1) {
-        if (lrcLines[i]!.t <= ahead) idx = i
-        else break
-      }
-      if (idx >= 0) {
-        const curLine = lrcLines[idx]!
-        swapLine(curLine.text, true)
-        // 只有正在展示这句时才推进度（淡切的 150ms 里 shownText 已是新句）
-        if (shownText === curLine.text) {
-          const next =
-            lrcLines[idx + 1]?.t ?? (Number.isFinite(el.duration) ? el.duration : curLine.t + 8)
-          const pct = Math.min(1, Math.max(0, (now - curLine.t) / Math.max(0.5, next - curLine.t)))
-          const sung = `${(pct * 100).toFixed(1)}%`
-          for (const b of binds) {
-            if (!b.lineText) continue
-            b.lineText.style.setProperty('--sung', sung)
-            // 长句跑马：亮字过了卡宽 42% 就开始左移，唱完时句尾刚好贴右缘
-            if (b.over > 0) {
-              const shift = Math.min(b.over, Math.max(0, pct * b.textW - b.boxW * 0.42))
-              b.lineText.style.transform = `translateX(${(-shift).toFixed(1)}px)`
-            }
-          }
-        }
-      }
-    }
+    syncLyric(el.currentTime)
     raf = requestAnimationFrame(tick)
   }
 
@@ -359,13 +416,26 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       b.items.forEach((item, i) => item.toggleAttribute('data-current', i === cur))
   }
 
-  /** 关掉所有卡的播放列表弹层（外点 / Esc 用） */
-  const closeLists = () => {
+  /** 关掉所有卡的弹层（播放列表 + 音量；外点 / Esc / 互斥切换用） */
+  const closePanels = () => {
     for (const b of binds) {
-      if (b.list && !b.list.hidden) {
-        b.list.hidden = true
-        b.card.style.zIndex = ''
+      if (b.list) b.list.hidden = true
+      if (b.vol) b.vol.hidden = true
+      b.card.style.zIndex = ''
+    }
+  }
+
+  /** 音量 UI 全量广播：滑杆位置与自绘轨道填充（--v）、百分比、静音图标 */
+  const updateVolUI = () => {
+    const v = Math.round(player.volume * 100)
+    for (const b of binds) {
+      if (b.volRange) {
+        b.volRange.value = String(v)
+        b.volRange.style.setProperty('--v', `${v}%`)
       }
+      if (b.volPct) b.volPct.textContent = `${v}%`
+      b.volOn?.classList.toggle('hidden', v === 0)
+      b.volOff?.classList.toggle('hidden', v !== 0)
     }
   }
 
@@ -405,6 +475,11 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       progress: card.querySelector<HTMLElement>('[data-np-progress]'),
       list: card.querySelector<HTMLElement>('[data-np-list]'),
       items: [...card.querySelectorAll<HTMLElement>('[data-np-item]')],
+      vol: card.querySelector<HTMLElement>('[data-np-vol]'),
+      volRange: card.querySelector<HTMLInputElement>('[data-np-vol-range]'),
+      volPct: card.querySelector<HTMLElement>('[data-np-vol-pct]'),
+      volOn: card.querySelector<HTMLElement>('[data-np-vol-on]'),
+      volOff: card.querySelector<HTMLElement>('[data-np-vol-off]'),
       textW: 0,
       boxW: 0,
       over: 0,
@@ -413,9 +488,10 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 
     if (binds.length === 0) return
 
-    // 回到首页时同步一次正在播放的状态、当前曲名与列表高亮
+    // 回到首页时同步一次正在播放的状态、当前曲名、列表高亮与音量 UI
     setLive(!player.paused)
     markCurrent()
+    updateVolUI()
     if (!player.paused) {
       swapLine(trackLabel(tracks[cur]!))
       loadLrc(tracks[cur]!)
@@ -446,16 +522,27 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       })
 
       // 播放列表：开在卡下方；打开时给卡提 z-index（backdrop-filter 让每张卡
-      // 都是独立层叠上下文，不提的话弹层会被后面的卡压住）
+      // 都是独立层叠上下文，不提的话弹层会被后面的卡压住）。与音量弹层互斥
       card.querySelector<HTMLElement>('[data-np-toggle-list]')?.addEventListener('click', (e) => {
         e.stopPropagation()
         if (!b.list) return
         const opening = b.list.hidden
-        closeLists()
+        closePanels()
         if (opening) {
           b.list.hidden = false
           card.style.zIndex = '40'
           b.items[cur]?.scrollIntoView({ block: 'nearest' })
+        }
+      })
+
+      card.querySelector<HTMLElement>('[data-np-vol-btn]')?.addEventListener('click', (e) => {
+        e.stopPropagation()
+        if (!b.vol) return
+        const opening = b.vol.hidden
+        closePanels()
+        if (opening) {
+          b.vol.hidden = false
+          card.style.zIndex = '40'
         }
       })
 
@@ -466,6 +553,13 @@ const trackLabel = (t: { title: string; artist?: string }) =>
           ensureGraph(player)
           setTrack(Number(item.dataset.npItem), true)
         })
+
+      b.vol?.addEventListener('click', (e) => e.stopPropagation())
+      b.volRange?.addEventListener('input', () => {
+        player.volume = Number(b.volRange!.value) / 100
+        localStorage.setItem(VOLUME_KEY, String(player.volume))
+        updateVolUI()
+      })
 
       // 进度条：点击与拖动都走 pointer 事件；阻止冒泡以免触发整卡的播放切换
       const seek = card.querySelector<HTMLElement>('[data-np-seek]')
@@ -513,17 +607,22 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     for (const b of binds) if (b.progress) b.progress.style.width = width
   })
 
-  // 点卡外任意处 / Esc 收起播放列表（模块级挂一次，binds 是活引用）
+  // 拖进度条（含暂停状态）立即重定位歌词 —— 播放中由 tick 驱动，这里兜暂停的底
+  player.addEventListener('seeked', () => syncLyric(player.currentTime))
+
+  // 点卡外任意处 / Esc 收起弹层（模块级挂一次，binds 是活引用）
   document.addEventListener('click', (e) => {
     for (const b of binds) {
-      if (b.list && !b.list.hidden && !b.card.contains(e.target as Node)) {
-        b.list.hidden = true
+      const open = (b.list && !b.list.hidden) || (b.vol && !b.vol.hidden)
+      if (open && !b.card.contains(e.target as Node)) {
+        if (b.list) b.list.hidden = true
+        if (b.vol) b.vol.hidden = true
         b.card.style.zIndex = ''
       }
     }
   })
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeLists()
+    if (e.key === 'Escape') closePanels()
   })
 
   // 窗口宽度变了重量跑马溢出（防抖 150ms），不溢出的把位移清干净

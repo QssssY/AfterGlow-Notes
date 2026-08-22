@@ -42,6 +42,12 @@
     "lrc": "/music/陈奕迅 - 最佳损友.lrc"
   },
   {
+    "title": "K歌之王",
+    "artist": "陈奕迅",
+    "src": "/music/K歌之王.mp3",
+    "lrc": "/music/陈奕迅 - K歌之王.lrc"
+  },
+  {
     "title": "苦瓜",
     "artist": "陈奕迅",
     "src": "/music/苦瓜.mp3",
@@ -58,6 +64,18 @@
     "artist": "赵蓓 / 赵蕾",
     "src": "/music/不怕.mp3",
     "lrc": "/music/赵蓓_赵蕾 - 不怕.lrc"
+  },
+  {
+    "title": "Mr. Broken Heart",
+    "artist": "松下優也",
+    "src": "/music/Mr. Broken Heart.mp3",
+    "lrc": "/music/松下優也 - Mr. ”Broken Heart”.lrc"
+  },
+  {
+    "title": "Call You Tonight",
+    "artist": "Whitney Houston",
+    "src": "/music/Call You Tonight.mp3",
+    "lrc": "/music/WhitneyHouston - Call You Tonight.lrc"
   },
   {
     "title": "The Way I Still Love You",

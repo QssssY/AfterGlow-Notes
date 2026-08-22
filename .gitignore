@@ -39,3 +39,8 @@ server/*.db-*
 # 生成指向不存在图片的 CSS，构建时报一堆 "didn't resolve at build time"
 design-export/
 .design/
+
+# AI 生图与自动化验证的临时产物（脚本随用随建，最终图片会转 webp 入库）
+.genimg/
+.verify-shots/
+.verify-*.mjs

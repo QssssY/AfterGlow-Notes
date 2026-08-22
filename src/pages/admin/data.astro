@@ -285,6 +285,13 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         { key: 'artist', label: '歌手' },
         { key: 'src', label: '音频地址', hint: '/music/xxx.mp3' },
         { key: 'lrc', label: '歌词地址（可空）', optional: true, hint: '/music/xxx.lrc，没有就不显示歌词' },
+        {
+          key: 'offset',
+          label: '歌词偏移·秒（可空）',
+          input: 'number',
+          optional: true,
+          hint: '这首歌词整体快/慢时微调：正值=歌词推迟出现，负值=提前，如 0.5 或 -1',
+        },
       ],
     },
   }

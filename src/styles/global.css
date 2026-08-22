@@ -813,13 +813,41 @@ html.theme-vt::view-transition-new(root) {
   );
 }
 
-/* 播放列表弹层：在玻璃卡内部，嵌套 backdrop-filter 不再取样（Chrome 的
+/* 播放列表 / 音量弹层：在玻璃卡内部，嵌套 backdrop-filter 不再取样（Chrome 的
    backdrop root 规则），模糊指望不上 —— 同色叠两层把 70% 抬到 ~91% 实底，
-   两个主题共用 --card-solid。顺带一条低调的细滚动条 */
-[data-np-list] {
+   两个主题共用 --card-solid。列表顺带一条低调的细滚动条 */
+[data-np-list],
+[data-np-vol] {
   background:
     linear-gradient(var(--card-solid), var(--card-solid)),
     linear-gradient(var(--card-solid), var(--card-solid));
+}
+[data-np-list] {
   scrollbar-width: thin;
   scrollbar-color: var(--ink-muted) transparent;
+}
+
+/* 音量滑杆：原生轨道是硬黑色，压在奶油玻璃上太重 —— 自绘。
+   填充比例 --v 由脚本随音量写，未填充段用发丝线色贴主题 */
+[data-np-vol-range] {
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand) var(--v, 100%), var(--hairline) var(--v, 100%));
+  outline: none;
+}
+[data-np-vol-range]::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 1px 4px var(--shadow-soft);
+}
+[data-np-vol-range]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand);
 }
