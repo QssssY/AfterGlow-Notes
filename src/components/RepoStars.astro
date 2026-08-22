@@ -14,22 +14,58 @@
 <script>
   const fmt = new Intl.NumberFormat('en-US', { notation: 'compact' })
 
-  // 客户端路由下换页会反复触发：拉到过的仓库进内存缓存，
-  // 一次会话最多向 GitHub 发一轮请求，不吃访客的限流配额
-  const cache = new Map<string, { repo: string; stars: number }>()
+  /**
+   * localStorage 两级缓存，治 403 刷屏：
+   * - 拉到的数字存 1 小时：F5 / 换页 / 新开标签都不再发请求；
+   * - 失败也记 15 分钟（负缓存）。之前失败不缓存，撞了限流后每次换页
+   *   重试 3 个仓库，控制台被红色 403 刷满（用户报过）。
+   * 记录含义是「最近一次检查时间 + 已知的最好数字」：失败时保留旧成功值，
+   * 显示上比退回构建兜底更接近真相。
+   */
+  const OK_TTL = 3_600_000
+  const FAIL_TTL = 900_000
+  interface Hit {
+    stars: number | null
+    at: number
+  }
 
-  const fetchOne = (repo: string) =>
-    cache.has(repo)
-      ? Promise.resolve(cache.get(repo)!)
-      : fetch(`https://api.github.com/repos/${repo}`, { referrerPolicy: 'no-referrer' })
-          .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-          .then((data) => {
-            const entry = { repo, stars: Number(data.stargazers_count) }
-            cache.set(repo, entry)
-            return entry
-          })
-          // 限流、离线、仓库转私有都会走到这里：返回 null，保留构建时的数字（下次换页重试）
-          .catch(() => null)
+  const read = (repo: string): Hit | null => {
+    try {
+      const raw = localStorage.getItem(`firefly:gh:${repo}`)
+      return raw ? (JSON.parse(raw) as Hit) : null
+    } catch {
+      return null
+    }
+  }
+  const write = (repo: string, hit: Hit) => {
+    try {
+      localStorage.setItem(`firefly:gh:${repo}`, JSON.stringify(hit))
+    } catch {
+      // 隐私模式存不了：退化成每次整页加载拉一轮
+    }
+  }
+
+  const fetchOne = async (repo: string) => {
+    const hit = read(repo)
+    if (hit && Date.now() - hit.at < (hit.stars === null ? FAIL_TTL : OK_TTL)) {
+      return hit.stars === null ? null : { repo, stars: hit.stars }
+    }
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}`, {
+        referrerPolicy: 'no-referrer',
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      const data = (await res.json()) as { stargazers_count: number }
+      const stars = Number(data.stargazers_count)
+      write(repo, { stars, at: Date.now() })
+      return { repo, stars }
+    } catch {
+      // 限流、离线、仓库转私有都到这里：负缓存 15 分钟，带上旧值（可能为 null）
+      const stale = hit?.stars ?? null
+      write(repo, { stars: stale, at: Date.now() })
+      return stale === null ? null : { repo, stars: stale }
+    }
+  }
 
   document.addEventListener('astro:page-load', () => {
     const cards = [...document.querySelectorAll<HTMLElement>('[data-gh]')]

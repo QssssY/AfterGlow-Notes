@@ -72,9 +72,10 @@ import { Icon } from 'astro-icon/components'
       }
     }
 
-    const button = document.querySelector<HTMLElement>('[data-like][data-like-site]')
-    if (!button) return
-    // 移动端 Social Row 的爱心数字也挂 data-like-count，这里一并同步
+    // 全站点赞可能有多颗按钮（桌面迷你圆钮 + 移动端 Social Row 胶囊），
+    // 共享同一份状态：点任意一颗，所有按钮的点亮态和所有计数一起更新
+    const buttons = [...document.querySelectorAll<HTMLElement>('[data-like][data-like-site]')]
+    if (buttons.length === 0) return
     const counts = [...document.querySelectorAll<HTMLElement>('[data-like-count]')]
 
     let liked = read()
@@ -82,8 +83,8 @@ import { Icon } from 'astro-icon/components'
     let total: number | null = null
 
     const render = () => {
-      button.setAttribute('aria-pressed', String(liked))
       const value = String(total ?? (liked ? 1 : 0))
+      for (const button of buttons) button.setAttribute('aria-pressed', String(liked))
       for (const count of counts) count.textContent = value
     }
     render()
@@ -97,20 +98,22 @@ import { Icon } from 'astro-icon/components'
       render()
     })
 
-    button.addEventListener('click', () => {
-      liked = !liked
-      write(liked)
-      if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
-      render()
-      if (liked) likeBurst(button)
-
-      postLike('site', liked ? 'like' : 'unlike').then((state) => {
-        if (!state) return
-        liked = state.liked
-        total = state.count
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        liked = !liked
         write(liked)
+        if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
         render()
+        if (liked) likeBurst(button)
+
+        postLike('site', liked ? 'like' : 'unlike').then((state) => {
+          if (!state) return
+          liked = state.liked
+          total = state.count
+          write(liked)
+          render()
+        })
       })
-    })
+    }
   })
 </script>

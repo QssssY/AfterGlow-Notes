@@ -74,26 +74,24 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
 
   <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
     <!--
-      左栏：桌面是 Sidebar + 目录 + 本文 + 相关；移动端只留目录
-      （侧栏由底部 TabBar 代替；本文与相关两块也不在移动端出现 ——
-      它们在设计稿里是左栏内容，摆到 390 下就成了正文前的一大段前言）。
+      左栏（纯桌面）：Sidebar + 目录 + 本文 + 相关，rail-pin 整栏钉住，
+      超出视口的部分在栏内自滚动（滚动条隐藏）。
+      移动端整栏不渲染：侧栏由底部 TabBar 代替，本文/相关摆到 390 下
+      就成了正文前的一大段前言；目录单独在返回按钮之后再出一份（见下）。
     -->
-    {/* 这栏比一屏高：rail-pin 整栏钉住，目录/相关在栏内自滚动（滚动条隐藏） */}
     <div
       data-rail
-      class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:rail-pin xl:w-[280px]"
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:rail-pin xl:flex"
     >
-      <div class="hidden w-full xl:block"><Sidebar /></div>
+      <Sidebar />
       <TocCard headings={headings} />
-      <div class="hidden w-full xl:block">
-        <ArticleInfo
-          words={stats.words}
-          minutes={stats.minutes}
-          date={date}
-          updated={post.data.updated}
-        />
-      </div>
-      <div class="hidden w-full xl:block"><RelatedCard posts={related} /></div>
+      <ArticleInfo
+        words={stats.words}
+        minutes={stats.minutes}
+        date={date}
+        updated={post.data.updated}
+      />
+      <RelatedCard posts={related} />
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1">
@@ -104,6 +102,9 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
         <Icon name="lucide:arrow-left" class="size-[16px] shrink-0 text-ink-soft" />
         <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">返回文章列表</span>
       </a>
+
+      {/* 移动端目录：排在返回按钮之后、正文之前（用户点名的顺序）；桌面版在左栏里 */}
+      <div class="w-full xl:hidden"><TocCard headings={headings} /></div>
 
       <!-- data-pagefind-* 告诉索引器只收正文，并把标题/日期存进搜索结果 -->
       <article
