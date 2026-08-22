@@ -1,0 +1,273 @@
+/* ─────────────────────────────────────────────────────────────
+ * 管理台样式 —— 只在 /admin 下加载（AdminLayout 引入）。
+ *
+ * 全部走 global.css 里的设计 token（--card / --hairline / --ink…），
+ * 明暗主题自动跟随博客本体。列表行、字段卡这些 DOM 是 JS 动态生成的，
+ * 所以样式收敛成少量 .ad-* 组件类，不在 JS 字符串里拼 Tailwind 工具类。
+ *
+ * 注意：这是「临时皮肤」。管理台的正式 UI 等设计稿（Pencil）出来后
+ * 按稿 1:1 重做，这里只保证能用、顺手、不丑。
+ * ───────────────────────────────────────────────────────────── */
+
+.ad-card {
+  background-color: var(--card);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  backdrop-filter: blur(4px);
+  border-radius: 28px;
+  box-shadow:
+    0 16px 32px -14px var(--shadow-soft),
+    0 0 18px 0 var(--sheen);
+}
+
+.ad-label {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.ad-input,
+.ad-textarea,
+.ad-select {
+  width: 100%;
+  border-radius: 12px;
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  border: 0;
+  padding: 9px 13px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  transition: outline-color 0.15s ease, background-color 0.15s ease;
+}
+.ad-input:focus-visible,
+.ad-textarea:focus-visible,
+.ad-select:focus-visible {
+  outline: 1.5px solid var(--brand);
+  outline-offset: -0.75px;
+  background-color: var(--card-solid);
+}
+.ad-textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+.ad-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.ad-input[type='color'] {
+  padding: 3px 6px;
+  height: 38px;
+  cursor: pointer;
+}
+.ad-input[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ad-check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+}
+
+.ad-btn,
+.ad-btn-primary,
+.ad-btn-ghost,
+.ad-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: 0;
+  transition: translate 0.25s var(--spring), scale 0.25s var(--spring), background-color 0.2s ease;
+  white-space: nowrap;
+}
+.ad-btn-primary {
+  background-color: var(--btn-dark);
+  color: #f0e6da;
+}
+.ad-btn,
+.ad-btn-ghost {
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  color: var(--ink);
+}
+.ad-btn-danger {
+  background-color: transparent;
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  color: var(--like-text);
+}
+@media (hover: hover) {
+  .ad-btn:hover,
+  .ad-btn-ghost:hover {
+    background-color: var(--card-solid);
+    translate: 0 -1px;
+  }
+  .ad-btn-primary:hover {
+    translate: 0 -1px;
+  }
+  .ad-btn-danger:hover {
+    background-color: var(--like-tint);
+    translate: 0 -1px;
+  }
+}
+:is(.ad-btn, .ad-btn-primary, .ad-btn-ghost, .ad-btn-danger):active {
+  scale: 0.96;
+  translate: 0 0;
+}
+:is(.ad-btn, .ad-btn-primary, .ad-btn-ghost, .ad-btn-danger)[disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.ad-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.ad-chip--draft {
+  background-color: var(--fire-tint);
+  color: var(--brand-ink);
+  outline-color: transparent;
+}
+
+/* 管理台顶部导航的当前项 */
+.ad-tab {
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.ad-tab:hover {
+  background-color: var(--chip);
+  color: var(--ink);
+}
+.ad-tab[aria-current='page'] {
+  background-color: var(--card-solid);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  color: var(--ink);
+}
+
+/* 数据编辑器的条目卡（JS 生成） */
+.ad-item {
+  border-radius: 18px;
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ad-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.ad-item-grid .ad-field--wide {
+  grid-column: 1 / -1;
+}
+.ad-item-tools {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.ad-item-tools button {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+}
+.ad-item-tools button:hover {
+  background-color: var(--card-solid);
+  color: var(--ink);
+}
+.ad-item-tools button.ad-danger:hover {
+  background-color: var(--like-tint);
+  color: var(--like-text);
+}
+
+.ad-hint {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.7;
+}
+
+/* 统计瓦片（概览页） */
+.ad-stat {
+  border-radius: 22px;
+  background-color: var(--card);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  backdrop-filter: blur(4px);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ad-stat b {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.ad-stat span {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* toast（admin.ts 生成） */
+.ad-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  translate: -50% 0;
+  z-index: 90;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--ink);
+  background-color: var(--card-solid);
+  outline: 1.5px solid var(--card-border);
+  outline-offset: -0.75px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 16px 32px -14px var(--shadow-soft);
+  animation: ad-toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ad-toast--err {
+  color: var(--like-text);
+}
+@keyframes ad-toast-in {
+  from {
+    opacity: 0;
+    translate: -50% 10px;
+  }
+}
+.ad-toast--out {
+  transition: opacity 0.25s ease, translate 0.25s ease;
+  opacity: 0;
+  translate: -50% 8px;
+}

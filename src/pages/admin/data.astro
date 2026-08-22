@@ -1,0 +1,403 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="站点数据" active="data">
+  <div class="flex flex-wrap items-center justify-between gap-[10px]">
+    <h1 class="font-display text-[22px] text-ink">站点数据</h1>
+    <button type="button" data-save class="ad-btn-primary">保存这一组</button>
+  </div>
+
+  <nav data-tabs class="flex flex-wrap gap-[6px]"></nav>
+
+  <p class="ad-hint" data-desc></p>
+
+  <div data-editor class="flex flex-col gap-[14px]">
+    <span class="ad-hint">加载中…</span>
+  </div>
+
+  <div class="flex">
+    <button type="button" data-add class="ad-btn-ghost" hidden>＋ 添加一条</button>
+  </div>
+
+  <section data-upload-box hidden class="ad-card flex flex-col gap-[10px] p-[20px]">
+    <span class="text-[14px] font-medium text-ink">上传音乐文件</span>
+    <p class="ad-hint">
+      mp3 / m4a / ogg / flac / lrc 都收，存进 <code>public/music/</code>。
+      上传后把得到的地址填进上面的「音频地址 / 歌词地址」。
+    </p>
+    <div class="flex flex-wrap items-center gap-[10px]">
+      <button type="button" data-upload-pick class="ad-btn-ghost">选文件上传</button>
+      <code data-upload-path class="ad-hint"></code>
+      <button type="button" data-upload-copy class="ad-btn-ghost" hidden>复制地址</button>
+    </div>
+    <input type="file" data-upload-file accept=".mp3,.m4a,.ogg,.flac,.lrc" hidden />
+  </section>
+</AdminLayout>
+
+<script>
+  import { api, esc, report, toast, today } from '~/scripts/admin'
+
+  // ---- 字段规格：新增一种可编辑内容 = 这里加一段 + server/admin.go 白名单加一行 ----
+
+  interface Field {
+    key: string
+    label: string
+    input?: 'text' | 'textarea' | 'number' | 'date' | 'checkbox' | 'select' | 'color' | 'csv'
+    options?: string[]
+    hint?: string
+    /** 空值时从 JSON 里省略这个键 */
+    optional?: boolean
+    /** 表单里占整行 */
+    wide?: boolean
+  }
+
+  interface Spec {
+    label: string
+    desc: string
+    kind: 'array' | 'object'
+    /** object 模式的顶层字段 */
+    fields?: Field[]
+    /** 条目字段（array 本体 / object 里 listKey 指向的数组） */
+    item: Field[]
+    listKey?: string
+    minItems?: number
+    upload?: 'music'
+  }
+
+  const ICON_HINT = 'lucide 图标名（去 lucide.dev 查，如 hammer）'
+
+  const SPECS: Record<string, Spec> = {
+    reading: {
+      label: '最近在读',
+      desc: '首页右栏的「最近在读」卡。progress 是读完的百分比。',
+      kind: 'array',
+      item: [
+        { key: 'title', label: '书名' },
+        { key: 'author', label: '作者' },
+        { key: 'progress', label: '进度 %', input: 'number' },
+        { key: 'accent', label: '进度条颜色', input: 'select', options: ['brand', 'gold'], hint: 'brand 橙 / gold 金' },
+      ],
+    },
+    now: {
+      label: '此刻',
+      desc: '首页中栏的「此刻」卡（移动端也用）。改完记得把更新日期拨到今天。',
+      kind: 'object',
+      listKey: 'items',
+      fields: [
+        { key: 'updated', label: '更新日期', input: 'date' },
+        { key: 'statement', label: '一句话（在做什么）', wide: true },
+        { key: 'note', label: '补充说明', input: 'textarea', wide: true },
+        { key: 'aside', label: '移动端小字', wide: true },
+      ],
+      item: [
+        { key: 'kind', label: '标签（在做/在啃…）' },
+        { key: 'detail', label: '内容', wide: true },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+        { key: 'active', label: '高亮（橙点）', input: 'checkbox' },
+      ],
+    },
+    playlist: {
+      label: '正在听',
+      desc: '首页播放器的歌单，按顺序播、到底循环。音频先用下方工具上传，再把地址填进来。至少留一首。',
+      kind: 'array',
+      minItems: 1,
+      upload: 'music',
+      item: [
+        { key: 'title', label: '曲名' },
+        { key: 'artist', label: '歌手' },
+        { key: 'src', label: '音频地址', hint: '/music/xxx.mp3' },
+        { key: 'lrc', label: '歌词地址（可空）', optional: true, hint: '/music/xxx.lrc，没有就不显示歌词' },
+      ],
+    },
+    blogroll: {
+      label: '友链',
+      desc: '「优秀博客」页的站点列表。头像是首字 + 渐变底，渐变两端和字色按条手调。',
+      kind: 'array',
+      item: [
+        { key: 'name', label: '站名' },
+        { key: 'initial', label: '头像字（一个字）' },
+        { key: 'href', label: '链接' },
+        { key: 'domain', label: '域名（展示用）' },
+        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
+        { key: 'tags', label: '标签（逗号分隔）', input: 'csv' },
+        { key: 'since', label: '上线年份', input: 'number' },
+        { key: 'from', label: '渐变起', input: 'color' },
+        { key: 'to', label: '渐变止', input: 'color' },
+        { key: 'initialColor', label: '首字颜色', input: 'color' },
+      ],
+    },
+    repos: {
+      label: '项目',
+      desc: '项目页与首页共用。第一条是 Featured 大卡，至少保留一条。星数是兜底值，浏览器端会拉 GitHub 最新的覆盖。',
+      kind: 'array',
+      minItems: 1,
+      item: [
+        { key: 'repo', label: 'GitHub 仓库', hint: '如 QssssY/offCat' },
+        { key: 'name', label: '显示名' },
+        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
+        { key: 'stack', label: '主语言' },
+        { key: 'stars', label: '兜底星数', input: 'number' },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+        { key: 'badge', label: '角标（可空，只有第一条显示）', optional: true },
+        { key: 'pushed', label: '最后推送时间', hint: 'ISO 格式，如 2026-08-19T15:06:27Z（项目页按它标「还在动」）' },
+      ],
+    },
+    share: {
+      label: '推荐分享',
+      desc: '「推荐分享」页的条目。分类随便写，筛选档位会自动按出现过的分类生成。',
+      kind: 'array',
+      item: [
+        { key: 'title', label: '标题' },
+        { key: 'href', label: '链接' },
+        { key: 'domain', label: '域名（展示用）' },
+        { key: 'desc', label: '介绍', input: 'textarea', wide: true },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+        { key: 'tone', label: '配色', input: 'select', options: ['fire', 'leaf'], hint: 'fire 橙 / leaf 绿' },
+        { key: 'category', label: '分类', hint: '工具 / 文章 / 播客 / 教程，或新起一个' },
+      ],
+    },
+    tools: {
+      label: '在用',
+      desc: '首页中栏末位的「在用」工具行，一行四件正好。',
+      kind: 'array',
+      item: [
+        { key: 'name', label: '名称' },
+        { key: 'meta', label: '说明' },
+        { key: 'icon', label: '图标', hint: ICON_HINT },
+      ],
+    },
+  }
+
+  // ---- 状态 ----
+
+  type Item = Record<string, unknown>
+
+  let current = 'reading'
+  let value: unknown = null
+  let dirty = false
+
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
+  const tabs = $('[data-tabs]')
+  const editor = $('[data-editor]')
+
+  const spec = () => SPECS[current]!
+  const list = (): Item[] =>
+    (spec().kind === 'array' ? value : (value as Item)?.[spec().listKey!]) as Item[]
+
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) e.preventDefault()
+  })
+
+  // ---- 渲染 ----
+
+  function fieldHtml(f: Field, v: unknown, scope: string): string {
+    const attrs = `data-k="${f.key}" data-scope="${scope}"`
+    const s = v == null ? '' : String(v)
+    let control: string
+    switch (f.input) {
+      case 'textarea':
+        control = `<textarea class="ad-textarea" rows="2" ${attrs}>${esc(s)}</textarea>`
+        break
+      case 'number':
+        control = `<input class="ad-input" type="number" ${attrs} value="${esc(s)}">`
+        break
+      case 'date':
+        control = `<input class="ad-input" type="date" ${attrs} value="${esc(s)}">`
+        break
+      case 'color':
+        control = `<input class="ad-input" type="color" ${attrs} value="${esc(s || '#d9812b')}">`
+        break
+      case 'checkbox':
+        return `<label class="flex items-center gap-[8px] self-end pb-[9px] text-[13px] text-ink">
+          <input type="checkbox" class="ad-check" ${attrs} ${v ? 'checked' : ''}> ${esc(f.label)}
+        </label>`
+      case 'select':
+        control = `<select class="ad-select" ${attrs}>${(f.options ?? [])
+          .map((o) => `<option value="${esc(o)}" ${o === s ? 'selected' : ''}>${esc(o)}</option>`)
+          .join('')}</select>`
+        break
+      case 'csv':
+        control = `<input class="ad-input" ${attrs} value="${esc(Array.isArray(v) ? v.join(', ') : s)}">`
+        break
+      default:
+        control = `<input class="ad-input" ${attrs} value="${esc(s)}">`
+    }
+    const hint = f.hint ? `<span class="ad-hint">${esc(f.hint)}</span>` : ''
+    return `<label class="flex flex-col gap-[4px] ${f.wide ? 'ad-field--wide' : ''}">
+      <span class="ad-label">${esc(f.label)}</span>${control}${hint}
+    </label>`
+  }
+
+  function render() {
+    const sp = spec()
+    $('[data-desc]').textContent = sp.desc
+    $('[data-add]').hidden = false
+    $('[data-upload-box]').hidden = sp.upload !== 'music'
+
+    for (const btn of tabs.querySelectorAll('button')) {
+      btn.setAttribute('aria-current', btn.dataset.name === current ? 'page' : 'false')
+    }
+
+    let html = ''
+    if (sp.kind === 'object' && sp.fields) {
+      html += `<div class="ad-card p-[20px]"><div class="ad-item-grid">${sp.fields
+        .map((f) => fieldHtml(f, (value as Item)[f.key], 'top'))
+        .join('')}</div></div>`
+    }
+    html += list()
+      .map(
+        (item, i) => `<div class="ad-item" data-idx="${i}">
+          <div class="ad-item-grid">${sp.item.map((f) => fieldHtml(f, item[f.key], String(i))).join('')}</div>
+          <div class="ad-item-tools">
+            <button type="button" data-act="up" data-idx="${i}">上移</button>
+            <button type="button" data-act="down" data-idx="${i}">下移</button>
+            <button type="button" data-act="del" data-idx="${i}" class="ad-danger">删除</button>
+          </div>
+        </div>`,
+      )
+      .join('')
+    editor.innerHTML = html
+  }
+
+  // ---- 输入回写（事件委托，结构不变不重渲染）----
+
+  editor.addEventListener('input', (e) => {
+    const el = e.target as HTMLInputElement
+    const key = el.dataset.k
+    if (!key) return
+    const sp = spec()
+    const scope = el.dataset.scope!
+    const fields = scope === 'top' ? sp.fields! : sp.item
+    const f = fields.find((x) => x.key === key)!
+    const target: Item = scope === 'top' ? (value as Item) : list()[Number(scope)]!
+
+    let v: unknown = el.value
+    if (f.input === 'checkbox') v = el.checked
+    else if (f.input === 'number') v = el.value === '' ? 0 : Number(el.value)
+    else if (f.input === 'csv')
+      v = el.value
+        .split(/[,，]/)
+        .map((t) => t.trim())
+        .filter(Boolean)
+    target[key] = v
+    dirty = true
+  })
+
+  editor.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')
+    if (!btn) return
+    const i = Number(btn.dataset.idx)
+    const items = list()
+    const act = btn.dataset.act
+    if (act === 'del') {
+      if (items.length <= (spec().minItems ?? 0)) {
+        toast(`这一组至少要留 ${spec().minItems} 条`, false)
+        return
+      }
+      items.splice(i, 1)
+    } else {
+      const j = act === 'up' ? i - 1 : i + 1
+      if (j < 0 || j >= items.length) return
+      ;[items[i], items[j]] = [items[j]!, items[i]!]
+    }
+    dirty = true
+    render()
+  })
+
+  $('[data-add]').addEventListener('click', () => {
+    const item: Item = {}
+    for (const f of spec().item) {
+      if (f.input === 'checkbox') item[f.key] = false
+      else if (f.input === 'number') item[f.key] = 0
+      else if (f.input === 'csv') item[f.key] = []
+      else if (f.input === 'select') item[f.key] = f.options?.[0] ?? ''
+      else if (f.input === 'color') item[f.key] = '#d9812b'
+      else if (f.input === 'date') item[f.key] = today()
+      else item[f.key] = ''
+    }
+    list().push(item)
+    dirty = true
+    render()
+    editor.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+
+  // ---- 存取 ----
+
+  function cleaned(): unknown {
+    const strip = (item: Item, fields: Field[]) => {
+      const out: Item = {}
+      for (const f of fields) {
+        const v = item[f.key]
+        if (f.optional && (v == null || (typeof v === 'string' && v.trim() === ''))) continue
+        out[f.key] = typeof v === 'string' ? v.trim() : v
+      }
+      return out
+    }
+    const sp = spec()
+    const items = list().map((it) => strip(it, sp.item))
+    if (sp.kind === 'array') return items
+    const top = strip(value as Item, sp.fields!)
+    top[sp.listKey!] = items
+    return top
+  }
+
+  async function load(name: string) {
+    current = name
+    value = await api(`/api/admin/data/${name}`)
+    dirty = false
+    render()
+  }
+
+  $('[data-save]').addEventListener('click', async () => {
+    try {
+      await api(`/api/admin/data/${current}`, { method: 'PUT', body: cleaned() })
+      dirty = false
+      toast('已保存 —— dev 站会热更新，正式站要重新构建')
+    } catch (err) {
+      report(err)
+    }
+  })
+
+  // ---- 页签 ----
+
+  tabs.innerHTML = Object.entries(SPECS)
+    .map(([name, sp]) => `<button type="button" class="ad-tab" data-name="${name}">${sp.label}</button>`)
+    .join('')
+  tabs.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-name]')
+    if (!btn || btn.dataset.name === current) return
+    if (dirty && !confirm('这一组还有没保存的修改，切换会丢掉。继续？')) return
+    load(btn.dataset.name!).catch(report)
+  })
+
+  load('reading').catch(report)
+
+  // ---- 音乐上传 ----
+
+  const upFile = $<HTMLInputElement>('[data-upload-file]')
+  const upPath = $('[data-upload-path]')
+  const upCopy = $('[data-upload-copy]')
+  $('[data-upload-pick]').addEventListener('click', () => upFile.click())
+  upFile.addEventListener('change', async () => {
+    const file = upFile.files?.[0]
+    if (!file) return
+    const fd = new FormData()
+    fd.append('kind', 'music')
+    fd.append('file', file)
+    try {
+      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      upPath.textContent = res.path
+      upCopy.hidden = false
+      toast('已上传，把地址填进歌单里')
+    } catch (err) {
+      report(err)
+    } finally {
+      upFile.value = ''
+    }
+  })
+  upCopy.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(upPath.textContent ?? '')
+    toast('已复制')
+  })
+</script>

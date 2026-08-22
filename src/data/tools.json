@@ -1,0 +1,6 @@
+[
+  { "name": "Astro", "meta": "这个站", "icon": "rocket" },
+  { "name": "Tailwind", "meta": "样式", "icon": "palette" },
+  { "name": "Java", "meta": "主力", "icon": "coffee" },
+  { "name": "Vue", "meta": "前端", "icon": "component" }
+]

@@ -1,0 +1,250 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="写文章" active="posts">
+  <div class="flex flex-wrap items-center justify-between gap-[10px]">
+    <h1 data-head class="font-display text-[22px] text-ink">写新文章</h1>
+    <div class="flex items-center gap-[8px]">
+      <a data-view hidden class="ad-btn-ghost" target="_blank" rel="noopener">在站点里看 ↗</a>
+      <button type="button" data-save class="ad-btn-primary">保存（Ctrl+S）</button>
+    </div>
+  </div>
+
+  <section class="ad-card flex flex-col gap-[14px] p-[24px]">
+    <div class="grid gap-[14px] xl:grid-cols-2">
+      <label class="flex flex-col xl:col-span-2">
+        <span class="ad-label">标题</span>
+        <input class="ad-input" data-f="title" />
+      </label>
+
+      <label class="flex flex-col">
+        <span class="ad-label">slug（网址：/posts/这里；小写字母、数字、短横线）</span>
+        <input class="ad-input ad-mono" data-f="slug" placeholder="my-first-post" />
+      </label>
+
+      <div class="grid grid-cols-2 gap-[14px]">
+        <label class="flex flex-col">
+          <span class="ad-label">日期</span>
+          <input class="ad-input" type="date" data-f="date" />
+        </label>
+        <label class="flex flex-col">
+          <span class="ad-label">更新于（可空）</span>
+          <input class="ad-input" type="date" data-f="updated" />
+        </label>
+      </div>
+
+      <label class="flex flex-col">
+        <span class="ad-label">分类（可空）</span>
+        <input class="ad-input" data-f="category" placeholder="前端工程" />
+      </label>
+
+      <label class="flex flex-col">
+        <span class="ad-label">标签（逗号分隔）</span>
+        <input class="ad-input" data-f="tags" placeholder="前端, Astro" />
+      </label>
+
+      <label class="flex flex-col xl:col-span-2">
+        <span class="ad-label">摘要（列表和 SEO 用，可空）</span>
+        <textarea class="ad-textarea" rows="2" data-f="description"></textarea>
+      </label>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-[14px]">
+      <label class="flex items-center gap-[8px] text-[13px] text-ink">
+        <input type="checkbox" class="ad-check" data-f="draft" />
+        存成草稿（不出现在站点上）
+      </label>
+
+      <span class="mx-[4px] h-[16px] w-px bg-hairline"></span>
+
+      <button type="button" class="ad-btn-ghost" data-cover-pick>上传封面</button>
+      <span class="ad-hint" data-cover-name>没有封面</span>
+      <button type="button" class="ad-btn-danger" data-cover-clear hidden>去掉封面</button>
+      <input type="file" data-cover-file accept="image/*" hidden />
+    </div>
+  </section>
+
+  <section class="ad-card flex flex-col gap-[12px] p-[24px]">
+    <div class="flex flex-wrap items-center justify-between gap-[10px]">
+      <span class="text-[14px] font-medium text-ink">正文（Markdown）</span>
+      <div class="flex items-center gap-[8px]">
+        <button type="button" class="ad-btn-ghost" data-img-pick>插入图片</button>
+        <input type="file" data-img-file accept="image/*" hidden />
+      </div>
+    </div>
+    <textarea
+      class="ad-textarea ad-mono min-h-[56vh]"
+      data-f="body"
+      placeholder="## 从这里开始写&#10;&#10;支持全部 Markdown 语法，代码块、引用、图片都行。"></textarea>
+    <p class="ad-hint">
+      语法备忘：<code>## 小标题</code>、<code>**加粗**</code>、<code>[文字](链接)</code>、
+      <code>```ts</code> 开代码块、<code>&gt; 引用</code>。图片用上面的按钮传，会自动插到光标处。
+    </p>
+  </section>
+</AdminLayout>
+
+<script>
+  import { api, report, SLUG_RE, toast, today } from '~/scripts/admin'
+  import type { PostMeta } from '~/scripts/admin'
+
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
+  const field = (k: string) => $(`[data-f="${k}"]`) as HTMLInputElement | HTMLTextAreaElement
+
+  const slugInput = field('slug') as HTMLInputElement
+  const viewLink = $<HTMLAnchorElement>('[data-view]')
+
+  let editing = new URLSearchParams(location.search).get('slug') ?? ''
+  let cover = ''
+  let dirty = false
+
+  document.addEventListener('input', () => (dirty = true))
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) e.preventDefault()
+  })
+
+  function showCover() {
+    $('[data-cover-name]').textContent = cover ? cover.replace('./_covers/', '') : '没有封面'
+    $('[data-cover-clear]').hidden = !cover
+  }
+
+  function enterEditMode(slug: string) {
+    editing = slug
+    slugInput.value = slug
+    slugInput.disabled = true
+    $('[data-head]').textContent = '编辑文章'
+    viewLink.hidden = false
+    viewLink.href = `/posts/${slug}`
+    history.replaceState(null, '', `?slug=${encodeURIComponent(slug)}`)
+  }
+
+  async function load() {
+    field('date').value = today()
+    if (!editing) return
+    const post = await api<{ slug: string; meta: PostMeta; body: string }>(
+      `/api/admin/posts/${encodeURIComponent(editing)}`,
+    )
+    const m = post.meta
+    field('title').value = m.title
+    field('date').value = m.date
+    field('updated').value = m.updated ?? ''
+    field('category').value = m.category ?? ''
+    field('tags').value = m.tags.join(', ')
+    field('description').value = m.description ?? ''
+    ;(field('draft') as HTMLInputElement).checked = m.draft
+    field('body').value = post.body
+    cover = m.cover ?? ''
+    showCover()
+    enterEditMode(post.slug)
+    dirty = false
+  }
+  load().catch(report)
+
+  // ---- 保存 ----
+  async function save() {
+    const slug = slugInput.value.trim()
+    if (!SLUG_RE.test(slug)) {
+      toast('slug 只能是小写字母、数字和短横线，例如 my-first-post', false)
+      slugInput.focus()
+      return
+    }
+    const meta: PostMeta = {
+      title: field('title').value.trim(),
+      description: field('description').value.trim() || undefined,
+      date: field('date').value,
+      updated: field('updated').value || undefined,
+      tags: field('tags')
+        .value.split(/[,，]/)
+        .map((t) => t.trim())
+        .filter(Boolean),
+      category: field('category').value.trim() || undefined,
+      cover: cover || undefined,
+      draft: (field('draft') as HTMLInputElement).checked,
+    }
+    if (!meta.title) {
+      toast('标题不能为空', false)
+      return
+    }
+    try {
+      await api(`/api/admin/posts/${encodeURIComponent(slug)}`, {
+        method: 'PUT',
+        body: { meta, body: field('body').value },
+      })
+      dirty = false
+      if (!editing) enterEditMode(slug)
+      toast('已保存')
+    } catch (err) {
+      report(err)
+    }
+  }
+
+  $('[data-save]').addEventListener('click', save)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault()
+      save()
+    }
+  })
+
+  // ---- 封面 ----
+  const coverFile = $<HTMLInputElement>('[data-cover-file]')
+  $('[data-cover-pick]').addEventListener('click', () => {
+    const slug = slugInput.value.trim()
+    if (!SLUG_RE.test(slug)) {
+      toast('先把 slug 填好 —— 封面文件按 slug 命名存进 _covers/', false)
+      slugInput.focus()
+      return
+    }
+    coverFile.click()
+  })
+  coverFile.addEventListener('change', async () => {
+    const file = coverFile.files?.[0]
+    if (!file) return
+    const fd = new FormData()
+    fd.append('kind', 'cover')
+    fd.append('slug', slugInput.value.trim())
+    fd.append('file', file)
+    try {
+      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      cover = res.path
+      dirty = true
+      showCover()
+      toast('封面已上传，保存后生效')
+    } catch (err) {
+      report(err)
+    } finally {
+      coverFile.value = ''
+    }
+  })
+  $('[data-cover-clear]').addEventListener('click', () => {
+    cover = ''
+    dirty = true
+    showCover()
+  })
+
+  // ---- 正文插图 ----
+  const imgFile = $<HTMLInputElement>('[data-img-file]')
+  $('[data-img-pick]').addEventListener('click', () => imgFile.click())
+  imgFile.addEventListener('change', async () => {
+    const file = imgFile.files?.[0]
+    if (!file) return
+    const fd = new FormData()
+    fd.append('kind', 'image')
+    fd.append('file', file)
+    try {
+      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      const body = field('body') as HTMLTextAreaElement
+      const at = body.selectionStart ?? body.value.length
+      const snippet = `\n![](${res.path})\n`
+      body.value = body.value.slice(0, at) + snippet + body.value.slice(at)
+      body.focus()
+      body.selectionStart = body.selectionEnd = at + snippet.length
+      dirty = true
+      toast('图片已插入正文')
+    } catch (err) {
+      report(err)
+    } finally {
+      imgFile.value = ''
+    }
+  })
+</script>

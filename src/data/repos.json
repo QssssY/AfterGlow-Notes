@@ -1,0 +1,30 @@
+[
+  {
+    "repo": "QssssY/offCat",
+    "name": "offCat",
+    "desc": "面向求职场景的 AI 应用：简历诊断、模拟面试、JD 匹配与模板导出，前后端同仓。",
+    "stack": "Java",
+    "stars": 1,
+    "icon": "layout-grid",
+    "badge": "正在打磨",
+    "pushed": "2026-08-19T15:06:27Z"
+  },
+  {
+    "repo": "QssssY/ai-psychological-assistant",
+    "name": "ai-psychological-assistant",
+    "desc": "AI 情感智能助手，做陪伴式对话与情绪记录。",
+    "stack": "Vue",
+    "stars": 0,
+    "icon": "app-window",
+    "pushed": "2026-03-13T14:12:51Z"
+  },
+  {
+    "repo": "QssssY/mini-vue",
+    "name": "mini-vue",
+    "desc": "手写 Vue 3 核心，把响应式、运行时与编译器各自实现一遍。",
+    "stack": "JavaScript",
+    "stars": 0,
+    "icon": "package",
+    "pushed": "2026-02-24T16:33:31Z"
+  }
+]

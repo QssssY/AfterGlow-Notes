@@ -1,5 +1,19 @@
 /** 站点级文案与导航 —— 取自 blog.pen 的 Sidebar / Footer / Banner */
 
+/*
+ * 常改的内容（最近在读 / 此刻 / 播放列表 / 友链 / 项目 / 分享 / 在用）真身在
+ * src/data/*.json —— 网页管理后台（/admin，写接口在 server/ 的 /api/admin）改的
+ * 就是这些文件。dev 下保存即热更新；部署后改完要重新构建。
+ * 这里只负责 import 进来、补上 TS 类型，再原样导出给组件 —— 组件不感知来源。
+ */
+import blogrollData from './data/blogroll.json'
+import nowData from './data/now.json'
+import playlistData from './data/playlist.json'
+import readingData from './data/reading.json'
+import reposData from './data/repos.json'
+import shareData from './data/share.json'
+import toolsData from './data/tools.json'
+
 export const site = {
   /** 侧栏 Wordmark */
   title: '萤火录',
@@ -121,43 +135,31 @@ export const greeting = {
  * 那是虚构人设。这里换成中性表述，说的都是这个仓库里真有的事；
  * 想写具体进展就直接改这几行，updated 记得跟着动。
  */
+export interface NowItem {
+  kind: string
+  /** 桌面用圆点（active 决定橙/灰），移动端用图标砖（icon 是 lucide 名） */
+  detail: string
+  icon: string
+  active: boolean
+}
 export const now = {
-  updated: new Date(2026, 7, 21),
-  statement: '在把这个博客从设计稿一比一搬成代码。',
-  note: '写东西之前先把它做出来，做的过程里才知道该写什么。所以这里长期有半成品，我不急着收尾。',
-  /** 只有移动端 Now Card 有这一行 */
-  aside: '这块每周改一次。改不动就说明我这周在摸鱼。',
-  /**
-   * 桌面用圆点（active 决定橙/灰），移动端用图标砖（icon 是 lucide 名）。
-   * 两处共用同一份条目：同一周的事说两套不同的，改一处必忘另一处。
-   */
-  items: [
-    {
-      kind: '在做',
-      detail: '把 blog.pen 的面板逐块落到 Astro 组件里',
-      icon: 'hammer',
-      active: true,
-    },
-    {
-      kind: '在啃',
-      detail: 'Tailwind 4 的 @theme 与主题变量怎么摆才不重复',
-      icon: 'sprout',
-      active: false,
-    },
-  ],
-} as const
+  ...nowData,
+  /** JSON 里存 "YYYY-MM-DD"，这里转回 Date 给组件格式化 */
+  updated: new Date(nowData.updated),
+  items: nowData.items as NowItem[],
+}
 
 /**
  * 在用 Card（首页中栏末位）—— 一行 4 件工具，icon 是 lucide 名。
  * 设计稿列的是 Blender / WebGPU / Astro / Neovim，其中只有 Astro 是真的；
  * 换成这个仓库实际在用的四件。
  */
-export const tools = [
-  { name: 'Astro', meta: '这个站', icon: 'rocket' },
-  { name: 'Tailwind', meta: '样式', icon: 'palette' },
-  { name: 'Java', meta: '主力', icon: 'coffee' },
-  { name: 'Vue', meta: '前端', icon: 'component' },
-] as const
+export interface Tool {
+  name: string
+  meta: string
+  icon: string
+}
+export const tools = toolsData as Tool[]
 
 /**
  * Snapshot Strip（首页中栏末位）—— 设计稿是三张 Unsplash 占位图，热链的。
@@ -207,87 +209,47 @@ export const finePrint = {
  * 没有 lrc 的歌只显示曲名，不做歌词跟随。多于一首时卡上会出现「下一首」按钮。
  * bars 是未播放时等化条的「定格假谱」高度（取自设计稿），播放时由实时频谱接管。
  */
+export interface Track {
+  title: string
+  artist: string
+  src: string
+  lrc?: string
+}
 export const nowPlaying = {
-  playlist: [
-    {
-      title: '十面埋伏',
-      artist: '陈奕迅',
-      src: '/music/shimianmaifu.mp3',
-      lrc: '/music/shimianmaifu.lrc',
-    },
-  ],
+  playlist: playlistData as Track[],
+  /** bars 是设计稿常量，不进管理后台 */
   bars: [8, 14, 6, 18, 11, 20, 9, 15, 7, 12, 17, 5],
 } as const
 
-/** Reading Card —— progress 是百分比；第二本用金色 */
-export const reading = [
-  { title: '《数字画笔》', author: 'Golan Levin', progress: 72, accent: 'brand' },
-  { title: '《人月神话》', author: 'Fred Brooks', progress: 34, accent: 'gold' },
-] as const
+/** Reading Card —— progress 是百分比；accent 只有 brand / gold 两档 */
+export interface ReadingItem {
+  title: string
+  author: string
+  progress: number
+  accent: 'brand' | 'gold'
+}
+export const reading = readingData as ReadingItem[]
 
 /**
  * 推荐分享 —— tone 决定图标砖的配色（fire = 橙底橙字，leaf = 玻璃底绿字）。
  * 设计稿里它不跟着 category 走（Fontshare 是工具却用 leaf），所以按条存。
  */
-export const shareItems = [
-  {
-    title: 'Ray.so — 把代码片段导出成好看的图',
-    desc: '分享代码到社交平台时不用再截屏幕，配色和窗口留白都可调，导出的 PNG 直接能用在文章里。',
-    href: 'https://ray.so',
-    domain: 'ray.so',
-    icon: 'code',
-    tone: 'fire',
-    category: '工具',
-  },
-  {
-    title: 'Warp — 带块级输出的现代终端',
-    desc: '命令和输出被拆成可折叠的块，翻历史记录时不必再和滚动条搏斗，补全提示也比默认 shell 聪明。',
-    href: 'https://www.warp.dev',
-    domain: 'warp.dev',
-    icon: 'terminal',
-    tone: 'fire',
-    category: '工具',
-  },
-  {
-    title: 'Fontshare — 可商用的免费字体库',
-    desc: '每套字重都完整，页面直接给出配对建议，做项目找标题字时比在 Google Fonts 里翻要省事。',
-    href: 'https://www.fontshare.com',
-    domain: 'fontshare.com',
-    icon: 'type',
-    tone: 'leaf',
-    category: '工具',
-  },
-  {
-    title: '中文文案排版指北',
-    desc: '中英混排的空格、全半角标点、数字用法都有明确规则，团队里争论「该不该加空格」时可以直接引用。',
-    href: 'https://github.com/sparanoid/chinese-copywriting-guidelines',
-    domain: 'github.com',
-    icon: 'file-text',
-    tone: 'leaf',
-    category: '文章',
-  },
-  {
-    title: 'CoRecursive — 代码背后的故事',
-    desc: '每期让一个项目的作者讲当初为什么那样设计，比读文档更能理解技术选型背后的取舍，通勤时听正好。',
-    href: 'https://corecursive.com',
-    domain: 'corecursive.com',
-    icon: 'mic',
-    tone: 'fire',
-    category: '播客',
-  },
-  {
-    title: 'The Book of Shaders — 从零学片元着色器',
-    desc: '从 GLSL 基础讲到噪声与图案生成，每章的示例都能在浏览器里改代码实时看效果，入门图形学最少弯路。',
-    href: 'https://thebookofshaders.com',
-    domain: 'thebookofshaders.com',
-    icon: 'palette',
-    tone: 'leaf',
-    category: '教程',
-  },
-] as const
+export interface ShareItem {
+  title: string
+  desc: string
+  href: string
+  domain: string
+  icon: string
+  tone: 'fire' | 'leaf'
+  category: string
+}
+export const shareItems = shareData as ShareItem[]
 
-/** Share 页 Filter Bar 的档位，顺序照设计稿 */
-export const shareFilters = ['全部', '工具', '文章', '播客', '教程'] as const
+/**
+ * Share 页 Filter Bar 的档位 —— 从条目里现算（首现顺序），
+ * 后台新增一个分类不用再改第二处。
+ */
+export const shareFilters = ['全部', ...new Set(shareItems.map((i) => i.category))]
 
 /**
  * 优秀博客 —— 头像是首字 + 渐变底。渐变的角度和色标位置全站统一，
@@ -297,80 +259,19 @@ export const shareFilters = ['全部', '工具', '文章', '播客', '教程'] a
  * 这六条是占位：设计稿里的站名和域名都是虚构的，点开全是死链，
  * 换成真实存在的站点，好让友链页能真的点。渐变按位置原样保留。
  */
-export const blogroll = [
-  {
-    name: '阮一峰',
-    initial: '阮',
-    href: 'https://www.ruanyifeng.com/blog/',
-    domain: 'ruanyifeng.com',
-    desc: '每周更新的科技爱好者周刊，入门教程写得比官方文档还好读。',
-    tags: ['周刊', '教程'],
-    from: '#D9812B',
-    to: '#EEC25E',
-    initialColor: '#241C18',
-    since: 2003,
-  },
-  {
-    name: '张鑫旭',
-    initial: '张',
-    href: 'https://www.zhangxinxu.com',
-    domain: 'zhangxinxu.com',
-    desc: 'CSS 与 DOM 的细节考古，一个属性能翻出十年前的浏览器差异。',
-    tags: ['CSS', '前端'],
-    from: '#1F5E4E',
-    to: '#2A7A66',
-    initialColor: '#F0E6DA',
-    since: 2008,
-  },
-  {
-    name: '少数派',
-    initial: '少',
-    href: 'https://sspai.com',
-    domain: 'sspai.com',
-    desc: '效率工具与数字生活，挑软件时先来这里看一圈别人的用法。',
-    tags: ['效率', '数字生活'],
-    from: '#A85B12',
-    to: '#C9741F',
-    initialColor: '#F0E6DA',
-    since: 2012,
-  },
-  {
-    name: '哔哩哔哩',
-    initial: '哔',
-    href: 'https://www.bilibili.com',
-    domain: 'bilibili.com',
-    desc: '技术区与纪录片都值得刷，评论区偶尔比视频本身更有信息量。',
-    tags: ['视频', '技术区'],
-    from: '#070707',
-    to: '#2E2724',
-    initialColor: '#F0E6DA',
-    since: 2009,
-  },
-  {
-    name: '稀土掘金',
-    initial: '掘',
-    href: 'https://juejin.cn',
-    domain: 'juejin.cn',
-    desc: '中文前端文章的集散地，新框架的第一手踩坑记录多半在这。',
-    tags: ['社区', '前端'],
-    from: '#EEC25E',
-    to: '#C9741F',
-    initialColor: '#241C18',
-    since: 2015,
-  },
-  {
-    name: '知乎',
-    initial: '知',
-    href: 'https://www.zhihu.com',
-    domain: 'zhihu.com',
-    desc: '专栏长文的质量参差，但认真写的那批仍然值得订阅。',
-    tags: ['问答', '专栏'],
-    from: '#2A7A66',
-    to: '#EEC25E',
-    initialColor: '#241C18',
-    since: 2011,
-  },
-] as const
+export interface BlogrollEntry {
+  name: string
+  initial: string
+  href: string
+  domain: string
+  desc: string
+  tags: string[]
+  from: string
+  to: string
+  initialColor: string
+  since: number
+}
+export const blogroll = blogrollData as BlogrollEntry[]
 
 /**
  * GitHub 仓库 —— 项目页与首页「在做的事」共用这一份，取代设计稿里那批虚构项目
@@ -384,36 +285,19 @@ export const blogroll = [
  * stack 取 GitHub 语言统计里占比最大的那个（mini-vue 的语言统计是空的，
  * 按默认分支上 41 个 .js 判为 JavaScript）。
  */
-export const repos = [
-  {
-    repo: 'QssssY/offCat',
-    name: 'offCat',
-    desc: '面向求职场景的 AI 应用：简历诊断、模拟面试、JD 匹配与模板导出，前后端同仓。',
-    stack: 'Java',
-    stars: 1,
-    icon: 'layout-grid',
-    badge: '正在打磨',
-    pushed: '2026-08-19T15:06:27Z',
-  },
-  {
-    repo: 'QssssY/ai-psychological-assistant',
-    name: 'ai-psychological-assistant',
-    desc: 'AI 情感智能助手，做陪伴式对话与情绪记录。',
-    stack: 'Vue',
-    stars: 0,
-    icon: 'app-window',
-    pushed: '2026-03-13T14:12:51Z',
-  },
-  {
-    repo: 'QssssY/mini-vue',
-    name: 'mini-vue',
-    desc: '手写 Vue 3 核心，把响应式、运行时与编译器各自实现一遍。',
-    stack: 'JavaScript',
-    stars: 0,
-    icon: 'package',
-    pushed: '2026-02-24T16:33:31Z',
-  },
-] as const
+export interface Repo {
+  repo: string
+  name: string
+  desc: string
+  stack: string
+  /** 构建时的兜底星数，浏览器端拉最新的覆盖（见 RepoStars.astro） */
+  stars: number
+  icon: string
+  /** 只有 Featured 卡展示（repos[0]），可空 */
+  badge?: string
+  pushed: string
+}
+export const repos = reposData as Repo[]
 
 /** 仓库地址由 repo 拼出来，不单独存 href */
 export const repoUrl = (repo: string) => `https://github.com/${repo}`

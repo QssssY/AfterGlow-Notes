@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -40,6 +41,9 @@ type server struct {
 	db     *sql.DB
 	origin string
 
+	// 管理后台（admin.go）；-admin-pass 不设则为 nil，整组接口不注册
+	admin *adminState
+
 	// 写操作限流：每 IP 每天最多 maxWrites 次，只在内存里记
 	mu        sync.Mutex
 	writeDay  string
@@ -52,6 +56,9 @@ func main() {
 	dbPath := flag.String("db", "firefly.db", "SQLite 数据库文件路径")
 	origin := flag.String("origin", "*", "CORS 允许的来源，如 https://example.com；* 表示不限")
 	maxWrites := flag.Int("max-writes", 200, "每个 IP 每天允许的写操作次数")
+	adminPass := flag.String("admin-pass", os.Getenv("ADMIN_PASSWORD"), "管理后台口令；不设则管理接口整组关闭")
+	blogDir := flag.String("blog-dir", "..", "博客仓库根目录（管理接口读写文章与数据文件）")
+	buildCmd := flag.String("build-cmd", os.Getenv("BLOG_BUILD_CMD"), "可选：重新构建站点的命令（如 pnpm build），/api/admin/build 用")
 	flag.Parse()
 
 	db, err := sql.Open("sqlite", *dbPath+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)")
@@ -87,12 +94,33 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
+	// 管理后台（admin.go）：不设口令就完全不注册，对外零暴露
+	if *adminPass != "" {
+		abs, err := filepath.Abs(*blogDir)
+		if err != nil {
+			log.Fatalf("解析 -blog-dir 失败: %v", err)
+		}
+		if _, err := os.Stat(filepath.Join(abs, "src", "content", "posts")); err != nil {
+			log.Fatalf("-blog-dir 不像博客仓库（找不到 src/content/posts）: %s", abs)
+		}
+		s.admin = &adminState{
+			pass:     *adminPass,
+			blogDir:  abs,
+			buildCmd: *buildCmd,
+			sessions: map[string]time.Time{},
+			tries:    map[string]int{},
+		}
+		registerAdminRoutes(mux, s)
+		log.Printf("admin enabled (blog-dir=%s, build-cmd=%q)", abs, *buildCmd)
+	}
+
+	// Read 60s：管理后台要传封面/音乐（最大 30MB），10s 会掐断慢网上传
 	httpServer := &http.Server{
 		Addr:              *addr,
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      10 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
@@ -116,8 +144,8 @@ func main() {
 func (s *server) cors(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", s.origin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)

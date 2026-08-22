@@ -1,0 +1,74 @@
+[
+  {
+    "name": "阮一峰",
+    "initial": "阮",
+    "href": "https://www.ruanyifeng.com/blog/",
+    "domain": "ruanyifeng.com",
+    "desc": "每周更新的科技爱好者周刊，入门教程写得比官方文档还好读。",
+    "tags": ["周刊", "教程"],
+    "from": "#D9812B",
+    "to": "#EEC25E",
+    "initialColor": "#241C18",
+    "since": 2003
+  },
+  {
+    "name": "张鑫旭",
+    "initial": "张",
+    "href": "https://www.zhangxinxu.com",
+    "domain": "zhangxinxu.com",
+    "desc": "CSS 与 DOM 的细节考古，一个属性能翻出十年前的浏览器差异。",
+    "tags": ["CSS", "前端"],
+    "from": "#1F5E4E",
+    "to": "#2A7A66",
+    "initialColor": "#F0E6DA",
+    "since": 2008
+  },
+  {
+    "name": "少数派",
+    "initial": "少",
+    "href": "https://sspai.com",
+    "domain": "sspai.com",
+    "desc": "效率工具与数字生活，挑软件时先来这里看一圈别人的用法。",
+    "tags": ["效率", "数字生活"],
+    "from": "#A85B12",
+    "to": "#C9741F",
+    "initialColor": "#F0E6DA",
+    "since": 2012
+  },
+  {
+    "name": "哔哩哔哩",
+    "initial": "哔",
+    "href": "https://www.bilibili.com",
+    "domain": "bilibili.com",
+    "desc": "技术区与纪录片都值得刷，评论区偶尔比视频本身更有信息量。",
+    "tags": ["视频", "技术区"],
+    "from": "#070707",
+    "to": "#2E2724",
+    "initialColor": "#F0E6DA",
+    "since": 2009
+  },
+  {
+    "name": "稀土掘金",
+    "initial": "掘",
+    "href": "https://juejin.cn",
+    "domain": "juejin.cn",
+    "desc": "中文前端文章的集散地，新框架的第一手踩坑记录多半在这。",
+    "tags": ["社区", "前端"],
+    "from": "#EEC25E",
+    "to": "#C9741F",
+    "initialColor": "#241C18",
+    "since": 2015
+  },
+  {
+    "name": "知乎",
+    "initial": "知",
+    "href": "https://www.zhihu.com",
+    "domain": "zhihu.com",
+    "desc": "专栏长文的质量参差，但认真写的那批仍然值得订阅。",
+    "tags": ["问答", "专栏"],
+    "from": "#2A7A66",
+    "to": "#EEC25E",
+    "initialColor": "#241C18",
+    "since": 2011
+  }
+]

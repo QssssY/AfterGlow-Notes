@@ -5,7 +5,8 @@ import { Icon } from 'astro-icon/components'
 import placeholderArt from '../../../images/placeholder-art.png'
 
 interface Props {
-  badge: string
+  /** 角标胶囊；后台可清空，空了整颗不渲染 */
+  badge?: string | undefined
   title: string
   desc: string
   /**
@@ -46,9 +47,13 @@ const external = href?.startsWith('http')
   <span class="flex h-fit w-full flex-col items-start gap-[12px] xl:flex-1">
     <!-- 徽标这轮跟着设计稿从金色改成橙色：底 fire-tint、字 brand-ink，两个都是变量，
          原先那对写死的十六进制在暗色下不跟主题走 -->
-    <span class="flex h-fit w-fit shrink-0 flex-row rounded-[12px] bg-fire-tint px-[11px] py-[5px]">
-      <span class="text-[11px] font-medium whitespace-nowrap text-brand-ink">{badge}</span>
-    </span>
+    {
+      badge && (
+        <span class="flex h-fit w-fit shrink-0 flex-row rounded-[12px] bg-fire-tint px-[11px] py-[5px]">
+          <span class="text-[11px] font-medium whitespace-nowrap text-brand-ink">{badge}</span>
+        </span>
+      )
+    }
 
     <span class="font-display text-[26px]/[34px] font-normal whitespace-nowrap text-ink">{title}</span>
 

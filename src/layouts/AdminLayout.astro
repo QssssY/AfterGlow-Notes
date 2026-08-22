@@ -1,0 +1,103 @@
+---
+/**
+ * 管理台布局 —— 站内 /admin 一组页面共用。
+ *
+ * 和 BaseLayout 的区别：
+ *  - 不挂 ClientRouter：后台页面全是重客户端状态的表单，整页跳转最省心，
+ *    脚本不用伺候 astro:page-load 重绑那一套。
+ *  - noindex + 不进 sitemap（astro.config 里过滤）：页面本身没有秘密
+ *    （数据都要 token 才拿得到），但也没必要被搜索引擎收进去。
+ *  - 主题跟随博客本体（同一份 localStorage 'theme'）。
+ */
+import { site } from '~/config'
+import '~/styles/global.css'
+import '~/styles/admin.css'
+
+interface Props {
+  title: string
+  /** 顶部导航高亮项 */
+  active?: 'dashboard' | 'posts' | 'data' | undefined
+  /** 登录页不做前置跳转检查 */
+  guard?: boolean
+}
+const { title, active, guard = true } = Astro.props
+
+const tabs = [
+  { key: 'dashboard', label: '概览', href: '/admin' },
+  { key: 'posts', label: '文章', href: '/admin/posts' },
+  { key: 'data', label: '站点数据', href: '/admin/data' },
+] as const
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} · 管理台 · {site.title}</title>
+
+    <!-- 首屏渲染前同步主题，防暗色闪白（同 BaseLayout） -->
+    <script is:inline>
+      ;((d) => {
+        const stored = localStorage.getItem('theme') ?? 'light'
+        d.classList.toggle(
+          'dark',
+          stored === 'dark' ||
+            (stored === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches),
+        )
+      })(document.documentElement)
+    </script>
+
+    {
+      guard && (
+        <script is:inline>
+          if (!localStorage.getItem('firefly:admin:token'))
+            location.replace('/admin/login')
+        </script>
+      )
+    }
+  </head>
+
+  <body class="bg-cream text-ink">
+    <div class="relative w-full overflow-clip">
+      <div class="aurora pointer-events-none absolute inset-[-240px] z-0"></div>
+
+      <div class="relative z-10 mx-auto flex min-h-screen w-full max-w-[1080px] flex-col px-[20px] pb-[72px] xl:px-[32px]">
+        <header class="flex flex-wrap items-center gap-x-[18px] gap-y-[10px] py-[22px]">
+          <a href="/admin" class="flex items-baseline gap-[8px]">
+            <span class="font-display text-[20px] text-ink">{site.title}</span>
+            <span class="text-[12px] text-ink-muted">管理台</span>
+          </a>
+
+          <nav class="flex items-center gap-[4px]">
+            {
+              tabs.map((t) => (
+                <a href={t.href} class="ad-tab" aria-current={active === t.key ? 'page' : undefined}>
+                  {t.label}
+                </a>
+              ))
+            }
+          </nav>
+
+          <span class="flex-1"></span>
+
+          <a href="/" target="_blank" rel="noopener" class="ad-btn-ghost">打开站点 ↗</a>
+          <button type="button" data-admin-logout class="ad-btn-ghost">退出</button>
+        </header>
+
+        <main class="flex w-full flex-1 flex-col gap-[20px]">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <script>
+      import { clearToken } from '~/scripts/admin'
+      document.querySelector('[data-admin-logout]')?.addEventListener('click', () => {
+        clearToken()
+        location.href = '/admin/login'
+      })
+    </script>
+  </body>
+</html>

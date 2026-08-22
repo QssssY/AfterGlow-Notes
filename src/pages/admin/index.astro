@@ -1,0 +1,123 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="概览" active="dashboard">
+  <section class="grid grid-cols-2 gap-[14px] xl:grid-cols-4">
+    <div class="ad-stat"><b data-stat="posts">—</b><span>文章（含草稿 <i data-stat="drafts">—</i>）</span></div>
+    <div class="ad-stat"><b data-stat="views">—</b><span>总阅读</span></div>
+    <div class="ad-stat"><b data-stat="postLikes">—</b><span>文章点赞</span></div>
+    <div class="ad-stat"><b data-stat="siteLikes">—</b><span>全站爱心</span></div>
+  </section>
+
+  <section class="grid gap-[20px] xl:grid-cols-2">
+    <div class="ad-card flex flex-col gap-[14px] p-[24px]">
+      <span class="text-[14px] font-medium text-ink">阅读最多</span>
+      <div data-top="views" class="flex flex-col gap-[8px]">
+        <span class="ad-hint">加载中…</span>
+      </div>
+    </div>
+    <div class="ad-card flex flex-col gap-[14px] p-[24px]">
+      <span class="text-[14px] font-medium text-ink">点赞最多</span>
+      <div data-top="likes" class="flex flex-col gap-[8px]">
+        <span class="ad-hint">加载中…</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="ad-card flex flex-col gap-[14px] p-[24px]">
+    <span class="text-[14px] font-medium text-ink">动手</span>
+    <div class="flex flex-wrap gap-[10px]">
+      <a href="/admin/editor" class="ad-btn-primary">写新文章</a>
+      <a href="/admin/posts" class="ad-btn-ghost">管理文章</a>
+      <a href="/admin/data" class="ad-btn-ghost">编辑站点数据</a>
+      <button type="button" data-build class="ad-btn-ghost">重新构建站点</button>
+    </div>
+    <p class="ad-hint">
+      内容改动都直接写进仓库文件：本地 <code>pnpm dev</code> 时保存即热更新；
+      部署到服务器后要点「重新构建」（需要启动服务时配 <code>-build-cmd</code>）才会反映到正式站。
+      改完记得回仓库 <code>git commit</code>，git 才是这个博客唯一的事实源。
+    </p>
+    <p class="ad-hint" data-build-status hidden></p>
+  </section>
+</AdminLayout>
+
+<script>
+  import { api, esc, report, toast } from '~/scripts/admin'
+  import type { PostListItem, Summary } from '~/scripts/admin'
+
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
+
+  async function load() {
+    const [sum, posts] = await Promise.all([
+      api<Summary>('/api/admin/summary'),
+      api<PostListItem[]>('/api/admin/posts'),
+    ])
+    for (const key of ['posts', 'drafts', 'views', 'postLikes', 'siteLikes'] as const) {
+      $(`[data-stat="${key}"]`).textContent = String(sum[key])
+    }
+    const titles = new Map(posts.map((p) => [p.slug, p.title]))
+    const fill = (sel: string, rows: { slug: string; count: number }[] | null, unit: string) => {
+      const box = $(`[data-top="${sel}"]`)
+      if (!rows?.length) {
+        box.innerHTML = '<span class="ad-hint">还没有数据 —— 等访客来过就有了</span>'
+        return
+      }
+      box.innerHTML = rows
+        .map(
+          (r) => `<div class="flex items-baseline justify-between gap-[12px]">
+            <a class="truncate text-[13px] text-ink hover:text-brand-ink" href="/posts/${esc(r.slug)}" target="_blank" rel="noopener">${esc(titles.get(r.slug) ?? r.slug)}</a>
+            <span class="shrink-0 text-[12px] text-ink-muted">${r.count} ${unit}</span>
+          </div>`,
+        )
+        .join('')
+    }
+    fill('views', sum.topViews, '次阅读')
+    fill('likes', sum.topLikes, '个赞')
+
+    if (!sum.buildCmd) {
+      const btn = $<HTMLButtonElement>('[data-build]')
+      btn.title = '服务端没配 -build-cmd；本地 dev 不需要构建'
+    }
+  }
+  load().catch(report)
+
+  // ---- 构建：POST 触发，然后轮询 GET 直到收工 ----
+  const btn = $<HTMLButtonElement>('[data-build]')
+  const status = $('[data-build-status]')
+
+  interface BuildState {
+    running: boolean
+    last: { ok: boolean; output: string; finishedAt: string; took: string } | null
+  }
+
+  async function poll() {
+    const st = await api<BuildState>('/api/admin/build')
+    if (st.running) {
+      status.hidden = false
+      status.textContent = '构建中…'
+      setTimeout(() => poll().catch(report), 3000)
+      return
+    }
+    btn.disabled = false
+    if (st.last) {
+      status.hidden = false
+      status.textContent = st.last.ok
+        ? `上次构建成功（${st.last.took}，${new Date(st.last.finishedAt).toLocaleString()}）`
+        : `上次构建失败：${st.last.output.slice(-600)}`
+      toast(st.last.ok ? '构建完成' : '构建失败，详情见下方', st.last.ok)
+    }
+  }
+
+  btn.addEventListener('click', async () => {
+    try {
+      btn.disabled = true
+      await api('/api/admin/build', { method: 'POST' })
+      toast('构建已开始')
+      await poll()
+    } catch (err) {
+      btn.disabled = false
+      report(err)
+    }
+  })
+</script>

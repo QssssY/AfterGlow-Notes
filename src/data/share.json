@@ -1,0 +1,56 @@
+[
+  {
+    "title": "Ray.so — 把代码片段导出成好看的图",
+    "desc": "分享代码到社交平台时不用再截屏幕，配色和窗口留白都可调，导出的 PNG 直接能用在文章里。",
+    "href": "https://ray.so",
+    "domain": "ray.so",
+    "icon": "code",
+    "tone": "fire",
+    "category": "工具"
+  },
+  {
+    "title": "Warp — 带块级输出的现代终端",
+    "desc": "命令和输出被拆成可折叠的块，翻历史记录时不必再和滚动条搏斗，补全提示也比默认 shell 聪明。",
+    "href": "https://www.warp.dev",
+    "domain": "warp.dev",
+    "icon": "terminal",
+    "tone": "fire",
+    "category": "工具"
+  },
+  {
+    "title": "Fontshare — 可商用的免费字体库",
+    "desc": "每套字重都完整，页面直接给出配对建议，做项目找标题字时比在 Google Fonts 里翻要省事。",
+    "href": "https://www.fontshare.com",
+    "domain": "fontshare.com",
+    "icon": "type",
+    "tone": "leaf",
+    "category": "工具"
+  },
+  {
+    "title": "中文文案排版指北",
+    "desc": "中英混排的空格、全半角标点、数字用法都有明确规则，团队里争论「该不该加空格」时可以直接引用。",
+    "href": "https://github.com/sparanoid/chinese-copywriting-guidelines",
+    "domain": "github.com",
+    "icon": "file-text",
+    "tone": "leaf",
+    "category": "文章"
+  },
+  {
+    "title": "CoRecursive — 代码背后的故事",
+    "desc": "每期让一个项目的作者讲当初为什么那样设计，比读文档更能理解技术选型背后的取舍，通勤时听正好。",
+    "href": "https://corecursive.com",
+    "domain": "corecursive.com",
+    "icon": "mic",
+    "tone": "fire",
+    "category": "播客"
+  },
+  {
+    "title": "The Book of Shaders — 从零学片元着色器",
+    "desc": "从 GLSL 基础讲到噪声与图案生成，每章的示例都能在浏览器里改代码实时看效果，入门图形学最少弯路。",
+    "href": "https://thebookofshaders.com",
+    "domain": "thebookofshaders.com",
+    "icon": "palette",
+    "tone": "leaf",
+    "category": "教程"
+  }
+]
