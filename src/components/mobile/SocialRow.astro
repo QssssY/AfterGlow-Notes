@@ -1,5 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
+import BilibiliIcon from '~/components/BilibiliIcon.astro'
 import { likes, socials } from '~/config'
 
 const github = socials.find((s) => s.variant === 'dark')!
@@ -27,7 +28,7 @@ const likeLabel = likes >= 1000 ? `${Math.round(likes / 1000)}k` : String(likes)
     rel="noopener noreferrer"
     class="glass flex h-fit flex-1 flex-row items-center justify-center gap-[7px] rounded-[13px] px-[13px] py-[8px]"
   >
-    <Icon name="lucide:tv" class="size-[18px] shrink-0 text-ink" />
+    <BilibiliIcon class="size-[18px] shrink-0 text-ink" />
     <span class="text-[13px] font-medium whitespace-nowrap text-ink">{second.label}</span>
   </a>
 

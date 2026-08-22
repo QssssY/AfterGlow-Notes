@@ -3,6 +3,7 @@ import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
 import avatarSrc from '../../images/cat001.jpg'
 import { email, isNavActive, nav, site, socials, themeChoices } from '~/config'
+import BilibiliIcon from './BilibiliIcon.astro'
 import NavItem from './NavItem.astro'
 
 const pathname = Astro.url.pathname
@@ -30,6 +31,7 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
       <a
         href="/rss.xml"
         aria-label="RSS 订阅"
+        title="RSS 订阅"
         class="hairline-box flex h-[28px] w-[30px] shrink-0 flex-row items-center justify-center rounded-[12px]"
       >
         <Icon name="lucide:rss" class="size-[14px] shrink-0 text-ink-soft" />
@@ -87,6 +89,7 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
       href={github.href}
       target="_blank"
       rel="noopener noreferrer"
+      title="GitHub · QssssY"
       class="flex h-[30px] flex-1 flex-row items-center justify-center gap-[8px] rounded-[12px] bg-btn-dark px-[12px] outline-[1.5px] -outline-offset-[0.75px] outline-sheen shadow-[0_24px_44px_-16px_var(--shadow-soft),0_0_20px_0_var(--sheen)] backdrop-blur-[4px]"
     >
       <Icon name="lucide:github" class="size-[16px] shrink-0 text-white" />
@@ -99,15 +102,17 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
       href={bilibili.href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={bilibili.label}
+      aria-label="bilibili 空间"
+      title="bilibili 空间"
       class="hairline-box flex h-[30px] w-fit shrink-0 flex-row items-center justify-center rounded-[12px] px-[8px]"
     >
-      <Icon name="lucide:tv" class="size-[15px] shrink-0 text-ink-soft" />
+      <BilibiliIcon class="size-[15px] shrink-0 text-ink-soft" />
     </a>
 
     <a
       href={`mailto:${email}`}
-      aria-label="邮箱"
+      aria-label="写信给我"
+      title={`写信给我 · ${email}`}
       class="hairline-box flex h-[30px] w-fit shrink-0 flex-row items-center justify-center rounded-[12px] px-[8px]"
     >
       <Icon name="lucide:mail" class="size-[15px] shrink-0 text-ink-soft" />

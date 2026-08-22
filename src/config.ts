@@ -64,7 +64,12 @@ export function isNavActive(match: readonly string[], pathname: string) {
  */
 export const socials = [
   { label: 'Github', icon: 'github', href: 'https://github.com/QssssY', variant: 'dark' },
-  { label: 'bilibili', icon: 'tv', href: 'https://www.bilibili.com', variant: 'glass' },
+  {
+    label: 'bilibili',
+    icon: 'tv',
+    href: 'https://space.bilibili.com/548357762',
+    variant: 'glass',
+  },
 ] as const
 
 /** 外观切换器的三档 */
