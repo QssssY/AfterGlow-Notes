@@ -84,7 +84,11 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
   </head>
 
   <body class="bg-cream text-ink">
-    <div class="relative mx-auto w-full max-w-[1440px] overflow-hidden">
+    <!--
+      背景层铺满整个视口：内容仍收在 1440 里，但 aurora 不能只画在 1440 内 ——
+      比 1440 宽的屏幕上，容器内外一个有柔光一个是纯 cream，左右两侧会看出色差接缝。
+    -->
+    <div class="relative w-full overflow-hidden">
       <!--
         Aurora Backdrop · blog.pen 里这层只有 blur(70) 没有填充，
         内容是按品牌色补的（见 global.css 的 @utility aurora）。
@@ -92,17 +96,19 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       -->
       <div class="aurora pointer-events-none absolute inset-[-240px] z-0"></div>
 
-      {rail && <VerticalRail />}
-      <!-- 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右 -->
-      <div
-        class:list={[
-          'relative z-10 flex flex-col px-[24px] pt-[28px]',
-          tabBar ? 'pb-[110px]' : 'pb-[28px]',
-          'xl:px-[48px] xl:pb-[56px]',
-          topPad === 72 ? 'xl:pt-[72px]' : 'xl:pt-[48px]',
-        ]}
-      >
-        <slot />
+      <div class="relative z-10 mx-auto w-full max-w-[1440px]">
+        {rail && <VerticalRail />}
+        <!-- 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右 -->
+        <div
+          class:list={[
+            'relative flex flex-col px-[24px] pt-[28px]',
+            tabBar ? 'pb-[110px]' : 'pb-[28px]',
+            'xl:px-[48px] xl:pb-[56px]',
+            topPad === 72 ? 'xl:pt-[72px]' : 'xl:pt-[48px]',
+          ]}
+        >
+          <slot />
+        </div>
       </div>
     </div>
 
