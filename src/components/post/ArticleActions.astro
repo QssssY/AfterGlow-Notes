@@ -26,10 +26,19 @@ const { slug, updated } = Astro.props
     class="group/like relative flex h-fit w-fit shrink-0 cursor-pointer flex-row items-center gap-[8px] rounded-[22px] bg-like-tint px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-[#F5C0CB66]"
   >
     <span data-like-burst aria-hidden="true" class="pointer-events-none absolute inset-0"></span>
-    <Icon
-      name="lucide:heart"
-      class="size-[18px] shrink-0 text-like-ink transition-colors group-aria-pressed/like:text-like-text"
-    />
+    <span class="relative size-[18px] shrink-0">
+      <Icon name="lucide:heart" class="absolute inset-0 size-[18px] text-like-ink" />
+      <!-- 已赞态的实心心：lucide 的 use 影子树填不了色，叠一颗同形的内联实心路径 -->
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        class="absolute inset-0 size-[18px] scale-50 fill-like-ink opacity-0 transition-[opacity,scale] duration-300 group-aria-pressed/like:scale-100 group-aria-pressed/like:opacity-100"
+      >
+        <path
+          d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+        ></path>
+      </svg>
+    </span>
     <span
       data-like-label
       class="text-[13px] font-medium whitespace-nowrap text-like-text transition-colors">喜欢</span
