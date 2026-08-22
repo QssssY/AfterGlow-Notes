@@ -3,9 +3,29 @@ import Footer from '~/components/Footer.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import StatsPageHead from '~/components/StatsPageHead.astro'
 import ApplyPanel from '~/components/blogroll/ApplyPanel.astro'
+import type { ImageMetadata } from 'astro'
 import BlogCard from '~/components/blogroll/BlogCard.astro'
 import { blogroll } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
+import avBilibili from '../../images/blogroll/bilibili.com.png'
+import avJuejin from '../../images/blogroll/juejin.cn.png'
+import avRuanyifeng from '../../images/blogroll/ruanyifeng.com.png'
+import avSspai from '../../images/blogroll/sspai.com.png'
+import avZhangxinxu from '../../images/blogroll/zhangxinxu.com.png'
+import avZhihu from '../../images/blogroll/zhihu.com.png'
+
+/**
+ * 各站真实头像：站方 icon / 博主本人照片，抓取自各站自己发布的资源。
+ * config 里的渐变配色保留作退路 —— 以后新增友链没头像也不会缺角。
+ */
+const avatars: Record<string, ImageMetadata> = {
+  'ruanyifeng.com': avRuanyifeng,
+  'zhangxinxu.com': avZhangxinxu,
+  'sspai.com': avSspai,
+  'bilibili.com': avBilibili,
+  'juejin.cn': avJuejin,
+  'zhihu.com': avZhihu,
+}
 
 // 设计稿写的是 18 个 / 9 年；按真实数据算
 const total = blogroll.length
@@ -19,7 +39,6 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
   title="优秀博客"
   description="长期在读的个人站点。都还在更新，而且写得比我好。"
   rail={false}
-  topPad={72}
 >
   <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
     <div class="hidden w-[280px] shrink-0 xl:block">
@@ -48,6 +67,7 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
                   domain={blog.domain}
                   desc={blog.desc}
                   tags={blog.tags}
+                  avatar={avatars[blog.domain]}
                   from={blog.from}
                   to={blog.to}
                   initialColor={blog.initialColor}

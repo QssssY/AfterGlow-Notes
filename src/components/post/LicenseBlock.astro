@@ -2,7 +2,7 @@
 import { Icon } from 'astro-icon/components'
 
 interface Props {
-  /** 展示用的文章链接，如 qingchuan.ink/48 */
+  /** 展示用的文章链接（域名 + 路径，域名跟 astro.config 的 site 走） */
   permalink: string
   shareUrl: string
   title: string

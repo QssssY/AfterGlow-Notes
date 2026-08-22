@@ -54,11 +54,11 @@ for (const post of posts) {
 }
 const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
 
-// 桌面区块间距取自设计稿的绝对坐标：Body 顶 72（由 topPad 给）；
-// Body 底 870 → Projects 904（34）；Projects 底 1174 → Footer 1204（30）
+// 桌面区块间距：Body 顶 48（设计稿是 72，用户嫌顶上空得慌，全站统一收到 48）；
+// Body 底 → Projects 34；Projects 底 → Footer 30（取自设计稿绝对坐标差）
 ---
 
-<BaseLayout title={site.title} topPad={72}>
+<BaseLayout title={site.title}>
   {/* ── 桌面：1440 三栏 ──────────────────────────────────
       设计稿这轮删掉了右上角那排 Social Button，社交入口挪进了侧栏 Social Row。 */}
   <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">

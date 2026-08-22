@@ -26,7 +26,8 @@ const { title, desc, stack, stars, href, full = false, repo } = Astro.props
   data-gh={repo}
   class:list={[
     'glass box-border flex flex-col items-start gap-[14px] rounded-[28px] p-[20px]',
-    full ? 'w-full' : 'w-[260px]',
+    // h-full：网格行 items-stretch，同排卡片等高，desc 行数不同也不参差
+    full ? 'h-full w-full' : 'w-[260px]',
   ]}
 >
   <!-- 还没有项目截图：先用品牌占位图（scripts/gen-placeholder-art.mjs 生成），
@@ -44,7 +45,8 @@ const { title, desc, stack, stars, href, full = false, repo } = Astro.props
     <Icon name="lucide:arrow-up-right" class="size-[18px] shrink-0 text-ink-muted" />
   </span>
 
-  <span class="w-full text-[13px]/[21px] font-normal text-ink-soft">{desc}</span>
+  <!-- flex-1：desc 吃掉等高后多出的空间，底部那行 语言·star 在同排卡片间对齐 -->
+  <span class="w-full flex-1 text-[13px]/[21px] font-normal text-ink-soft">{desc}</span>
 
   <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[10px]">
     <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{stack}</span>
