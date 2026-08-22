@@ -28,12 +28,22 @@ const { src, alt = '', compact = false, grow = false } = Astro.props
   ]}
 >
   {
+    /*
+     * 图挂在一层 relative 容器里、自身 absolute 铺满：
+     * 绝对定位的图不参与卡片高度计算，否则 grow 模式下图片的固有比例
+     * （576 宽 → 约 400 高）会把卡撑得比两侧栏还高，中栏就「突下去」了。
+     */
     src ? (
-      <Image
-        src={src}
-        alt={alt}
-        class:list={['h-full flex-1 object-cover', compact ? 'rounded-[22px]' : 'rounded-[29px]']}
-      />
+      <span class="relative h-full min-w-0 flex-1">
+        <Image
+          src={src}
+          alt={alt}
+          class:list={[
+            'absolute inset-0 h-full w-full object-cover',
+            compact ? 'rounded-[22px]' : 'rounded-[29px]',
+          ]}
+        />
+      </span>
     ) : (
       <span
         class:list={[

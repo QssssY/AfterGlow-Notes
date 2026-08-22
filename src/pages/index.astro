@@ -67,8 +67,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       <UptimeCard />
     </div>
 
-    {/* self-stretch + ArtCard grow：真实内容比设计稿短一截时，
-        让画卡吸收差值，中栏底边和两侧对齐，不留一段生硬的空白 */}
+    {/* 三栏底边一条线：行高由左栏（Sidebar+Uptime = 798）定，
+        中、右两栏 self-stretch 拉到同高，差值分别由画卡和问候卡吸收 */}
     <div class="flex flex-1 flex-col items-start gap-[24px] self-stretch">
       <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" grow />
       <NowCard />
@@ -76,8 +76,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       <ToolsBar />
     </div>
 
-    <div class="flex h-fit w-[392px] shrink-0 flex-col items-start gap-[24px]">
-      <GreetingCard avatar={avatar} />
+    <div class="flex w-[392px] shrink-0 flex-col items-start gap-[24px] self-stretch">
+      <GreetingCard avatar={avatar} grow />
       <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[16px]">
         <LikeWidget />
         <NowPlayingCard />
