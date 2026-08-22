@@ -32,14 +32,14 @@
 
 :root {
   --cream: #f7f1e7;
-  /* 卡底从 60% 白降到 35%（毛玻璃质感第二轮）：60% 时模糊吸进来的
-     背景全被白底盖住，用户反馈"没区别"。轮廓靠 card-border + 投影撑，
-     可读性靠大半径 blur 保底。 */
-  --card: #ffffff59;
-  --card-solid: #ffffffe0;
-  --card-border: #ffffffcc;
+  /* 毛玻璃三轮迭代（用户逐轮验收）：卡底 60%→35%→25% 白 ——
+     透才有得看；描边 80%→30% 白 —— 近实心的白框最毁玻璃感，
+     苹果的边是若有若无的细高光，轮廓主要交给投影和顶缘反光。 */
+  --card: #ffffff40;
+  --card-solid: #ffffffb3;
+  --card-border: #ffffff4d;
   --hairline: #5b423f1a;
-  --chip: #ffffff80;
+  --chip: #ffffff59;
   --ink: #5b423f;
   --ink-soft: #7a6555;
   --ink-muted: #6e5b4c;
