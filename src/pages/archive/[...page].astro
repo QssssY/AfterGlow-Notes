@@ -42,7 +42,7 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
   <div class="flex w-full flex-row items-start gap-[48px]">
     <div
       data-rail
-      class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[16px] xl:sticky xl:flex"
+      class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[16px] xl:rail-pin xl:flex"
     >
       <Sidebar />
       <ArchivePanel years={yearBars(all)} />

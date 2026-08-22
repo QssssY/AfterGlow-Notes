@@ -193,6 +193,27 @@
   outline-offset: -0.5px;
 }
 
+/* 左栏钉住（桌面 8 页的 [data-rail]）：滚动时导航永远停在顶上。
+ * 栏比视口高时不再「先滚完再贴底」（用户反馈那样仍像跟着滚），
+ * 而是整栏钉在 48、在栏内自滚动（滚动条隐藏，滚到栏底自动接管回页面滚动）。
+ *
+ * 数字账：sticky top 24 + 上下 24 内边距 = 内容视觉顶 48，与页面顶部内边距对齐；
+ * margin-block -24 抵消内边距的占位，静止时几何与改动前完全一致。
+ * 这对负/正 24 同时是给玻璃卡上下投影留的绘制空间 —— overflow 会裁掉出界的阴影。
+ * 左右不留：侧向只有 8% 透明度的阴影边缘，裁在卡边上看不出来。 */
+@utility rail-pin {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  margin-block: -24px;
+  padding-block: 24px;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Aurora 背景层：每页一个。
  * 设计稿里这层只有模糊没有填充，内容是我按品牌色补的：
  * 橙(brand) + 墨绿(leaf) + 金(gold) 三团柔光，落点参考三栏重心。

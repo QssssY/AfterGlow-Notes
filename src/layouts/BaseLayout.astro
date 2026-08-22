@@ -203,25 +203,8 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
          最初的 WAAPI 版把「卡片可见」押在 JS 动画能跑完上，
          渲染帧一被节流（headless / 后台标签页 / 省电模式）整页就停在 opacity 0。 -->
 
-    <script>
-      /**
-       * 左栏粘性（[data-rail] + xl:sticky）的 top 计算。
-       *
-       * 栏比视口矮：top = 48（和页面顶部内边距对齐），滚动时整栏钉在顶上。
-       * 栏比视口高：top 取负值，让「栏底 + 24px 余量」贴住视口底 ——
-       * 先随页面滚完自己的内容再钉住，底部面板不会被永远顶出可视区
-       * （文章页的 侧栏+目录+相关 加起来超过一屏，固定 top 48 就看不到尾了）。
-       */
-      const setRailTops = () => {
-        for (const rail of document.querySelectorAll<HTMLElement>('[data-rail]')) {
-          rail.style.top = `${Math.min(48, innerHeight - rail.offsetHeight - 24)}px`
-        }
-      }
-      addEventListener('resize', setRailTops)
-      // 字体晚到会微调栏高，load 后再校一次
-      addEventListener('load', setRailTops)
-      document.addEventListener('astro:page-load', setRailTops)
-    </script>
+    <!-- 左栏粘性不再走 JS：见 global.css 的 rail-pin —— 整栏钉住 + 栏内自滚动。
+         之前「栏比视口高就先滚完再贴底」的两段式，前半段仍会跟着滚轮走（用户反馈），废弃。 -->
 
     <script>
       // 数字滚动 —— 统计位（[data-countup]）首次进站时从 0 涨到真实值。
