@@ -1,22 +1,32 @@
 ---
 import { site } from '~/config'
 
-// 设计稿里在 1440 帧内定位于 x=1366，右边缘距页面右侧 48px —— 用 right 定位以便随宽度自适应
 const chars = [...site.title]
 ---
 
-<!-- Vertical Rail · blog.pen（竖排站名，装饰层） -->
+<!--
+  Vertical Rail · blog.pen（竖排站名，装饰层）
+
+  设计稿把它画在 1440 帧内 x=1366 —— 那版首页右上角是空的。布局迭代后
+  那里长出了时钟和问候卡，absolute 挂容器会压在卡面上，滚动还跟着跑，
+  显得像卡住了（用户报过）。改成：
+  - fixed 贴视口右缘、垂直居中 —— 恒定悬浮的侧签，不与任何内容互动；
+  - 毛玻璃胶囊底（全站同款 glass 配方），从「裸字浮在卡上」变成自成一层的小部件；
+  - 只在视口 ≥1520px 出现：1440 容器两侧各余 40px 以上才放得下，窄了宁可藏。
+-->
 <div
   aria-hidden="true"
-  class="pointer-events-none absolute top-[100px] right-[48px] z-20 hidden w-[26px] flex-col items-center gap-0 xl:flex"
+  class="glass pointer-events-none fixed top-1/2 right-[20px] z-30 hidden w-fit -translate-y-1/2 flex-col items-center gap-0 rounded-full px-[7px] py-[16px] min-[1520px]:flex"
 >
-  <span class="h-[38px] w-[1px] shrink-0 bg-hairline"></span>
+  <span class="mb-[6px] h-[22px] w-[1px] shrink-0 bg-hairline"></span>
   {
     chars.map((char) => (
-      <span class="font-display w-[26px] text-center text-[15px] font-normal text-ink-muted">
+      <span class="font-display w-[22px] text-center text-[14px]/[24px] font-normal text-ink-muted">
         {char}
       </span>
     ))
   }
-  <span class="size-[5px] shrink-0 rounded-full bg-brand shadow-[0_0_8px_0_var(--glow-fire)]"></span>
+  <span
+    class="mt-[7px] size-[5px] shrink-0 rounded-full bg-brand shadow-[0_0_8px_0_var(--glow-fire)]"
+  ></span>
 </div>
