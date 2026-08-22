@@ -12,8 +12,14 @@ const github = socials.find((s) => s.variant === 'dark')!
 const bilibili = socials.find((s) => s.variant === 'glass')!
 ---
 
-<!-- Sidebar · blog.pen I23TnW -->
-<aside class="glass box-border flex w-[280px] flex-col items-start gap-[26px] rounded-[36px] p-[24px]">
+<!-- Sidebar · blog.pen I23TnW
+     transition:name="site-nav"：和内容页的 NavBar 同名 —— 换页时浏览器
+     View Transitions 会把首页大卡与图标条互相 morphing（YYsuni 导航卡
+     form 切换的等价物）；头像另起一层独立飞行（nav-avatar）。 -->
+<aside
+  transition:name="site-nav"
+  class="glass box-border flex w-[280px] flex-col items-start gap-[26px] rounded-[36px] p-[24px]"
+>
   <!-- Brand -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[13px]">
     <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px]">
@@ -39,13 +45,16 @@ const bilibili = socials.find((s) => s.variant === 'glass')!
     </div>
 
     <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
-      <Image
-        src={avatarSrc}
-        alt={site.author}
-        width={68}
-        height={68}
-        class="size-[34px] shrink-0 rounded-[17px] object-cover shadow-[0_10px_18px_-4px_var(--color-dot-idle)]"
-      />
+      {/* transition 指令只能挂元素，包一层定尺寸的 span 让头像独立参与换页动画 */}
+      <span transition:name="nav-avatar" class="flex size-[34px] shrink-0">
+        <Image
+          src={avatarSrc}
+          alt={site.author}
+          width={68}
+          height={68}
+          class="size-[34px] shrink-0 rounded-[17px] object-cover shadow-[0_10px_18px_-4px_var(--color-dot-idle)]"
+        />
+      </span>
       <span class="font-display text-[18px]/[18px] font-medium whitespace-nowrap text-ink">
         {site.author}
       </span>

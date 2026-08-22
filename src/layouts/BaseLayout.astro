@@ -109,8 +109,11 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
 
       <div class="relative z-10 mx-auto w-full max-w-[1440px]">
         {rail && <VerticalRail />}
-        <!-- 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右 -->
+        {/* 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右。
+            transition:name="page-content"：换页时整个内容区作为一层轻抬浮现（见 global.css），
+            背景留在 root 组里交叉淡化 —— 前后两页 aurora 相同，视觉上等于纹丝不动 */}
         <div
+          transition:name="page-content"
           class:list={[
             'relative flex flex-col px-[24px] pt-[28px]',
             tabBar ? 'pb-[110px]' : 'pb-[28px]',

@@ -605,6 +605,38 @@
   }
 }
 
+/* ─── 换页动效（学 YYsuni 的手感）───
+   背景留在 root 组里做默认交叉淡化 —— 前后两页的 aurora 相同，视觉上等于不动；
+   导航独立成组：首页大卡 ⟷ 内容页图标条 跨形态 morphing（他导航卡 form 切换的等价物），
+   头像单独一层飞行；内容整层（page-content）轻抬浮现 —— 只动一层，
+   不像被否掉的旧版每张卡各自浮，不晃眼。
+   选择器带 :root 抬高优先级，确保压过 Astro 可能生成的默认换页动画。 */
+@media (prefers-reduced-motion: no-preference) {
+  :root::view-transition-group(site-nav),
+  :root::view-transition-group(nav-avatar) {
+    animation-duration: 0.35s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes vt-content-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes vt-content-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+  :root::view-transition-old(page-content) {
+    animation: vt-content-out 0.15s ease both;
+  }
+  :root::view-transition-new(page-content) {
+    animation: vt-content-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。
    浮现/收起的过渡由上面 .glass 交互规则的 opacity/translate/scale 通道接管；
    放在 reduced-motion 块外 —— 关动效时也得藏，只是切换不带过渡。 */

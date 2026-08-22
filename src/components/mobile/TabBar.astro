@@ -5,8 +5,10 @@ import { isNavActive, nav } from '~/config'
 const pathname = Astro.url.pathname
 ---
 
-<!-- Tab Bar · blog.pen Mobile 首页（替代桌面的 Sidebar 与 Footer） -->
+<!-- Tab Bar · blog.pen Mobile 首页（替代桌面的 Sidebar 与 Footer）
+     transition:name：换页时自成一组原地衔接，不跟着 root 交叉淡化闪一下 -->
 <nav
+  transition:name="tab-bar"
   class="glass fixed bottom-[29px] left-[16px] right-[16px] z-20 flex h-fit flex-row items-center gap-[2px] rounded-[22px] p-[8px] xl:hidden"
 >
   {
