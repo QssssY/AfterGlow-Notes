@@ -5,6 +5,12 @@ import TabBar from '~/components/mobile/TabBar.astro'
 import VerticalRail from '~/components/VerticalRail.astro'
 import { site } from '~/config'
 import '~/styles/global.css'
+// 首屏关键字体 preload：正文中文 400 子集 + 正文拉丁 400 + 标题 Averia。
+// 不预载就要等 CSS 解析后才发现字体 → 文字先按后备字体闪一下再换（FOUT）。
+// ?url 让 Vite 给出带哈希的产物地址，和 fonts.css 里引用的是同一份文件。
+import averiaWoff2 from '@fontsource/averia-gruesa-libre/files/averia-gruesa-libre-latin-400-normal.woff2?url'
+import notoLatinWoff2 from '@fontsource/noto-sans-sc/files/noto-sans-sc-latin-400-normal.woff2?url'
+import notoCjkWoff2 from '../generated/fonts/noto-sans-sc-cjk-400.woff2?url'
 
 interface Props {
   title: string
@@ -49,6 +55,9 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="preload" href={notoCjkWoff2} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={notoLatinWoff2} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={averiaWoff2} as="font" type="font/woff2" crossorigin />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -164,6 +173,53 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         }
       }
 
+      /**
+       * 圆形揭示：新主题从点击点以圆形扩散铺满全屏（View Transitions 裁切 root 快照）。
+       * 期间临时抹掉所有命名分组（theme-vt，见 global.css）——不抹的话导航/内容
+       * 会各自独立换装，圆形边界就不完整了。明暗没实际翻转（比如浅色系统下
+       * 浅色↔自动）或不支持 / 减少动态时，退回原来的颜色短过渡。
+       */
+      let revealing = false
+      function applyWithReveal(choice: string, ev?: MouseEvent) {
+        const willDark = choice === 'dark' || (choice === 'auto' && query.matches)
+        const flips = willDark !== document.documentElement.classList.contains('dark')
+        if (
+          !flips ||
+          revealing ||
+          !document.startViewTransition ||
+          matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
+          apply(choice, true)
+          return
+        }
+        revealing = true
+        const x = ev?.clientX ?? innerWidth / 2
+        const y = ev?.clientY ?? 40
+        document.documentElement.classList.add('theme-vt')
+        const vt = document.startViewTransition(() => apply(choice, false))
+        vt.ready
+          .then(() => {
+            const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
+            document.documentElement.animate(
+              {
+                clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${Math.ceil(r)}px at ${x}px ${y}px)`],
+              },
+              {
+                duration: 520,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                pseudoElement: '::view-transition-new(root)',
+              },
+            )
+          })
+          .catch(() => {
+            // 过渡被跳过（罕见）也无妨，主题已经切完
+          })
+        vt.finished.finally(() => {
+          document.documentElement.classList.remove('theme-vt')
+          revealing = false
+        })
+      }
+
       const current = () => localStorage.getItem('theme') ?? 'light'
 
       query.addEventListener('change', () => {
@@ -194,13 +250,16 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         )
 
         for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
-          chip.addEventListener('click', () => apply(chip.dataset.themeChoice!, true))
+          chip.addEventListener('click', (e) => applyWithReveal(chip.dataset.themeChoice!, e))
         }
         for (const button of document.querySelectorAll('[data-theme-cycle]')) {
-          button.addEventListener('click', () => {
-            // 移动端只有这一颗按钮：在明暗之间直切。三档循环里的「自动」
+          button.addEventListener('click', (e) => {
+            // 移动端/图标条只有这一颗按钮：在明暗之间直切。三档循环里的「自动」
             // 常与当前系统外观同色，点上去毫无反应，像是要点两次才生效。
-            apply(document.documentElement.classList.contains('dark') ? 'light' : 'dark', true)
+            applyWithReveal(
+              document.documentElement.classList.contains('dark') ? 'light' : 'dark',
+              e as MouseEvent,
+            )
           })
         }
 
@@ -234,6 +293,20 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <!-- 粘性策略：导航侧栏从不钉（自然滚走），只有长内容页钉一屏装得下的
          功能面板组（文章页的 目录+信息+相关、归档页的 年表+订阅），
          见各页 data-pin-group。整栏钉住的方案改过两版都被否，别再回去。 -->
+
+    <script>
+      // 图片渐显：还没解码完的图先隐着（底下是容器的骨架屏微光），
+      // 加载完 0.45s 淡入 —— 慢网下不再看到图片逐行蹦出来
+      const settle = (img: HTMLImageElement) => img.classList.remove('img-pending')
+      document.addEventListener('astro:page-load', () => {
+        for (const img of document.images) {
+          if (img.complete) continue
+          img.classList.add('img-pending')
+          img.addEventListener('load', () => settle(img), { once: true })
+          img.addEventListener('error', () => settle(img), { once: true })
+        }
+      })
+    </script>
 
     <script>
       // 数字滚动 —— 统计位（[data-countup]）首次进站时从 0 涨到真实值。

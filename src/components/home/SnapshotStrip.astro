@@ -30,7 +30,7 @@ const { images = [] } = Astro.props
       const src = images[i]
       // 图包一层 overflow-hidden：hover 缓慢推近时不越出格子的圆角
       return src ? (
-        <span class="h-full min-w-0 flex-1 overflow-hidden rounded-[22px]">
+        <span class="skeleton h-full min-w-0 flex-1 overflow-hidden rounded-[22px]">
           <Image
             src={src}
             alt={shot.alt}

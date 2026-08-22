@@ -20,6 +20,11 @@ export default defineConfig({
   // 开发工具栏会浮在页面底部中央，挡住截图核对；需要时改回 true
   devToolbar: { enabled: false },
 
+  // 站内链接进入视口就预取整页 HTML：静态页都很小（首页 ~30KB），
+  // 换页时 ClientRouter 直接命中缓存，点击 → 渲染几乎零等待。
+  // 默认只在 hover 时预取，首跳仍要等一个往返，故改 viewport 策略。
+  prefetch: { prefetchAll: true, defaultStrategy: 'viewport' },
+
   integrations: [
     // expressiveCode 必须排在 mdx 之前
     // 设计稿的代码块在浅色和暗色下都是深色底，所以只挂一个主题

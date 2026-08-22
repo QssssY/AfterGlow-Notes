@@ -643,6 +643,70 @@
   }
 }
 
+/* ─── 骨架屏 ───
+   微光扫过的占位底：挂在图片容器上，图渐显完成前露出来的就是它。
+   底色用 avatar-bg（明暗自动跟随），高光是一道斜向的 sheen 扫带。 */
+@utility skeleton {
+  position: relative;
+  background-color: var(--avatar-bg);
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(100deg, transparent 32%, var(--sheen) 50%, transparent 68%);
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* 图片渐显（配 BaseLayout 的 img-pending 脚本）：解码完成前透明，露出骨架屏 */
+img {
+  transition: opacity 0.45s ease;
+}
+img.img-pending {
+  opacity: 0;
+}
+
+/* ─── 长内容的「虚拟滚动」（静态站等价物）───
+   content-visibility: auto 让视口外的段落/列表行完全跳过渲染与布局，
+   滚到附近才渲染 —— 长文的首屏渲染和滚动帧率都省在这里。
+   contain-intrinsic-size 的 auto 关键字会记住渲染过的真实高度，占位不跳。 */
+.article-body > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+[data-entry] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 62px;
+}
+
+/* ─── 主题切换的圆形揭示（配 BaseLayout 的 applyWithReveal）───
+   期间抹掉所有命名分组：全页收进 root 快照，被圆形 clip-path 统一裁切；
+   root 自带的交叉淡化也关掉，圆形边界是唯一的过渡。 */
+html.theme-vt * {
+  view-transition-name: none !important;
+}
+html.theme-vt::view-transition-old(root) {
+  animation: none;
+}
+html.theme-vt::view-transition-new(root) {
+  animation: none;
+}
+
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。
    浮现/收起的过渡由上面 .glass 交互规则的 opacity/translate/scale 通道接管；
    放在 reduced-motion 块外 —— 关动效时也得藏，只是切换不带过渡。 */
