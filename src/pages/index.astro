@@ -62,12 +62,11 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
       首页是短内容页，不做任何粘性（用户拍板：只有长内容才钉）——
       布局与设计稿完全一致，Projects 恢复满宽伸到侧栏底下。 */}
   <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">
-    <div class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px]">
+    {/* 左栏 self-stretch + Uptime 拉伸：时钟挪去右栏后左栏偏短，
+        差值让「运行天数」卡吃掉（内容居中），三栏底线保持平齐 */}
+    <div class="flex w-[280px] shrink-0 flex-col items-start gap-[24px] self-stretch">
       <Sidebar />
-      {/* 大时钟（学 YYsuni，用户点名）：放导航之下 —— 「现在几点」和下面
-          Uptime 的「站活了多少天」是同一气质的氛围件，恰好凑成一组 */}
-      <ClockCard />
-      <UptimeCard />
+      <UptimeCard grow />
     </div>
 
     {/* 三栏底边一条线：行高由左栏（Sidebar+Uptime ≈ 788）定，
@@ -80,6 +79,9 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
     </div>
 
     <div class="flex w-[392px] shrink-0 flex-col items-start gap-[24px] self-stretch">
+      {/* 大时钟（学 YYsuni，用户点名）：放介绍卡上面 —— 它吃掉的高度
+          正好来自问候卡原本过大的上下留白（grow + justify-center 自动收缩） */}
+      <ClockCard />
       {/* 爱心缩成迷你圆钮挂在问候卡右上角，原 Widget Row 整行让给音乐卡 */}
       <div class="relative flex w-full flex-1 flex-col self-stretch">
         <GreetingCard avatar={avatar} grow />
@@ -98,12 +100,12 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
   {/* ── 移动：390 单栏，顶栏 + 底部 Tab Bar，无 Footer ──── */}
   <div class="flex w-full flex-col items-start gap-[14px] xl:hidden">
     <TopBar />
+    {/* 大时钟移动端也放介绍卡上面（与桌面同一心智），脚本按 data-clock-digit 分组广播两处 */}
+    <ClockCard />
     <GreetingCard avatar={avatar} compact />
     <SocialRow />
     {/* 移动端也能听歌：与桌面右栏那张共享同一个 Audio（NowPlayingCard 脚本按绑定组广播） */}
     <NowPlayingCard />
-    {/* 大时钟移动端同样一份，脚本按 data-clock-digit 分组广播两处 */}
-    <ClockCard />
     <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" compact />
     <MobileNowCard />
     {

@@ -2,11 +2,22 @@
 import { uptime } from '~/config'
 import { daysSince } from '~/utils/post'
 
+interface Props {
+  /** 首页左栏用：时钟挪去右栏后左栏偏短，这张卡拉伸吃掉差值，三栏底线平齐 */
+  grow?: boolean
+}
+const { grow = false } = Astro.props
+
 const days = daysSince(uptime.since)
 ---
 
 <!-- Uptime Card · blog.pen Home / Left Column -->
-<div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[10px] rounded-[26px] p-[20px]">
+<div
+  class:list={[
+    'glass box-border flex w-full shrink-0 flex-col items-start gap-[10px] rounded-[26px] p-[20px]',
+    grow ? 'flex-1 justify-center' : 'h-fit',
+  ]}
+>
   <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">本站已运行</span>
 
   <span class="flex h-fit w-fit shrink-0 flex-row items-end gap-[6px]">
