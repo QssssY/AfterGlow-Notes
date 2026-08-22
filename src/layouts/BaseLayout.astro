@@ -2,7 +2,6 @@
 import { ClientRouter } from 'astro:transitions'
 import ScrollTopButton from '~/components/ScrollTopButton.astro'
 import TabBar from '~/components/mobile/TabBar.astro'
-import VerticalRail from '~/components/VerticalRail.astro'
 import { site } from '~/config'
 import '~/styles/global.css'
 // 首屏关键字体 preload：正文中文 400 子集 + 正文拉丁 400 + 标题 Averia。
@@ -118,7 +117,9 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       <div class="aurora pointer-events-none absolute inset-[-240px] z-0"></div>
 
       <div class="relative z-10 mx-auto w-full max-w-[1440px]">
-        {rail && <VerticalRail />}
+        {/* 竖排站名（VerticalRail）已收起：设计稿那版右上角是空的，布局迭代后
+            它在哪都别扭（压卡 / 悬浮都被用户否了）。组件保留，想复出加一行即可；
+            rail prop 暂留，免得动一圈页面。 */}
         {/* 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右。
             transition:name="page-content"：换页时整个内容区作为一层轻抬浮现（见 global.css），
             背景留在 root 组里交叉淡化 —— 前后两页 aurora 相同，视觉上等于纹丝不动 */}

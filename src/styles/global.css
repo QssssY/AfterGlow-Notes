@@ -54,6 +54,8 @@
   --code-bg: #2e2724;
   --shadow-soft: #00000014;
   --sheen: #ffffff3d;
+  /* 玻璃顶缘高光（毛玻璃质感升级）：模拟光从上方打进玻璃的那道内侧反光 */
+  --glass-edge: #ffffff96;
   --btn-dark: #070707;
   --like-fill: #f5c0cb;
   --like-ink: #e08a9c;
@@ -84,6 +86,7 @@
   --code-bg: #0d0b0a;
   --shadow-soft: #00000059;
   --sheen: #ffffff14;
+  --glass-edge: #ffffff24;
   --btn-dark: #2a2521;
   --like-fill: #f0a4b4;
   --like-ink: #f0a4b4;
@@ -152,13 +155,19 @@
  * backdrop blur 是 4px：Pencil 的 background_blur radius 8 对应 CSS blur(4px)。
  * ───────────────────────────────────────────────────────────── */
 
-/* 玻璃卡片：Sidebar / Social Button / Project Card 等，全站 40 处 */
+/* 玻璃卡片：Sidebar / Social Button / Project Card 等，全站 40 处。
+ *
+ * 毛玻璃质感升级（用户点名参考苹果）：原来 blur(4px) 基本等于没有。
+ * 苹果玻璃的三件套 —— 大半径模糊（背景光晕被吸进卡里）、saturate 提饱和
+ * （透进来的颜色鲜亮而不浑浊）、顶缘 1px 内侧高光（玻璃的受光边）。
+ * 底色透明度不动（blog.pen 的值），质感全靠滤镜和高光。 */
 @utility glass {
   background-color: var(--card);
   outline: 1.5px solid var(--card-border);
   outline-offset: -0.75px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(24px) saturate(160%);
   box-shadow:
+    inset 0 1px 0 0 var(--glass-edge),
     0 24px 44px -16px var(--shadow-soft),
     0 0 20px 0 var(--sheen);
 }
@@ -168,8 +177,9 @@
   background-color: var(--card);
   outline: 1.5px solid var(--card-border);
   outline-offset: -0.75px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(20px) saturate(160%);
   box-shadow:
+    inset 0 1px 0 0 var(--glass-edge),
     0 14px 28px -12px var(--shadow-soft),
     0 0 18px 0 var(--sheen);
 }
@@ -179,8 +189,9 @@
   background-color: var(--card);
   outline: 1.5px solid var(--card-border);
   outline-offset: -0.75px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(20px) saturate(160%);
   box-shadow:
+    inset 0 1px 0 0 var(--glass-edge),
     0 16px 32px -14px var(--shadow-soft),
     0 0 18px 0 var(--sheen);
 }
