@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions'
+import ScrollTopButton from '~/components/ScrollTopButton.astro'
 import TabBar from '~/components/mobile/TabBar.astro'
 import VerticalRail from '~/components/VerticalRail.astro'
 import { site } from '~/config'
@@ -123,6 +124,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     </div>
 
     {tabBar && <TabBar />}
+    <ScrollTopButton />
 
     <!-- 播放器没有 <audio> 标签：Astro 换页 swap 后会把 body 里所有媒体元素
          重建一遍（reifyMediaElements），连 transition:persist 的也保不住。

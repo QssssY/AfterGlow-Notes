@@ -1,0 +1,47 @@
+---
+import { Icon } from 'astro-icon/components'
+---
+
+<!--
+  回到顶部 —— 右下角小方块（用户点名；处理方式学 YYsuni scroll-top-button：
+  滚过 200px 才浮现、点击平滑回顶、回到顶部自然收起）。
+  视觉走本站玻璃语言：44px 方块 + radius-btn 圆角，浮现/收起的过渡
+  由 .glass 交互规则接管，隐藏态样式见 global.css 的 [data-top-btn]。
+  移动端抬到 Tab Bar（bottom 29 + 高约 75）之上，桌面贴角。
+-->
+<button
+  type="button"
+  data-top-btn
+  data-show="false"
+  aria-label="回到顶部"
+  title="回到顶部"
+  class="glass group fixed right-[16px] bottom-[118px] z-30 flex size-[44px] cursor-pointer flex-row items-center justify-center rounded-[14px] xl:right-[28px] xl:bottom-[28px]"
+>
+  <Icon
+    name="lucide:arrow-up"
+    class="size-[18px] shrink-0 text-ink-soft transition-[translate,color] duration-300 group-hover:-translate-y-[2px] group-hover:text-brand-ink"
+  />
+</button>
+
+<script>
+  // 模块级监听只挂一次；换页由 astro:page-load 刷新元素引用（ReadingProgress 同款模式）
+  let btn: HTMLElement | null = null
+
+  // 阈值沿用 YYsuni 的 200：滚出一点头部就出现，回到顶部自然收起
+  const update = () => {
+    btn?.setAttribute('data-show', String(window.scrollY > 200))
+  }
+  addEventListener('scroll', update, { passive: true })
+
+  document.addEventListener('astro:page-load', () => {
+    btn = document.querySelector<HTMLElement>('[data-top-btn]')
+    update()
+    btn?.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        // 尊重系统的减少动态偏好；其余情况平滑滚回
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      })
+    })
+  })
+</script>
