@@ -467,6 +467,53 @@
     scale: 0.96;
   }
 
+  /* chip 小件（标签胶囊、友链行、正文标签、筛选钮……）：hover 提亮微浮，按下微缩。
+     :not([aria-pressed='true'])：选中态的筛选胶囊底色由 aria-pressed 变体接管，
+     hover 提亮会把它的选中底色盖掉。 */
+  :is(a, button, [role='button']):is(.bg-chip, .bg-fire-tint, .bg-like-tint) {
+    transition:
+      background-color 0.25s ease,
+      translate 0.3s var(--spring),
+      scale 0.3s var(--spring);
+  }
+  @media (hover: hover) {
+    :is(a, button, [role='button']).bg-chip:not([aria-pressed='true']):hover {
+      background-color: var(--card-solid);
+      translate: 0 -1px;
+    }
+    :is(a, button, [role='button']).bg-fire-tint:hover {
+      background-color: color-mix(in srgb, var(--brand) 27%, transparent);
+      translate: 0 -1px;
+    }
+    :is(a, button, [role='button']).bg-like-tint:hover {
+      translate: 0 -1px;
+    }
+  }
+  :is(a, button, [role='button']):is(.bg-chip, .bg-fire-tint, .bg-like-tint):active {
+    scale: 0.96;
+    translate: 0 0;
+  }
+
+  /* 深色 GitHub 按钮（侧栏 / 移动端 Social Row）：同玻璃卡的浮起手感 */
+  a.bg-btn-dark {
+    transition:
+      translate 0.3s var(--spring),
+      scale 0.3s var(--spring),
+      box-shadow 0.3s ease;
+  }
+  @media (hover: hover) {
+    a.bg-btn-dark:hover {
+      translate: 0 -2px;
+      box-shadow:
+        0 28px 50px -16px var(--shadow-soft),
+        0 0 26px 0 var(--sheen);
+    }
+  }
+  a.bg-btn-dark:active {
+    scale: 0.97;
+    translate: 0 0;
+  }
+
   /* 卡片右上的外链箭头随 hover 游走（YYsuni 卡片的方向暗示） */
   svg[data-icon='lucide:arrow-up-right'],
   svg[data-icon='lucide:arrow-right'],

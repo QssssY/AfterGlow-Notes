@@ -7,16 +7,23 @@ import ChangelogCard from '~/components/about/ChangelogCard.astro'
 import FriendsPanel from '~/components/about/FriendsPanel.astro'
 import PrivacyPanel from '~/components/about/PrivacyPanel.astro'
 import SideStack from '~/components/about/SideStack.astro'
-import { email } from '~/config'
+import { loadPosts } from '~/components/blog/data'
+import { email, repos } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
+import avBilibili from '../../images/blogroll/bilibili.com.png'
+import avRuanyifeng from '../../images/blogroll/ruanyifeng.com.png'
+import avZhangxinxu from '../../images/blogroll/zhangxinxu.com.png'
+import avZhihu from '../../images/blogroll/zhihu.com.png'
 
 // 设计稿 About 页自带的数据，暂放页面文件里（见 report：建议之后并入 src/config.ts）
+// 文案与首页 config.tools / config.now 一个口径：只说这个人和这个仓库真有的事，
+// 设计稿原稿的「三维 / 画布 / Blender」人设是虚构的，已换掉。
 const paragraphs = [
-  '白天写业务代码，晚上折腾三维和画布。喜欢那种「先做出来看看」的工作方式，所以这里大部分文章都是过程记录，而不是结论。',
-  '不太擅长长期计划，但擅长在半途发现更有意思的岔路。如果你也在做类似的事，欢迎写信来聊。',
+  '主力写 Java，前端用 Vue。这个站是最近的业余项目：从 Pencil 设计稿开始一比一还原成 Astro 代码，点赞和阅读的计数服务也是自己用 Go 写的。',
+  '文章多是过程记录而不是结论。不太擅长长期计划，但擅长在半途发现更有意思的岔路。如果你也在做类似的事，欢迎写信来聊。',
 ]
 
-const chips = ['TypeScript', 'Three.js', 'Astro', 'Blender', 'Python']
+const chips = ['Java', 'Vue', 'Astro', 'Tailwind', 'Go']
 
 /**
  * About Me 里 chips 下方新加的两列清单（设计稿这轮加的）。
@@ -36,10 +43,16 @@ const lists = [
   },
 ]
 
+/**
+ * 站点数据 —— 全是真的：篇数按内容集合数、项目数按 config.repos 数，
+ * 「次喜欢」由浏览器端向 Go 后端现查（live 标记），查不到就保持 —，不编数字。
+ * 设计稿写的 69 / 12 / 20,118 是虚构占位。
+ */
+const posts = await loadPosts()
 const stats = [
-  { value: '69', label: '篇文章' },
-  { value: '12', label: '个项目' },
-  { value: '20,118', label: '次喜欢' },
+  { value: String(posts.length), label: '篇文章' },
+  { value: String(repos.length), label: '个项目' },
+  { value: '—', label: '次喜欢', live: true },
 ]
 
 const contacts = [
@@ -49,46 +62,48 @@ const contacts = [
   { icon: 'rss', value: '订阅 RSS（/rss.xml）', href: '/rss.xml' },
 ]
 
+/**
+ * 更新日志 —— 全部对应仓库里真实的提交（git log 可查），
+ * 设计稿那套 2023-2025 的站史（Live2D / 语义化画布）是虚构人设，已换掉。
+ */
 const changelog = [
   {
-    title: '重写为语义化画布',
-    date: '2026.08',
-    desc: '把文章、项目和实验都放进同一套节点描述里，界面开始能自己生长。',
+    title: '交互与真实数据',
+    date: '2026.08.22',
+    desc: '首页音乐卡能放歌、跟歌词；全站换客户端路由丝滑换页；面板上的数字全部换成真实数据。',
     current: true,
     badge: '当前',
   },
   {
-    title: '加入 Live2D 与音乐卡片',
-    date: '2025.02',
-    desc: '首页变成了一块桌面，可以随手摆放喜欢的小组件。',
+    title: '自建计数服务',
+    date: '2026.08.22',
+    desc: '点赞与阅读计数换成自己用 Go 写的小服务，只存匿名总数，不记 IP 和 UA。',
   },
   {
-    title: '迁移到 Astro',
-    date: '2024.06',
-    desc: '抛弃了自己写的构建脚本，换来干净的部署流程和更快的首屏。',
-  },
-  {
-    title: '第一次部署',
-    date: '2023.10',
-    desc: '一个只有三篇文章的静态页面，托管在免费额度上。',
+    title: '从设计稿到代码',
+    date: '2026.08.21',
+    desc: 'blog.pen 设计稿定稿，Astro 项目初始化，首页与各栏目逐块一比一还原。',
   },
 ]
 
 /**
- * 关于页的友链面板 —— 图标和浅色渐变是本页独有的（友链页那份用首字 + 饱和渐变），
- * 所以两处数据分开存，跟设计稿一致。这里取友链页六条里的四条，换真实站点占位。
+ * 关于页的友链面板 —— 取友链页六条里的四条，头像用各站真实图
+ * （images/blogroll/，和友链页同一批素材）；icon + 渐变留作没头像时的退路。
  */
 const friends = [
-  { name: '阮一峰', desc: '周刊与入门教程', icon: 'terminal', href: 'https://www.ruanyifeng.com/blog/', from: '#E3D2B4', to: '#C9E0D8' },
-  { name: '哔哩哔哩', desc: '技术区与纪录片', icon: 'camera', href: 'https://www.bilibili.com', from: '#C6E0D6', to: '#E6D6BC' },
-  { name: '张鑫旭', desc: 'CSS 与前端细节', icon: 'app-window', href: 'https://www.zhangxinxu.com', from: '#E7D6B8', to: '#D6D2BE' },
-  { name: '知乎', desc: '专栏与长文', icon: 'book-open', href: 'https://www.zhihu.com', from: '#CFE0D2', to: '#E7D8C0' },
+  { name: '阮一峰', desc: '周刊与入门教程', icon: 'terminal', href: 'https://www.ruanyifeng.com/blog/', from: '#E3D2B4', to: '#C9E0D8', avatar: avRuanyifeng },
+  { name: '哔哩哔哩', desc: '技术区与纪录片', icon: 'camera', href: 'https://www.bilibili.com', from: '#C6E0D6', to: '#E6D6BC', avatar: avBilibili },
+  { name: '张鑫旭', desc: 'CSS 与前端细节', icon: 'app-window', href: 'https://www.zhangxinxu.com', from: '#E7D6B8', to: '#D6D2BE', avatar: avZhangxinxu },
+  { name: '知乎', desc: '专栏与长文', icon: 'book-open', href: 'https://www.zhihu.com', from: '#CFE0D2', to: '#E7D8C0', avatar: avZhihu },
 ]
 ---
 
 <BaseLayout title="关于网站" rail={false}>
   <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
-    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+    <div
+      data-rail
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:sticky xl:flex"
+    >
       <Sidebar />
       <BuildPanel />
       <PrivacyPanel />
@@ -106,7 +121,7 @@ const friends = [
       <!-- Row 1 -->
       <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:flex-row">
         <AboutMe
-          role="前端 / 图形 / 偶尔做点没用的东西"
+          role="Java / Vue / 业余把想法做成能跑的小东西"
           paragraphs={paragraphs}
           chips={chips}
           lists={lists}
@@ -120,6 +135,7 @@ const friends = [
   </div>
 
   <div class="mt-[30px] hidden w-full xl:block">
-    <Footer license="本站由 Astro 构建 · 托管在 Vercel · 萤火录" />
+    {/* 托管平台还没定（config.build.hosting 同口径），定了再写上真名字 */}
+    <Footer license="本站由 Astro 构建 · 托管平台待定 · 萤火录" />
   </div>
 </BaseLayout>

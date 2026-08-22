@@ -1,11 +1,10 @@
 ---
 import { Icon } from 'astro-icon/components'
 import BilibiliIcon from '~/components/BilibiliIcon.astro'
-import { likes, socials } from '~/config'
+import { socials } from '~/config'
 
 const github = socials.find((s) => s.variant === 'dark')!
 const second = socials.find((s) => s.variant === 'glass')!
-const likeLabel = likes >= 1000 ? `${Math.round(likes / 1000)}k` : String(likes)
 ---
 
 <!-- Social Row · blog.pen Mobile 首页（尺寸与桌面 Social Button 不同，故未复用） -->
@@ -32,8 +31,9 @@ const likeLabel = likes >= 1000 ? `${Math.round(likes / 1000)}k` : String(likes)
     <span class="text-[13px] font-medium whitespace-nowrap text-ink">{second.label}</span>
   </a>
 
+  {/* 数字是真的：由 LikeWidget 的脚本统一回填（后端总数，或本机的 0/1） */}
   <span class="glass flex h-fit w-fit shrink-0 flex-row items-center gap-[6px] rounded-[13px] px-[12px] py-[8px]">
     <Icon name="lucide:heart" class="size-[18px] shrink-0 text-like-ink" />
-    <span class="text-[12px] font-medium whitespace-nowrap text-like-text">{likeLabel}</span>
+    <span data-like-count class="text-[12px] font-medium whitespace-nowrap text-like-text">0</span>
   </span>
 </div>

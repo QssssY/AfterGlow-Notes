@@ -62,7 +62,8 @@ const tags = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) =
   {/* ── 桌面：1440 三栏 ──────────────────────────────────
       设计稿这轮删掉了右上角那排 Social Button，社交入口挪进了侧栏 Social Row。 */}
   <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">
-    <div class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px]">
+    {/* data-rail + xl:sticky：左栏钉住不随滚动走，top 由 BaseLayout 的脚本按栏高算 */}
+    <div data-rail class="flex h-fit w-[280px] shrink-0 flex-col items-start gap-[24px] xl:sticky">
       <Sidebar />
       <UptimeCard />
     </div>

@@ -28,8 +28,15 @@ const { images = [] } = Astro.props
   {
     snapshots.map((shot, i) => {
       const src = images[i]
+      // 图包一层 overflow-hidden：hover 缓慢推近时不越出格子的圆角
       return src ? (
-        <Image src={src} alt={shot.alt} class="h-full min-w-0 flex-1 rounded-[22px] object-cover" />
+        <span class="h-full min-w-0 flex-1 overflow-hidden rounded-[22px]">
+          <Image
+            src={src}
+            alt={shot.alt}
+            class="h-full w-full object-cover transition-transform duration-700 ease-out hover:scale-[1.06]"
+          />
+        </span>
       ) : (
         <span class="h-full min-w-0 flex-1 rounded-[22px] bg-avatar-bg" />
       )

@@ -1,22 +1,22 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { likes } from '~/config'
 ---
 
 <!--
   站点点赞 —— 迷你圆钮，挂在问候卡右上角。
   设计稿 Widget Row 里那颗 76px 的大爱心让位给了整行的音乐卡（用户拍板），
-  交互原样保留：本机/服务端计数、已赞实心心、心形爆裂。
+  交互原样保留：服务端计数、已赞实心心、心形爆裂。
   注意不能用 fill：astro-icon 渲染成 symbol + use，路径自带 fill="none" 属性，
   外部 CSS 选不进 use 的影子树 —— 已赞态靠叠一颗内联实心路径。
 
-  计数不加千分位：设计稿写的是 20118，不是 20,118。
+  计数是真实数据：Go 后端在的话显示全站总数；不在就只显示访客本机的 0/1。
+  设计稿里的 20118 是虚构基数，已删 —— 不编数字。
 -->
 <div class="relative shrink-0">
   <button
     type="button"
     data-like
-    data-like-base={likes}
+    data-like-site
     aria-pressed="false"
     aria-label="喜欢这个站点"
     title="喜欢这个站点"
@@ -44,9 +44,7 @@ import { likes } from '~/config'
   <span
     class="pointer-events-none absolute -top-[6px] left-[26px] flex h-fit w-fit flex-row items-center justify-center rounded-[10px] bg-fire-tint px-[6px] py-[2px]"
   >
-    <span data-like-count class="text-[10px] font-bold whitespace-nowrap text-brand-ink">
-      {likes}
-    </span>
+    <span data-like-count class="text-[10px] font-bold whitespace-nowrap text-brand-ink">0</span>
   </span>
 </div>
 
@@ -74,45 +72,45 @@ import { likes } from '~/config'
       }
     }
 
-    for (const button of document.querySelectorAll<HTMLElement>('[data-like][data-like-base]')) {
-      const base = Number(button.dataset.likeBase ?? 0)
-      const count = document.querySelector<HTMLElement>('[data-like-count]')
+    const button = document.querySelector<HTMLElement>('[data-like][data-like-site]')
+    if (!button) return
+    // 移动端 Social Row 的爱心数字也挂 data-like-count，这里一并同步
+    const counts = [...document.querySelectorAll<HTMLElement>('[data-like-count]')]
 
-      let liked = read()
-      // 服务端总数；null = 后端没配或没应答，显示 config 里的占位基数
-      let total: number | null = null
+    let liked = read()
+    // 服务端总数；null = 后端没配或没应答，只显示访客自己的 0/1 —— 不编数字
+    let total: number | null = null
 
-      const render = () => {
-        button.setAttribute('aria-pressed', String(liked))
-        // 设计稿写法不带千分位（20118）
-        if (count) count.textContent = String(total ?? base + (liked ? 1 : 0))
-      }
+    const render = () => {
+      button.setAttribute('aria-pressed', String(liked))
+      const value = String(total ?? (liked ? 1 : 0))
+      for (const count of counts) count.textContent = value
+    }
+    render()
+
+    // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）
+    getLikes('site').then((state) => {
+      if (!state) return
+      liked = state.liked
+      total = state.count
+      write(liked)
       render()
+    })
 
-      // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）
-      getLikes('site').then((state) => {
+    button.addEventListener('click', () => {
+      liked = !liked
+      write(liked)
+      if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
+      render()
+      if (liked) likeBurst(button)
+
+      postLike('site', liked ? 'like' : 'unlike').then((state) => {
         if (!state) return
         liked = state.liked
         total = state.count
         write(liked)
         render()
       })
-
-      button.addEventListener('click', () => {
-        liked = !liked
-        write(liked)
-        if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
-        render()
-        if (liked) likeBurst(button)
-
-        postLike('site', liked ? 'like' : 'unlike').then((state) => {
-          if (!state) return
-          liked = state.liked
-          total = state.count
-          write(liked)
-          render()
-        })
-      })
-    }
+    })
   })
 </script>

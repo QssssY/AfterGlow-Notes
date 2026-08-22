@@ -79,10 +79,14 @@ export const themeChoices = [
   { value: 'auto', label: '自动' },
 ] as const
 
-/** Uptime Card —— 天数按当前日期实时计算，不是写死的 */
+/**
+ * Uptime Card —— 天数按构建日期实时计算，不是写死的。
+ * 起点是这个仓库的首次提交（git log --reverse 可查：2026-08-21），
+ * 设计稿写的「自 2023 年 10 月」是虚构人设，别改回去。
+ */
 export const uptime = {
-  since: new Date(2023, 9, 1),
-  sinceLabel: '自 2023 年 10 月 首次部署',
+  since: new Date(2026, 7, 21),
+  sinceLabel: '自 2026 年 8 月 21 日 首次提交',
 } as const
 
 /**
@@ -105,8 +109,10 @@ export const greeting = {
   bio: '记录、研究并延伸我所遇见、观察和思考的一切。',
 } as const
 
-/** Like Widget —— 设计稿写的是 20118，不带千分位 */
-export const likes = 20118
+/*
+ * Like Widget 的基数：设计稿写的 20118 是虚构的，已删。
+ * 计数以 Go 后端为准（getLikes('site')）；后端不在时只显示访客本机的 0/1。
+ */
 
 /**
  * 此刻 Card（首页中栏）—— 设计稿这轮新加的一块，取代了原来的「最新文章」列表。

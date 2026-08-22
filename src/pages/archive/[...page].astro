@@ -40,7 +40,10 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
     重复了，一并删掉）。左栏只剩 年表 + 订阅，间距也从 24 收到 16。
   */}
   <div class="flex w-full flex-row items-start gap-[48px]">
-    <div class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex">
+    <div
+      data-rail
+      class="hidden h-fit w-[280px] shrink-0 flex-col items-start gap-[16px] xl:sticky xl:flex"
+    >
       <Sidebar />
       <ArchivePanel years={yearBars(all)} />
       <SubscribePanel />

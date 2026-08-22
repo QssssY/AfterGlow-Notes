@@ -95,8 +95,10 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <!--
       背景层铺满整个视口：内容仍收在 1440 里，但 aurora 不能只画在 1440 内 ——
       比 1440 宽的屏幕上，容器内外一个有柔光一个是纯 cream，左右两侧会看出色差接缝。
+      裁切用 overflow-clip 而不是 hidden：hidden 会把这层变成滚动容器，
+      里面所有 position:sticky（左栏）都会失效 —— clip 只裁绘制，不产生滚动容器。
     -->
-    <div class="relative w-full overflow-hidden">
+    <div class="relative w-full overflow-clip">
       <!--
         Aurora Backdrop · blog.pen 里这层只有 blur(70) 没有填充，
         内容是按品牌色补的（见 global.css 的 @utility aurora）。
@@ -200,5 +202,65 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <!-- 入场浮现改在 global.css 里用 @starting-style 做（纯 CSS）：
          最初的 WAAPI 版把「卡片可见」押在 JS 动画能跑完上，
          渲染帧一被节流（headless / 后台标签页 / 省电模式）整页就停在 opacity 0。 -->
+
+    <script>
+      /**
+       * 左栏粘性（[data-rail] + xl:sticky）的 top 计算。
+       *
+       * 栏比视口矮：top = 48（和页面顶部内边距对齐），滚动时整栏钉在顶上。
+       * 栏比视口高：top 取负值，让「栏底 + 24px 余量」贴住视口底 ——
+       * 先随页面滚完自己的内容再钉住，底部面板不会被永远顶出可视区
+       * （文章页的 侧栏+目录+相关 加起来超过一屏，固定 top 48 就看不到尾了）。
+       */
+      const setRailTops = () => {
+        for (const rail of document.querySelectorAll<HTMLElement>('[data-rail]')) {
+          rail.style.top = `${Math.min(48, innerHeight - rail.offsetHeight - 24)}px`
+        }
+      }
+      addEventListener('resize', setRailTops)
+      // 字体晚到会微调栏高，load 后再校一次
+      addEventListener('load', setRailTops)
+      document.addEventListener('astro:page-load', setRailTops)
+    </script>
+
+    <script>
+      // 数字滚动 —— 统计位（[data-countup]）首次进站时从 0 涨到真实值。
+      // 只在整页加载的文档上播：客户端路由换页不重播，同入场浮现的 during-nav 规则。
+      let navigated = false
+      document.addEventListener('astro:after-swap', () => {
+        navigated = true
+      })
+
+      document.addEventListener('astro:page-load', () => {
+        if (navigated || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+        for (const el of document.querySelectorAll<HTMLElement>('[data-countup]')) {
+          // 值可能是 1,024 / 2.4k / 21万 / 1.8k 字：拆成 数字 + 后缀，只滚数字
+          const raw = (el.textContent ?? '').trim()
+          const m = /^(\d[\d,]*)(?:\.(\d+))?(.*)$/.exec(raw)
+          if (!m) continue
+          const target = Number(m[1]!.replace(/,/g, '')) + Number(`0.${m[2] ?? '0'}`)
+          if (!Number.isFinite(target) || target <= 0) continue
+
+          const decimals = m[2]?.length ?? 0
+          const grouped = m[1]!.includes(',')
+          const suffix = m[3] ?? ''
+          const fmt = (v: number) =>
+            (grouped
+              ? Number(v.toFixed(decimals)).toLocaleString('en-US')
+              : v.toFixed(decimals)) + suffix
+
+          const t0 = performance.now()
+          const DURATION = 750
+          const step = (now: number) => {
+            const p = Math.min(1, (now - t0) / DURATION)
+            const eased = 1 - (1 - p) ** 3
+            el.textContent = p < 1 ? fmt(target * eased) : raw
+            if (p < 1) requestAnimationFrame(step)
+          }
+          requestAnimationFrame(step)
+        }
+      })
+    </script>
   </body>
 </html>

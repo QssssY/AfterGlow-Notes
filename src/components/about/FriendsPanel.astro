@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
 
 interface Friend {
@@ -9,6 +11,8 @@ interface Friend {
   // 头像渐变逐人不同，设计稿里是手调的，不走 token
   from: string
   to: string
+  /** 各站真实头像（images/blogroll/）；没有时退回 icon + 渐变 */
+  avatar?: ImageMetadata | undefined
 }
 
 interface Props {
@@ -43,15 +47,25 @@ const rows = [friends.slice(0, 2), friends.slice(2)]
                 rel="noopener noreferrer"
                 class="box-border flex h-fit w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[14px] py-[12px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
               >
-                <span
-                  class="flex size-[38px] shrink-0 flex-row items-center justify-center rounded-full"
-                  style={`background-image:linear-gradient(-135deg,${friend.from} 14.645%,${friend.to} 85.355%)`}
-                >
-                  <Icon
-                    name={`lucide:${friend.icon}`}
-                    class="size-[16px] shrink-0 text-ink opacity-[0.55]"
+                {friend.avatar ? (
+                  <Image
+                    src={friend.avatar}
+                    alt={friend.name}
+                    width={76}
+                    height={76}
+                    class="size-[38px] shrink-0 rounded-full object-cover outline-1 -outline-offset-[0.5px] outline-sheen"
                   />
-                </span>
+                ) : (
+                  <span
+                    class="flex size-[38px] shrink-0 flex-row items-center justify-center rounded-full"
+                    style={`background-image:linear-gradient(-135deg,${friend.from} 14.645%,${friend.to} 85.355%)`}
+                  >
+                    <Icon
+                      name={`lucide:${friend.icon}`}
+                      class="size-[16px] shrink-0 text-ink opacity-[0.55]"
+                    />
+                  </span>
+                )}
                 <span class="flex h-fit flex-1 flex-col items-start gap-[3px]">
                   <span class="text-[14px] font-bold whitespace-nowrap text-ink">{friend.name}</span>
                   <span class="w-full text-[12.5px] font-normal text-ink-soft">{friend.desc}</span>

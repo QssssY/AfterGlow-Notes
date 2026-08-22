@@ -46,6 +46,7 @@ const since = `${uptime.since.getFullYear()} 年 ${uptime.since.getMonth() + 1} 
   <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
 
   <span class="w-full text-[11.5px]/[1.55] font-normal text-ink-muted">
-    自 {since}上线，第 {daysSince(uptime.since)} 天。
+    {/* 还没部署上线，说「动工」才是真话；uptime.since = 仓库首次提交 */}
+    自 {since}动工，第 {daysSince(uptime.since)} 天。
   </span>
 </Panel>

@@ -27,8 +27,8 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
             heading.depth === 3 && 'pl-[12px]',
           ]}
         >
-          <span class="h-[14px] w-[2px] shrink-0 rounded-[1px] bg-hairline group-data-active:bg-brand" />
-          <span class="flex-1 text-[13px] font-normal text-ink-soft group-data-active:font-medium group-data-active:text-ink">
+          <span class="h-[14px] w-[2px] shrink-0 rounded-[1px] bg-hairline transition-colors group-hover:bg-dot-idle group-data-active:bg-brand" />
+          <span class="flex-1 text-[13px] font-normal text-ink-soft transition-colors group-hover:text-ink group-data-active:font-medium group-data-active:text-ink">
             {heading.text}
           </span>
         </a>
