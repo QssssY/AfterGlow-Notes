@@ -17,8 +17,6 @@ interface Props {
   /** 真实封面图；没有时退回设计稿的渐变底 + 图标 */
   cover?: ImageMetadata | undefined
   coverIcon?: string
-  /** 文章 slug：给了就给封面挂共享元素名，点进文章时缩略图变形成文章页大图 */
-  slug?: string | undefined
 }
 
 const {
@@ -32,7 +30,6 @@ const {
   words,
   cover,
   coverIcon = 'feather',
-  slug,
 } = Astro.props
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -84,10 +81,9 @@ const indexLabel = typeof index === 'number' ? pad(index) : index
   </span>
 
   <!-- 236px 定宽封面在窄屏会把整行撑出视口，所以 xl 以下不渲染。
-       transition:name（有 slug 才挂）：点进文章时这块缩略图作为共享元素
-       直接变形成文章页的大图，换页有了「东西飞过去」的连续感 -->
+       曾与文章页大图共享 transition:name 做变形飞行，已撤：236×162 和 1016×300
+       宽高比差太远，交叉淡化对不上 —— 飞行中是一块盖住正文的半透明残板 -->
   <span
-    transition:name={slug ? `post-cover-${slug}` : undefined}
     class="img-sheen relative hidden h-[162px] w-[236px] shrink-0 flex-row items-center justify-center overflow-hidden rounded-[22px] bg-[linear-gradient(-124.467deg,#E8D3AE_14.645%,#C9DED6_85.355%)] xl:flex"
   >
     <!--

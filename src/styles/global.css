@@ -728,6 +728,10 @@ img.img-pending {
   content-visibility: auto;
   contain-intrinsic-size: auto 96px;
 }
+/* 注：视口附近那批的文本整形并不会被 c-v 推迟 —— 浏览器在呈现首帧前就把
+   「视口+邻近余量」补排完了（换页时约 200 个盒子、60ms 一口气做完，都算在
+   动画开播前的准备期里）。试过给首屏 N 个子元素豁免 c-v，只会让准备期更长，
+   已回退；c-v 真正省的是视口外的大尾巴。 */
 [data-entry] {
   content-visibility: auto;
   contain-intrinsic-size: auto 62px;
@@ -744,8 +748,21 @@ html.theme-vt [data-astro-transition-scope] {
 html.theme-vt::view-transition-old(root) {
   animation: none;
 }
+/* 揭示动画直接写在 CSS 里：伪元素树一建立动画就原子生效。
+   旧版是 vt.ready 之后再用 WAAPI 挂 —— 中间只要挤进一帧，
+   新主题就先整屏闪现再缩回圆点（机器忙时表现为「卡一下才开始切」）。
+   圆心/半径由 BaseLayout 在开始过渡前写进 --reveal-* 内联变量。 */
+@keyframes theme-reveal-in {
+  from {
+    clip-path: circle(0px at var(--reveal-x, 50%) var(--reveal-y, 40px));
+  }
+  to {
+    clip-path: circle(var(--reveal-r, 150vmax) at var(--reveal-x, 50%) var(--reveal-y, 40px));
+  }
+}
 html.theme-vt::view-transition-new(root) {
-  animation: none;
+  /* 420ms：配合按停页面动画后快照不逐帧重栅格化，扩散全程满帧 */
+  animation: theme-reveal-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 /* 揭示进行中只按停「无限循环」的动画（等化条 / 站点橙点 / 音波线 / 时钟冒号 /
    骨架扫带）：它们随便动一帧，新页实时快照就要整层重栅格化，圆形扩散必卡。
@@ -786,7 +803,10 @@ html.theme-vt .skeleton::after {
   }
 }
 
-/* 主题切换瞬间给全站颜色一个短过渡（脚本临时挂 .theme-anim） */
+/* 主题切换瞬间给全站颜色一个短过渡（脚本临时挂 .theme-anim）。
+   这是圆形揭示不可用/被占用时的回退路径 —— 不带 box-shadow：
+   阴影是纯绘制属性，40 张玻璃卡逐帧重画 0.35s，正是回退路径卡顿的大头；
+   阴影换色本来就几乎看不出来。 */
 @media (prefers-reduced-motion: no-preference) {
   .theme-anim,
   .theme-anim *,
@@ -796,8 +816,7 @@ html.theme-vt .skeleton::after {
       background-color 0.35s ease,
       border-color 0.35s ease,
       outline-color 0.35s ease,
-      color 0.35s ease,
-      box-shadow 0.35s ease !important;
+      color 0.35s ease !important;
   }
 }
 

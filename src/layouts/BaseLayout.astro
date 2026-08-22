@@ -200,30 +200,27 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         revealing = true
         const x = ev?.clientX ?? innerWidth / 2
         const y = ev?.clientY ?? 40
+        const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
+        // 圆心/半径先写进变量，动画本体在 global.css 的 theme-reveal-in 里 ——
+        // 伪元素一建立动画就原子生效。旧版等 vt.ready 再 WAAPI，机器忙时
+        // ready 和挂动画之间挤进一帧，新主题整屏闪现又缩回圆点，像卡了一下
+        const rootStyle = document.documentElement.style
+        rootStyle.setProperty('--reveal-x', `${x}px`)
+        rootStyle.setProperty('--reveal-y', `${y}px`)
+        rootStyle.setProperty('--reveal-r', `${Math.ceil(r)}px`)
         document.documentElement.classList.add('theme-vt')
         const vt = document.startViewTransition(() => apply(choice, false))
-        vt.ready
-          .then(() => {
-            const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-            document.documentElement.animate(
-              {
-                clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${Math.ceil(r)}px at ${x}px ${y}px)`],
-              },
-              {
-                // 420ms：配合 theme-vt 按停页面动画（见 global.css）后快照不再逐帧
-                // 重栅格化，扩散全程满帧；原 520ms 略拖，收紧一点更利落
-                duration: 420,
-                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-                pseudoElement: '::view-transition-new(root)',
-              },
-            )
-          })
-          .catch(() => {
-            // 过渡被跳过（罕见）也无妨，主题已经切完
-          })
         vt.finished.finally(() => {
-          document.documentElement.classList.remove('theme-vt')
-          revealing = false
+          // 收尾重算（摘类恢复循环动画）挪出最后一帧：先让终帧上屏再算，
+          // 不然扩散刚满屏就顿一下。revealing 等收尾完再放开，避免连点时
+          // 迟到的清理把下一轮过渡的 theme-vt 拆了
+          setTimeout(() => {
+            document.documentElement.classList.remove('theme-vt')
+            rootStyle.removeProperty('--reveal-x')
+            rootStyle.removeProperty('--reveal-y')
+            rootStyle.removeProperty('--reveal-r')
+            revealing = false
+          }, 80)
         })
       }
 
