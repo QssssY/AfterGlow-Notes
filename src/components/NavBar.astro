@@ -1,0 +1,78 @@
+---
+import { Image } from 'astro:assets'
+import { Icon } from 'astro-icon/components'
+import { isNavActive, nav, site } from '~/config'
+import avatarSrc from '../../images/cat001.jpg'
+
+const pathname = Astro.url.pathname
+---
+
+<!--
+  紧凑导航条（桌面内容页顶部）—— 结构照搬 YYsuni：完整 Sidebar 只留在首页，
+  内容页的导航缩成一条图标横条，且和他的 .card（absolute）一样随页面滚走，不钉。
+  视觉走本站语言：玻璃条 + 36px 图标位，激活态同 Tab Bar（fire-tint 底 + 品牌色），
+  右端补 主题切换（复用 BaseLayout 的 data-theme-cycle 绑定）和 RSS ——
+  这俩原来在 Sidebar 上，侧栏不随页后桌面内容页得留个入口。
+-->
+<nav
+  data-navbar
+  aria-label="站内导航"
+  class="glass box-border flex h-fit w-fit flex-row items-center gap-[4px] rounded-[18px] p-[8px]"
+>
+  <a
+    href="/"
+    title={`回首页 · ${site.title}`}
+    class="mr-[4px] flex size-[36px] shrink-0 flex-row items-center justify-center"
+  >
+    <Image
+      src={avatarSrc}
+      alt={site.title}
+      width={60}
+      height={60}
+      class="size-[30px] shrink-0 rounded-full object-cover shadow-[0_8px_14px_-4px_var(--color-dot-idle)]"
+    />
+  </a>
+
+  {
+    nav.map((item) => {
+      const active = isNavActive(item.match, pathname)
+      return (
+        <a
+          href={item.href}
+          title={item.label}
+          aria-current={active ? 'page' : undefined}
+          class:list={[
+            'flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] transition-colors',
+            active ? 'bg-fire-tint' : 'hover:bg-chip',
+          ]}
+        >
+          <Icon
+            name={`lucide:${item.icon}`}
+            class:list={['size-[19px] shrink-0', active ? 'text-brand-ink' : 'text-ink-soft']}
+          />
+        </a>
+      )
+    })
+  }
+
+  <span class="mx-[4px] h-[22px] w-[1px] shrink-0 bg-hairline"></span>
+
+  <button
+    type="button"
+    data-theme-cycle
+    title="切换深浅色"
+    aria-label="切换深浅色"
+    class="flex size-[36px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors hover:bg-chip"
+  >
+    <Icon name="lucide:sun-moon" class="size-[19px] shrink-0" />
+  </button>
+
+  <a
+    href="/rss.xml"
+    title="RSS 订阅"
+    aria-label="RSS 订阅"
+    class="flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors hover:bg-chip"
+  >
+    <Icon name="lucide:rss" class="size-[17px] shrink-0" />
+  </a>
+</nav>

@@ -2,7 +2,7 @@
 import type { GetStaticPaths } from 'astro'
 import { Icon } from 'astro-icon/components'
 import Footer from '~/components/Footer.astro'
-import Sidebar from '~/components/Sidebar.astro'
+import NavBar from '~/components/NavBar.astro'
 import StatsPageHead from '~/components/StatsPageHead.astro'
 import TagsBand from '~/components/blog/TagsBand.astro'
 import TimelineCard from '~/components/blog/TimelineCard.astro'
@@ -39,12 +39,10 @@ const groups = groupByYear(posts)
   description={`标签「${tag}」下的 ${posts.length} 篇文章`}
   rail={false}
 >
-  <div class="flex w-full flex-row items-start gap-[48px]">
-    <div class="hidden h-fit w-[280px] shrink-0 xl:block">
-      <Sidebar />
-    </div>
+  {/* 结构照搬 YYsuni：没有侧栏面板的页面走居中单列（宽度保持设计稿内容列的 1016） */}
+  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
 
-    <div class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[24px]">
+  <div class="mx-auto flex h-fit w-full max-w-[1016px] min-w-0 flex-col items-start gap-[24px]">
       <StatsPageHead
         title={`#${tag}`}
         subtitle={`「${tag}」下的文章，按时间倒叙排列。`}
@@ -65,7 +63,6 @@ const groups = groupByYear(posts)
       <TagsBand tags={tagCounts(all)} />
 
       <TimelineCard groups={groups} />
-    </div>
   </div>
 
   <!-- 移动端不显示 Footer：由底部 Tab Bar 取代 -->

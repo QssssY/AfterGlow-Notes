@@ -1,8 +1,8 @@
 ---
 import type { GetStaticPaths } from 'astro'
 import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
 import PostRow from '~/components/PostRow.astro'
-import Sidebar from '~/components/Sidebar.astro'
 import StatsPageHead from '~/components/StatsPageHead.astro'
 import ArchivePanel from '~/components/blog/ArchivePanel.astro'
 import ListHeader from '~/components/blog/ListHeader.astro'
@@ -39,18 +39,17 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
     篇数与字数从副标题挪进右侧那两格统计（原来左栏那块 Stats 面板说的是同一件事，
     重复了，一并删掉）。左栏只剩 年表 + 订阅，间距也从 24 收到 16。
   */}
+  {/* 结构照搬 YYsuni：内容页没有整根侧栏，导航缩成顶部图标条（随页滚走） */}
+  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
+
   <div class="flex w-full flex-row items-start gap-[48px]">
-    {/* 长内容页的粘性（学 YYsuni）：Sidebar 自然滚走，翻长列表时有用的
-        年表+订阅 一屏装得下，钉在 48；栏 self-stretch 给粘性组行程 */}
-    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex xl:self-stretch">
-      <Sidebar />
-      <div
-        data-pin-group
-        class="flex w-full flex-col items-start gap-[16px] xl:sticky xl:top-[48px]"
-      >
-        <ArchivePanel years={yearBars(all)} />
-        <SubscribePanel />
-      </div>
+    {/* 短栏 = 翻长列表有用的 年表+订阅，一屏装得下，整栏 sticky —— 从不钉超过一屏的东西 */}
+    <div
+      data-pin-group
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:sticky xl:top-[48px] xl:flex"
+    >
+      <ArchivePanel years={yearBars(all)} />
+      <SubscribePanel />
     </div>
 
     <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px]">

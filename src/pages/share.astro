@@ -1,6 +1,6 @@
 ---
 import Footer from '~/components/Footer.astro'
-import Sidebar from '~/components/Sidebar.astro'
+import NavBar from '~/components/NavBar.astro'
 import StackPill from '~/components/StackPill.astro'
 import StatsPageHead from '~/components/StatsPageHead.astro'
 import ShareItem from '~/components/share/ShareItem.astro'
@@ -18,12 +18,10 @@ const categories = new Set(shareItems.map((item) => item.category)).size
   description="值得反复打开的工具、文章和播客。只收自己真正用过的，不做榜单。"
   rail={false}
 >
-  <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
-    <div class="hidden w-[280px] shrink-0 xl:block">
-      <Sidebar />
-    </div>
+  {/* 结构照搬 YYsuni：没有侧栏面板的页面走居中单列（宽度保持设计稿内容列的 1016） */}
+  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
 
-    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
+  <div class="mx-auto flex h-fit w-full max-w-[1016px] flex-col items-start gap-[24px]">
       <StatsPageHead
         title="推荐分享"
         subtitle="值得反复打开的工具、文章和播客。只收自己真正用过的，不做榜单。"
@@ -68,7 +66,6 @@ const categories = new Set(shareItems.map((item) => item.category)).size
           </p>
         </div>
       </div>
-    </div>
   </div>
 
   <div class="mt-[30px] hidden w-full xl:block">

@@ -3,7 +3,7 @@ import { Image } from 'astro:assets'
 import { getCollection, render } from 'astro:content'
 import { Icon } from 'astro-icon/components'
 import Footer from '~/components/Footer.astro'
-import Sidebar from '~/components/Sidebar.astro'
+import NavBar from '~/components/NavBar.astro'
 import ArticleActions from '~/components/post/ArticleActions.astro'
 import ArticleInfo from '~/components/post/ArticleInfo.astro'
 import LicenseBlock from '~/components/post/LicenseBlock.astro'
@@ -72,30 +72,29 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
 >
   <ReadingProgress />
 
+  {/* 结构照搬 YYsuni：内容页没有整根侧栏，导航缩成顶部图标条（随页滚走） */}
+  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
+
   <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
     <!--
-      左栏（纯桌面）。粘性照 YYsuni 的路子：从不钉超过一屏的东西 ——
-      Sidebar 随页面自然滚走，真正跟手的是下面这组 目录+本文+相关
-      （目录内部限高 300 自滚，整组一屏装得下），钉在 top 48。
-      栏 self-stretch 到行高，粘性组才有跟随整篇文章的行程。
-      移动端整栏不渲染：侧栏由底部 TabBar 代替，本文/相关摆到 390 下
+      左栏（纯桌面）就是 YYsuni 文章页那根短栏：目录+本文+相关，
+      整栏一屏装得下（目录内部限高 300 自滚），简单 sticky top-48 ——
+      从不钉超过一屏的东西。
+      移动端整栏不渲染：导航由底部 TabBar 代替，本文/相关摆到 390 下
       就成了正文前的一大段前言；目录单独在返回按钮之后再出一份（见下）。
     -->
-    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex xl:self-stretch">
-      <Sidebar />
-      <div
-        data-pin-group
-        class="flex w-full flex-col items-start gap-[24px] xl:sticky xl:top-[48px]"
-      >
-        <TocCard headings={headings} />
-        <ArticleInfo
-          words={stats.words}
-          minutes={stats.minutes}
-          date={date}
-          updated={post.data.updated}
-        />
-        <RelatedCard posts={related} />
-      </div>
+    <div
+      data-pin-group
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:sticky xl:top-[48px] xl:flex"
+    >
+      <TocCard headings={headings} />
+      <ArticleInfo
+        words={stats.words}
+        minutes={stats.minutes}
+        date={date}
+        updated={post.data.updated}
+      />
+      <RelatedCard posts={related} />
     </div>
 
     <div class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1">

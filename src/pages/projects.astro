@@ -1,8 +1,8 @@
 ---
 import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
 import ProjectCard from '~/components/ProjectCard.astro'
 import RepoStars from '~/components/RepoStars.astro'
-import Sidebar from '~/components/Sidebar.astro'
 import FeaturedProject from '~/components/projects/FeaturedProject.astro'
 import FilterBar from '~/components/projects/FilterBar.astro'
 import NowPanel from '~/components/projects/NowPanel.astro'
@@ -35,9 +35,15 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
 ---
 
 <BaseLayout title="我的项目" rail={false}>
+  {/* 结构照搬 YYsuni：内容页没有整根侧栏，导航缩成顶部图标条（随页滚走） */}
+  <div class="mb-[24px] hidden xl:block"><NavBar /></div>
+
   <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
-    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
-      <Sidebar />
+    {/* 短栏 = 构成+状态 两面板，一屏装得下，整栏 sticky */}
+    <div
+      data-pin-group
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:sticky xl:top-[48px] xl:flex"
+    >
       <StackPanel />
       <NowPanel />
     </div>
