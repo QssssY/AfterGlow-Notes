@@ -226,12 +226,15 @@
  * 尺寸用 -inset-[240px] 复刻设计稿的 1920×1808 @ (-240,-240)。
  * Pencil 的模糊半径是 CSS 的两倍，桌面 70→35px、移动 60→30px。 */
 @utility aurora {
-  filter: blur(35px);
+  /* 性能账：这层比视口还大 480px，之前挂着 blur(35px)，每次 View Transition
+     快照（换页/换主题都要拍两张）都得把它整层重栅格化，卡顿一大半是它贡献的。
+     径向渐变本身就是连续柔和的 —— 椭圆放大一圈、收尾拉长，视觉上与带模糊
+     等价，滤镜整个撤掉，快照成本立降 */
   background:
-    radial-gradient(38% 26% at 20% 16%, var(--brand) 0%, transparent 68%),
-    radial-gradient(30% 22% at 80% 10%, var(--leaf) 0%, transparent 68%),
-    radial-gradient(44% 30% at 66% 58%, var(--color-gold) 0%, transparent 70%),
-    radial-gradient(34% 24% at 12% 76%, var(--fire-warm) 0%, transparent 70%);
+    radial-gradient(44% 31% at 20% 16%, var(--brand) 0%, transparent 72%),
+    radial-gradient(36% 27% at 80% 10%, var(--leaf) 0%, transparent 72%),
+    radial-gradient(50% 35% at 66% 58%, var(--color-gold) 0%, transparent 74%),
+    radial-gradient(40% 29% at 12% 76%, var(--fire-warm) 0%, transparent 74%);
   /* 0.16 → 0.26（毛玻璃第二轮）：玻璃透了之后背后得有东西可透 ——
      光晕太淡的话透过来的只是奶油色，模糊再大也看不出流动感 */
   opacity: 0.26;
@@ -239,14 +242,6 @@
 
 .dark .aurora {
   opacity: 0.16;
-}
-
-/* 断点跟 xl (80rem) 对齐：全站桌面/移动布局都在这里切，
- * 用 40rem 会多出一段「移动布局配桌面模糊」的中间态。 */
-@media (width < 80rem) {
-  .aurora {
-    filter: blur(30px);
-  }
 }
 
 @layer base {
@@ -636,11 +631,20 @@
    选择器带 :root 抬高优先级，确保压过 Astro 可能生成的默认换页动画。 */
 @media (prefers-reduced-motion: no-preference) {
   :root::view-transition-group(site-nav),
+  :root::view-transition-group(site-sidebar),
   :root::view-transition-group(nav-avatar),
   :root::view-transition-group(nav-active),
   :root::view-transition-group(tab-active) {
     animation-duration: 0.35s;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* 跨形态换页（侧栏页 ⟷ 内容页）没有配对目标时，旧导航是「只出不进」的
+     独影：快照是拍平的不透明像素，默认 0.25s 的淡出会像一块残板盖在新页
+     标题上（用户截到那帧）。加速到 0.15s，先退干净再让内容浮上来 */
+  :root::view-transition-old(site-sidebar),
+  :root::view-transition-old(site-nav) {
+    animation-duration: 0.15s;
   }
 
   @keyframes vt-content-out {
@@ -654,11 +658,13 @@
       transform: translateY(12px);
     }
   }
-  /* 组的几何动画掐掉：前后两页 page-content 的盒子高度/滚动位置不同，
-     默认的组插值会让整层内容明显平移一段（用户截到那帧，很不舒服）——
-     盒子直接就位，只留旧层即隐 + 新层轻抬浮现 */
+  /* 组的几何插值掐掉：前后两页 page-content 的盒子高度/滚动位置不同，
+     默认插值会让整层内容明显平移一段。注意必须用 duration:0 而不是
+     animation:none —— 规范里组的基础样式停在「旧页盒子」上，动画一删
+     整程都卡在旧位置、结束瞬间跳新位置（就是那帧标题被截断的错位）；
+     时长归零则立刻落到关键帧终态 = 新页盒子 */
   :root::view-transition-group(page-content) {
-    animation: none;
+    animation-duration: 0s;
   }
   :root::view-transition-old(page-content) {
     animation: none;
@@ -730,7 +736,9 @@ img.img-pending {
 /* ─── 主题切换的圆形揭示（配 BaseLayout 的 applyWithReveal）───
    期间抹掉所有命名分组：全页收进 root 快照，被圆形 clip-path 统一裁切；
    root 自带的交叉淡化也关掉，圆形边界是唯一的过渡。 */
-html.theme-vt * {
+/* 命名分组只存在于挂了 Astro 过渡指令的元素上（data-astro-transition-scope），
+   按属性摘就够 —— 旧写法通配 *，类一挂一摘就是两轮全页样式重算 */
+html.theme-vt [data-astro-transition-scope] {
   view-transition-name: none !important;
 }
 html.theme-vt::view-transition-old(root) {
@@ -739,14 +747,14 @@ html.theme-vt::view-transition-old(root) {
 html.theme-vt::view-transition-new(root) {
   animation: none;
 }
-/* 揭示进行中把页面上的 CSS 动画/过渡全部按停：等化条、时钟冒号、光标闪烁
-   哪怕动一下，新页的实时快照就得逐帧重新栅格化，圆形扩散必掉帧卡半程。
-   揭示本体是挂在伪元素上的 WAAPI 动画，不吃这两条，照常丝滑 */
-html.theme-vt *,
-html.theme-vt *::before,
-html.theme-vt *::after {
+/* 揭示进行中只按停「无限循环」的动画（等化条 / 站点橙点 / 音波线 / 时钟冒号 /
+   骨架扫带）：它们随便动一帧，新页实时快照就要整层重栅格化，圆形扩散必卡。
+   一次性的 150ms 变色过渡无害，让它跑；揭示本体是伪元素上的 WAAPI，不受影响 */
+html.theme-vt :is([data-eq] > span, .site-dot, [data-np-icon] path, [data-clock-colon]) {
   animation-play-state: paused !important;
-  transition: none !important;
+}
+html.theme-vt .skeleton::after {
+  animation-play-state: paused !important;
 }
 
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。

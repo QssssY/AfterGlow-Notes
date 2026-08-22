@@ -15,11 +15,12 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
 ---
 
 <!-- Sidebar · blog.pen I23TnW
-     transition:name="site-nav"：和内容页的 NavBar 同名 —— 换页时浏览器
-     View Transitions 会把首页大卡与图标条互相 morphing（YYsuni 导航卡
-     form 切换的等价物）；头像另起一层独立飞行（nav-avatar）。 -->
+     transition:name="site-sidebar"：只和其他侧栏页同名（首页⟷归档等，同形原地衔接）。
+     之前与内容页 NavBar 共用 site-nav 做跨形态 morph —— 280×740 的大卡收成
+     52px 高的小条，中间态是一块大板子压在新页标题上（用户截到那帧），已拆开；
+     跨形态时两者各自淡入淡出，只留头像那层小圆独立飞行（nav-avatar）。 -->
 <aside
-  transition:name="site-nav"
+  transition:name="site-sidebar"
   class="glass box-border flex w-[280px] flex-col items-start gap-[26px] rounded-[36px] p-[24px]"
 >
   <!-- Brand -->
