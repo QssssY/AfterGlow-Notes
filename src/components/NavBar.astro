@@ -10,22 +10,27 @@ const pathname = Astro.url.pathname
 <!--
   紧凑导航条（桌面内容页顶部）—— 结构照搬 YYsuni：完整 Sidebar 只留在首页，
   内容页的导航缩成一条图标横条，且和他的 .card（absolute）一样随页面滚走，不钉。
-  视觉走本站语言：玻璃条 + 36px 图标位，激活态同 Tab Bar（fire-tint 底 + 品牌色），
-  右端补 主题切换（复用 BaseLayout 的 data-theme-cycle 绑定）和 RSS ——
-  这俩原来在 Sidebar 上，侧栏不随页后桌面内容页得留个入口。
+  视觉走本站语言：玻璃条 + 36px 图标位；右端补 主题切换 + RSS。
+  不挂 View Transitions 共享元素名（玻璃条快照是块模糊空板）。
+  激活/hover 高亮是一颗跟手胶囊（data-nav-pill，照搬他 nav-card 的 spring 胶囊）：
+  弹簧跟随 hover，离手 1.5s 弹回当前页；图标颜色跟着胶囊走（data-pill-on）。
 -->
 <nav
   data-navbar
-  transition:name="site-nav"
   aria-label="站内导航"
-  class="glass box-border flex h-fit w-fit flex-row items-center gap-[4px] rounded-[18px] p-[8px]"
+  class="glass relative box-border flex h-fit w-fit flex-row items-center gap-[4px] rounded-[18px] p-[8px]"
 >
+  <span
+    data-nav-pill
+    aria-hidden="true"
+    class="pointer-events-none absolute rounded-[12px] bg-fire-tint opacity-0"></span>
+
   <a
     href="/"
     title={`回首页 · ${site.title}`}
-    class="mr-[4px] flex size-[36px] shrink-0 flex-row items-center justify-center"
+    class="relative mr-[4px] flex size-[36px] shrink-0 flex-row items-center justify-center"
   >
-    <span transition:name="nav-avatar" class="flex size-[30px] shrink-0">
+    <span class="flex size-[30px] shrink-0">
       <Image
         src={avatarSrc}
         alt={site.title}
@@ -44,16 +49,13 @@ const pathname = Astro.url.pathname
           href={item.href}
           title={item.label}
           aria-current={active ? 'page' : undefined}
-          transition:name={active ? 'nav-active' : undefined}
+          data-pill-target
           class:list={[
-            'flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] transition-colors',
-            active ? 'bg-fire-tint' : 'hover:bg-chip',
+            'relative flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] transition-colors',
+            active ? 'text-brand-ink' : 'text-ink-soft',
           ]}
         >
-          <Icon
-            name={`lucide:${item.icon}`}
-            class:list={['size-[19px] shrink-0', active ? 'text-brand-ink' : 'text-ink-soft']}
-          />
+          <Icon name={`lucide:${item.icon}`} class="size-[19px] shrink-0" />
         </a>
       )
     })
@@ -64,9 +66,10 @@ const pathname = Astro.url.pathname
   <button
     type="button"
     data-theme-cycle
+    data-pill-target
     title="切换深浅色"
     aria-label="切换深浅色"
-    class="flex size-[36px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors hover:bg-chip"
+    class="relative flex size-[36px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors"
   >
     <Icon name="lucide:sun-moon" class="size-[19px] shrink-0" />
   </button>
@@ -75,8 +78,57 @@ const pathname = Astro.url.pathname
     href="/rss.xml"
     title="RSS 订阅"
     aria-label="RSS 订阅"
-    class="flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors hover:bg-chip"
+    data-pill-target
+    class="relative flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors"
   >
     <Icon name="lucide:rss" class="size-[17px] shrink-0" />
   </a>
 </nav>
+
+<style>
+  /* 胶囊所在项亮成品牌色（图标 stroke 走 currentColor） */
+  [data-pill-target][data-pill-on] {
+    color: var(--brand-ink);
+  }
+</style>
+
+<script>
+  // 跟手胶囊（照搬 YYsuni nav-card）：mouseenter 就位，1.5s 后弹回激活项 ——
+  // 连「悬停不动 1.5s 也会先弹回去」的小脾气都和他一致（他的 effect 就这么写的）。
+  // 弹簧在 CSS（global.css 的 [data-nav-pill] transition + --spring）。
+  document.addEventListener('astro:page-load', () => {
+    for (const bar of document.querySelectorAll<HTMLElement>('[data-navbar]')) {
+      const pill = bar.querySelector<HTMLElement>('[data-nav-pill]')
+      if (!pill) continue
+      const targets = [...bar.querySelectorAll<HTMLElement>('[data-pill-target]')]
+      const activeEl = bar.querySelector<HTMLElement>('a[aria-current="page"]')
+      let snapTimer: ReturnType<typeof setTimeout> | undefined
+
+      const moveTo = (el: HTMLElement, instant = false) => {
+        if (instant) pill.style.transition = 'none'
+        pill.style.left = `${el.offsetLeft}px`
+        pill.style.top = `${el.offsetTop}px`
+        pill.style.width = `${el.offsetWidth}px`
+        pill.style.height = `${el.offsetHeight}px`
+        pill.style.opacity = '1'
+        for (const t of targets) t.toggleAttribute('data-pill-on', t === el)
+        if (instant) {
+          void pill.offsetWidth // 先落位再恢复过渡，避免从 (0,0) 飞进来
+          pill.style.transition = ''
+        }
+      }
+
+      // classic 模式下条是 display:none（量不到尺寸），跳过初始落位，
+      // 切到紧凑后第一次 hover 会以 instant 落位补上
+      if (bar.offsetWidth > 0 && activeEl) moveTo(activeEl, true)
+
+      for (const t of targets) {
+        t.addEventListener('mouseenter', () => {
+          clearTimeout(snapTimer)
+          moveTo(t, pill.style.opacity !== '1')
+          if (activeEl && t !== activeEl) snapTimer = setTimeout(() => moveTo(activeEl), 1500)
+        })
+      }
+    }
+  })
+</script>

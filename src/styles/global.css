@@ -416,31 +416,36 @@
   }
 
   /*
-   * 入场浮现 —— @starting-style 让玻璃卡首次渲染时从「透明 + 下移一点」过渡进来。
-   * 纯 CSS：引擎保证到达终态，headless / 后台标签页这类不出帧的环境直接显示终值，
-   * 不会像 JS 动画那样把内容可见性押在动画能否跑完上。
-   * 老浏览器不认识 @starting-style 就没有入场动画，内容照常显示。
+   * 入场弹跳（照搬 YYsuni card.tsx）：小件 opacity 0 + scale 0.6 → 1 弹簧弹入，
+   * 大面板（.glass 整卡，含文章卡/侧栏）走他大容器的温和档 scale 0.95。
+   * 错峰 0.1s/张（他的 ANIMATION_DELAY），序号 --enter-i 由 BaseLayout
+   * 在换页 swap 后、首帧前写好 —— 他的站每次换页都重播这套入场，
+   * 页面是「瞬时切换 + 内容逐张弹出来」，不做任何跨页过渡。
+   * fill 用 backwards：只在延迟期隐藏；跑完把 scale 还给 hover 的过渡通道
+   * （forwards 会永远压住 transition，卡片从此 hover 不动）。
    */
-  .glass,
-  .glass-row,
-  .glass-panel {
-    transition:
-      opacity 0.55s ease,
-      translate 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  @starting-style {
-    .glass,
-    .glass-row,
-    .glass-panel {
+  @keyframes card-enter {
+    from {
       opacity: 0;
-      translate: 0 12px;
+      scale: 0.6;
     }
   }
-  /* 客户端路由换页时不重播入场：整页卡片每切一次导航就浮一次，晃眼。
-     astro:after-swap 挂上 during-nav、新页首帧后摘掉（见 BaseLayout），
-     过渡被瞬时化后 @starting-style 的起点直接跳到终态。 */
-  html.during-nav :is(.glass, .glass-row, .glass-panel) {
-    transition-duration: 0s !important;
+  @keyframes panel-enter {
+    from {
+      opacity: 0;
+      scale: 0.95;
+    }
+  }
+  .glass-row,
+  .glass-panel {
+    animation: card-enter 0.45s var(--spring) backwards;
+    animation-delay: calc(var(--enter-i, 0) * 100ms);
+  }
+  /* fixed 常驻件（移动端 TabBar、回顶按钮）不参与：它们跨页视觉连续，
+     每次换页重新弹出会像导航条消失又长回来 */
+  .glass:not(.fixed) {
+    animation: panel-enter 0.45s var(--spring) backwards;
+    animation-delay: calc(var(--enter-i, 0) * 100ms);
   }
 
   /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版）。
@@ -621,58 +626,27 @@
       height 0.35s var(--spring),
       opacity 0.2s ease;
   }
+
+  /* 紧凑图标条的跟手胶囊（照搬 YYsuni nav-card：spring 跟随 hover 的那颗，
+     位置由 NavBar 脚本写；离手 1.5s 后弹回当前激活项） */
+  [data-nav-pill] {
+    transition:
+      left 0.35s var(--spring),
+      width 0.35s var(--spring),
+      opacity 0.2s ease;
+  }
 }
 
-/* ─── 换页动效（学 YYsuni 的手感）───
-   背景留在 root 组里做默认交叉淡化 —— 前后两页的 aurora 相同，视觉上等于不动；
-   导航独立成组：首页大卡 ⟷ 内容页图标条 跨形态 morphing（他导航卡 form 切换的等价物），
-   头像单独一层飞行；内容整层（page-content）轻抬浮现 —— 只动一层，
-   不像被否掉的旧版每张卡各自浮，不晃眼。
-   选择器带 :root 抬高优先级，确保压过 Astro 可能生成的默认换页动画。 */
-@media (prefers-reduced-motion: no-preference) {
-  :root::view-transition-group(site-nav),
-  :root::view-transition-group(site-sidebar),
-  :root::view-transition-group(nav-avatar),
-  :root::view-transition-group(nav-active),
-  :root::view-transition-group(tab-active) {
-    animation-duration: 0.35s;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  /* 跨形态换页（侧栏页 ⟷ 内容页）没有配对目标时，旧导航是「只出不进」的
-     独影：快照是拍平的不透明像素，默认 0.25s 的淡出会像一块残板盖在新页
-     标题上（用户截到那帧）。加速到 0.15s，先退干净再让内容浮上来 */
-  :root::view-transition-old(site-sidebar),
-  :root::view-transition-old(site-nav) {
-    animation-duration: 0.15s;
-  }
-
-  @keyframes vt-content-out {
-    to {
-      opacity: 0;
-    }
-  }
-  @keyframes vt-content-in {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-  }
-  /* 组的几何插值掐掉：前后两页 page-content 的盒子高度/滚动位置不同，
-     默认插值会让整层内容明显平移一段。注意必须用 duration:0 而不是
-     animation:none —— 规范里组的基础样式停在「旧页盒子」上，动画一删
-     整程都卡在旧位置、结束瞬间跳新位置（就是那帧标题被截断的错位）；
-     时长归零则立刻落到关键帧终态 = 新页盒子 */
-  :root::view-transition-group(page-content) {
-    animation-duration: 0s;
-  }
-  :root::view-transition-old(page-content) {
-    animation: none;
-    opacity: 0;
-  }
-  :root::view-transition-new(page-content) {
-    animation: vt-content-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
+/* ─── 换页（照搬 YYsuni：瞬时切换，动效全交给新页的入场弹跳）───
+   ClientRouter 只留 SPA 能力（音乐跨页不断播）；View Transitions 的
+   交叉淡化与共享元素分组全部关停。教训：带 backdrop-filter 的玻璃卡
+   被拍成过渡快照时会渲染成一块模糊空板（用户多次截到的「神秘小方块」），
+   共享元素名一个不留；换页的观感由上面的 card-enter/panel-enter 错峰入场给。 */
+:root::view-transition-old(root) {
+  animation: none;
+}
+:root::view-transition-new(root) {
+  animation: none;
 }
 
 /* ─── 骨架屏 ───
@@ -737,42 +711,11 @@ img.img-pending {
   contain-intrinsic-size: auto 62px;
 }
 
-/* ─── 主题切换的圆形揭示（配 BaseLayout 的 applyWithReveal）───
-   期间抹掉所有命名分组：全页收进 root 快照，被圆形 clip-path 统一裁切；
-   root 自带的交叉淡化也关掉，圆形边界是唯一的过渡。 */
-/* 命名分组只存在于挂了 Astro 过渡指令的元素上（data-astro-transition-scope），
-   按属性摘就够 —— 旧写法通配 *，类一挂一摘就是两轮全页样式重算 */
-html.theme-vt [data-astro-transition-scope] {
-  view-transition-name: none !important;
-}
-html.theme-vt::view-transition-old(root) {
-  animation: none;
-}
-/* 揭示动画直接写在 CSS 里：伪元素树一建立动画就原子生效。
-   旧版是 vt.ready 之后再用 WAAPI 挂 —— 中间只要挤进一帧，
-   新主题就先整屏闪现再缩回圆点（机器忙时表现为「卡一下才开始切」）。
-   圆心/半径由 BaseLayout 在开始过渡前写进 --reveal-* 内联变量。 */
-@keyframes theme-reveal-in {
-  from {
-    clip-path: circle(0px at var(--reveal-x, 50%) var(--reveal-y, 40px));
-  }
-  to {
-    clip-path: circle(var(--reveal-r, 150vmax) at var(--reveal-x, 50%) var(--reveal-y, 40px));
-  }
-}
-html.theme-vt::view-transition-new(root) {
-  /* 420ms：配合按停页面动画后快照不逐帧重栅格化，扩散全程满帧 */
-  animation: theme-reveal-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-/* 揭示进行中只按停「无限循环」的动画（等化条 / 站点橙点 / 音波线 / 时钟冒号 /
-   骨架扫带）：它们随便动一帧，新页实时快照就要整层重栅格化，圆形扩散必卡。
-   一次性的 150ms 变色过渡无害，让它跑；揭示本体是伪元素上的 WAAPI，不受影响 */
-html.theme-vt :is([data-eq] > span, .site-dot, [data-np-icon] path, [data-clock-colon]) {
-  animation-play-state: paused !important;
-}
-html.theme-vt .skeleton::after {
-  animation-play-state: paused !important;
-}
+/* ─── 主题切换（照搬 YYsuni）：瞬时翻转，零动画 ───
+   他的「深夜」只是一组 CSS 变量预设，点击即换值 —— 全仓没有
+   startViewTransition，也没有全页颜色过渡。瞬时翻转只有一次样式重算，
+   没有任何会掉帧的动画，机器再忙也只是极短的一拍，不存在「卡顿感」。
+   此前的圆形揭示（双向快照 + 裁切动画）在负载下必卡，已整体移除。 */
 
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。
    浮现/收起的过渡由上面 .glass 交互规则的 opacity/translate/scale 通道接管；
@@ -803,22 +746,8 @@ html.theme-vt .skeleton::after {
   }
 }
 
-/* 主题切换瞬间给全站颜色一个短过渡（脚本临时挂 .theme-anim）。
-   这是圆形揭示不可用/被占用时的回退路径 —— 不带 box-shadow：
-   阴影是纯绘制属性，40 张玻璃卡逐帧重画 0.35s，正是回退路径卡顿的大头；
-   阴影换色本来就几乎看不出来。 */
-@media (prefers-reduced-motion: no-preference) {
-  .theme-anim,
-  .theme-anim *,
-  .theme-anim *::before,
-  .theme-anim *::after {
-    transition:
-      background-color 0.35s ease,
-      border-color 0.35s ease,
-      outline-color 0.35s ease,
-      color 0.35s ease !important;
-  }
-}
+/* （原 .theme-anim 全站颜色短过渡已随圆形揭示一并移除：
+     每个元素 0.35s 的颜色过渡 = 逐帧全页重绘，负载下就是另一种卡顿。） */
 
 /* 正在听 —— 播放态给卡一圈品牌微光，呼吸感由阴影过渡给 */
 [data-np] {

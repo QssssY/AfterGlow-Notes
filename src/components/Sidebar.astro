@@ -15,12 +15,10 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
 ---
 
 <!-- Sidebar · blog.pen I23TnW
-     transition:name="site-sidebar"：只和其他侧栏页同名（首页⟷归档等，同形原地衔接）。
-     之前与内容页 NavBar 共用 site-nav 做跨形态 morph —— 280×740 的大卡收成
-     52px 高的小条，中间态是一块大板子压在新页标题上（用户截到那帧），已拆开；
-     跨形态时两者各自淡入淡出，只留头像那层小圆独立飞行（nav-avatar）。 -->
+     不挂任何 View Transitions 共享元素名（历史上 site-sidebar / nav-avatar 都试过）：
+     带 backdrop-filter 的玻璃卡被拍成过渡快照会渲染成一块模糊空板（「神秘小方块」）。
+     换页动效照搬 YYsuni：瞬时切换，本卡随 panel-enter 弹入。 -->
 <aside
-  transition:name="site-sidebar"
   class="glass box-border flex w-[280px] flex-col items-start gap-[26px] rounded-[36px] p-[24px]"
 >
   <!-- Brand -->
@@ -49,8 +47,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
     </div>
 
     <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
-      {/* transition 指令只能挂元素，包一层定尺寸的 span 让头像独立参与换页动画 */}
-      <span transition:name="nav-avatar" class="flex size-[34px] shrink-0">
+      <span class="flex size-[34px] shrink-0">
         <Image
           src={avatarSrc}
           alt={site.author}

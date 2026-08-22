@@ -125,10 +125,9 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
             它在哪都别扭（压卡 / 悬浮都被用户否了）。组件保留，想复出加一行即可；
             rail prop 暂留，免得动一圈页面。 */}
         {/* 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右。
-            transition:name="page-content"：换页时整个内容区作为一层轻抬浮现（见 global.css），
-            背景留在 root 组里交叉淡化 —— 前后两页 aurora 相同，视觉上等于纹丝不动 */}
+            换页动效照搬 YYsuni：瞬时切换 + 新页卡片错峰弹入（global.css 的 card-enter），
+            不再挂任何 View Transitions 共享元素名 —— 玻璃卡快照会变成模糊空板 */}
         <div
-          transition:name="page-content"
           class:list={[
             'relative flex flex-col px-[24px] pt-[28px]',
             tabBar ? 'pb-[110px]' : 'pb-[28px]',
@@ -144,28 +143,45 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     {tabBar && <TabBar />}
     <ScrollTopButton />
 
+    <!-- 入场错峰序号（照搬 YYsuni 的 order*0.1s）：给每张玻璃卡编 --enter-i，
+         card-enter/panel-enter 的 animation-delay 按它错峰。必须在首帧前写好：
+         首载靠这段同步脚本（在正文之后解析），换页靠 astro:after-swap（swap 后、绘制前）。
+         封顶 8 —— 再靠后的卡在首屏外，等滚到时早轮到了，不让它干等一秒多。 -->
+    <script is:inline>
+      ;(() => {
+        const stagger = () => {
+          // 只给「当前可见」的卡编号 —— 双布局模式下另一形态的条/栏都在 DOM 里
+          // （display:none），不滤掉的话可见卡的序号被白白推高，页面要空等几百毫秒。
+          // 序号按屏上位置（上→下、左→右）排 —— YYsuni 手工 order 的自动版
+          const cards = []
+          for (const el of document.querySelectorAll('.glass, .glass-row, .glass-panel')) {
+            if (el.checkVisibility ? el.checkVisibility() : true) {
+              const r = el.getBoundingClientRect()
+              cards.push({ el, top: r.top, left: r.left })
+            }
+          }
+          cards.sort((a, b) => a.top - b.top || a.left - b.left)
+          cards.forEach(({ el }, i) => el.style.setProperty('--enter-i', String(Math.min(i, 8))))
+        }
+        stagger()
+        document.addEventListener('astro:after-swap', stagger)
+      })()
+    </script>
+
     <!-- 播放器没有 <audio> 标签：Astro 换页 swap 后会把 body 里所有媒体元素
          重建一遍（reifyMediaElements），连 transition:persist 的也保不住。
          音频实体在 NowPlayingCard 的脚本里 new Audio() —— 模块级对象
          不进 DOM，客户端路由怎么换页都碰不到它，音乐跨页不断。 -->
 
     <script>
-      // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的明暗直切按钮
+      // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的明暗直切按钮。
+      // 照搬 YYsuni：瞬时翻转，零动画。他的「深夜」只是一组 CSS 变量预设，
+      // 点击即换值 —— 没有 startViewTransition、没有全页颜色过渡。
+      // 瞬时翻转只有一次样式重算，没有任何会掉帧的动画，负载再高也不会「卡顿」。
+      // （此前的圆形揭示 = 双向快照 + 裁切动画，机器忙时必卡，已整体移除。）
       const query = matchMedia('(prefers-color-scheme: dark)')
-      /**
-       * 切换瞬间给全站颜色挂一个短过渡（见 global.css 的 .theme-anim）。
-       * 类是临时的：常驻会让所有 hover 的颜色反馈都慢半拍。
-       */
-      let animTimer: ReturnType<typeof setTimeout> | undefined
-      function withColorTransition() {
-        const root = document.documentElement
-        root.classList.add('theme-anim')
-        clearTimeout(animTimer)
-        animTimer = setTimeout(() => root.classList.remove('theme-anim'), 400)
-      }
 
-      function apply(choice: string, animate = false) {
-        if (animate) withColorTransition()
+      function apply(choice: string) {
         document.documentElement.classList.toggle(
           'dark',
           choice === 'dark' || (choice === 'auto' && query.matches),
@@ -178,61 +194,14 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         }
       }
 
-      /**
-       * 圆形揭示：新主题从点击点以圆形扩散铺满全屏（View Transitions 裁切 root 快照）。
-       * 期间临时抹掉所有命名分组（theme-vt，见 global.css）——不抹的话导航/内容
-       * 会各自独立换装，圆形边界就不完整了。明暗没实际翻转（比如浅色系统下
-       * 浅色↔自动）或不支持 / 减少动态时，退回原来的颜色短过渡。
-       */
-      let revealing = false
-      function applyWithReveal(choice: string, ev?: MouseEvent) {
-        const willDark = choice === 'dark' || (choice === 'auto' && query.matches)
-        const flips = willDark !== document.documentElement.classList.contains('dark')
-        if (
-          !flips ||
-          revealing ||
-          !document.startViewTransition ||
-          matchMedia('(prefers-reduced-motion: reduce)').matches
-        ) {
-          apply(choice, true)
-          return
-        }
-        revealing = true
-        const x = ev?.clientX ?? innerWidth / 2
-        const y = ev?.clientY ?? 40
-        const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-        // 圆心/半径先写进变量，动画本体在 global.css 的 theme-reveal-in 里 ——
-        // 伪元素一建立动画就原子生效。旧版等 vt.ready 再 WAAPI，机器忙时
-        // ready 和挂动画之间挤进一帧，新主题整屏闪现又缩回圆点，像卡了一下
-        const rootStyle = document.documentElement.style
-        rootStyle.setProperty('--reveal-x', `${x}px`)
-        rootStyle.setProperty('--reveal-y', `${y}px`)
-        rootStyle.setProperty('--reveal-r', `${Math.ceil(r)}px`)
-        document.documentElement.classList.add('theme-vt')
-        const vt = document.startViewTransition(() => apply(choice, false))
-        vt.finished.finally(() => {
-          // 收尾重算（摘类恢复循环动画）挪出最后一帧：先让终帧上屏再算，
-          // 不然扩散刚满屏就顿一下。revealing 等收尾完再放开，避免连点时
-          // 迟到的清理把下一轮过渡的 theme-vt 拆了
-          setTimeout(() => {
-            document.documentElement.classList.remove('theme-vt')
-            rootStyle.removeProperty('--reveal-x')
-            rootStyle.removeProperty('--reveal-y')
-            rootStyle.removeProperty('--reveal-r')
-            revealing = false
-          }, 80)
-        })
-      }
-
       const current = () => localStorage.getItem('theme') ?? 'light'
 
       query.addEventListener('change', () => {
         if (current() === 'auto') apply('auto')
       })
 
-      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类和布局模式补回来，不闪默认态；
-      // 同时挂 during-nav：换页不重播 @starting-style 的入场浮现 ——
-      // 整页卡片每切一次导航就浮一次，高频切换晃眼睛（见 global.css 对应规则）
+      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类和布局模式补回来，不闪默认态。
+      // 入场弹跳每次换页都重播（YYsuni 的手感），不再挂 during-nav 抑制
       document.addEventListener('astro:after-swap', () => {
         const choice = current()
         document.documentElement.classList.toggle(
@@ -241,29 +210,20 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         )
         document.documentElement.dataset.theme = choice
         document.documentElement.dataset.layout = localStorage.getItem('layout') ?? 'classic'
-        document.documentElement.classList.add('during-nav')
       })
 
       // 首次加载与每次换页都会触发：在当前 DOM 上重绑控件
       document.addEventListener('astro:page-load', () => {
         apply(current())
 
-        // 新页首帧渲染完再摘掉 during-nav，入场过渡恢复给下一次「整页刷新」用
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => document.documentElement.classList.remove('during-nav')),
-        )
-
         for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
-          chip.addEventListener('click', (e) => applyWithReveal(chip.dataset.themeChoice!, e))
+          chip.addEventListener('click', () => apply(chip.dataset.themeChoice!))
         }
         for (const button of document.querySelectorAll('[data-theme-cycle]')) {
-          button.addEventListener('click', (e) => {
+          button.addEventListener('click', () => {
             // 移动端/图标条只有这一颗按钮：在明暗之间直切。三档循环里的「自动」
             // 常与当前系统外观同色，点上去毫无反应，像是要点两次才生效。
-            applyWithReveal(
-              document.documentElement.classList.contains('dark') ? 'light' : 'dark',
-              e as MouseEvent,
-            )
+            apply(document.documentElement.classList.contains('dark') ? 'light' : 'dark')
           })
         }
 
@@ -290,9 +250,8 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       })
     </script>
 
-    <!-- 入场浮现改在 global.css 里用 @starting-style 做（纯 CSS）：
-         最初的 WAAPI 版把「卡片可见」押在 JS 动画能跑完上，
-         渲染帧一被节流（headless / 后台标签页 / 省电模式）整页就停在 opacity 0。 -->
+    <!-- 入场弹跳本体在 global.css（card-enter/panel-enter，纯 CSS 动画）：
+         引擎保证到达终态，headless / 后台标签页这类不出帧的环境直接显示终值。 -->
 
     <!-- 粘性策略：导航侧栏从不钉（自然滚走），只有长内容页钉一屏装得下的
          功能面板组（文章页的 目录+信息+相关、归档页的 年表+订阅），
@@ -323,7 +282,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
 
     <script>
       // 数字滚动 —— 统计位（[data-countup]）首次进站时从 0 涨到真实值。
-      // 只在整页加载的文档上播：客户端路由换页不重播，同入场浮现的 during-nav 规则。
+      // 只在整页加载的文档上播：客户端路由换页不重播（高频换页反复滚数字很吵）。
       let navigated = false
       document.addEventListener('astro:after-swap', () => {
         navigated = true
