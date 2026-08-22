@@ -58,7 +58,6 @@ const friends = friendsData.map((f) => ({ ...f, avatar: blogrollAvatar(f.domain)
       >
         <BuildPanel />
         <PrivacyPanel />
-        <CreditsPanel />
       </div>
     </div>
 
@@ -83,6 +82,7 @@ const friends = friendsData.map((f) => ({ ...f, avatar: blogrollAvatar(f.domain)
       </div>
 
       <ChangelogCard entries={changelog} />
+      <CreditsPanel />
       <FriendsPanel note="欢迎交换 · 邮件里说一声就好" friends={friends} />
     </div>
   </div>

@@ -1,13 +1,13 @@
 ---
 import { Icon } from 'astro-icon/components'
-import Panel from '~/components/Panel.astro'
 
 /**
- * 致谢 CREDITS · 关于页左栏第三块（用户点名加的声明，设计语言照 FINE PRINT）。
+ * 致谢 CREDITS · 关于页内容流，站点更新日志之下（用户定位）。
  *
- * 声明个人学习项目身份 + 致谢两个借鉴的开源博客：
- * 界面雏形与静态站基础设施参考了 CuteLeaf/Firefly，
+ * 全宽玻璃卡（外壳对齐 ChangelogCard）：声明个人学习项目身份，
+ * 致谢两个借鉴的开源博客 —— 界面雏形与静态站基础设施参考 CuteLeaf/Firefly，
  * 紧凑布局、粘性策略和首页大时钟学的 YYsuni/2025-blog-public。
+ * 两条链接做成 chip 行卡，样式与下方友链面板的朋友卡同款。
  */
 const credits = [
   {
@@ -23,40 +23,46 @@ const credits = [
 ]
 ---
 
-<Panel caption="致 谢  CREDITS">
-  <p class="w-full text-[12px]/[1.55] font-normal text-ink-soft">
-    这是一个个人学习项目：从设计稿到前后端代码都是练手之作，边搭边学。
+<!-- Credits · 关于页 -->
+<div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[30px] px-[30px] py-[28px]">
+  <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px]">
+    <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      致 谢 CREDITS
+    </span>
+    <span class="text-[12px] font-normal text-ink-muted">个人学习项目 · 边搭边学</span>
+  </div>
+
+  <p class="w-full text-[13px]/[22px] font-normal text-ink-soft">
+    这个站从设计稿到前后端代码都是练手之作。界面与工程上大量借鉴了两个优秀的开源博客，特此感谢
+    —— 站里学来的每一处，代码注释里都注明了出处。
   </p>
 
-  {
-    credits.map((credit) => (
-      <a
-        href={credit.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="group flex h-fit w-full shrink-0 flex-col gap-[2px]"
-      >
-        <span class="flex w-full flex-row items-center gap-[6px]">
-          <span class="size-[4px] shrink-0 rounded-full bg-ink-muted" />
-          <span class="min-w-0 flex-1 truncate text-[12.5px]/[1.5] font-medium text-ink">
-            {credit.name}
+  <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[12px] xl:flex-row">
+    {
+      credits.map((credit) => (
+        <a
+          href={credit.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group box-border flex h-fit w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[16px] py-[13px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
+        >
+          <span class="flex size-[34px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
+            <Icon name="lucide:github" class="size-[16px] shrink-0 text-brand-ink" />
+          </span>
+          <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[2px]">
+            <span class="w-full truncate text-[13.5px]/[18px] font-medium text-ink">
+              {credit.name}
+            </span>
+            <span class="w-full truncate text-[11.5px]/[15px] font-normal text-ink-muted">
+              {credit.note}
+            </span>
           </span>
           <Icon
             name="lucide:arrow-up-right"
-            class="size-[12px] shrink-0 text-brand-ink transition-transform group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
+            class="size-[14px] shrink-0 text-brand-ink transition-transform group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
           />
-        </span>
-        <span class="pl-[12px] text-[11.5px]/[1.5] font-normal text-ink-muted">{credit.note}</span>
-      </a>
-    ))
-  }
-
-  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
-
-  <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
-    <Icon name="lucide:heart" class="size-[13px] shrink-0 text-brand-ink" />
-    <span class="flex-1 text-[11.5px]/[1.5] font-normal text-ink-soft">
-      感谢两位作者的开源分享，站里学来的每一处都注明在代码注释里。
-    </span>
-  </span>
-</Panel>
+        </a>
+      ))
+    }
+  </div>
+</div>
