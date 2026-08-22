@@ -63,8 +63,10 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     optional?: boolean
     /** 表单里占整行 */
     wide?: boolean
-    /** avatar 型控件：从条目的哪个字段取文件名（域名） */
+    /** avatar 型控件：从条目的哪个字段取文件名（域名 / 仓库名） */
     nameFrom?: string
+    /** avatar 型控件走哪种上传（服务端 kind）：avatar 友链头像 / project 项目配图 */
+    uploadKind?: 'avatar' | 'project'
     /** 只是个操作控件，不往 JSON 里写值（avatar 用） */
     virtual?: boolean
   }
@@ -186,6 +188,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         { key: 'icon', label: '图标', hint: ICON_HINT },
         { key: 'badge', label: '角标（可空，只有第一条显示）', optional: true },
         { key: 'pushed', label: '最后推送时间', input: 'datetime', hint: '项目页按它标「在推进 / 搁置」，点同步自动填' },
+        { key: 'thumb', label: '项目配图', input: 'avatar', nameFrom: 'repo', uploadKind: 'project', virtual: true, hint: '项目页卡片的大图（截图/海报），按仓库名存 images/projects/；不传用品牌占位图' },
       ],
     },
     stack: {
@@ -375,10 +378,10 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         control = `<input class="ad-input" ${attrs} value="${esc(Array.isArray(v) ? v.join(', ') : s)}">`
         break
       case 'avatar':
-        // 操作控件：图按域名传给服务端，不往 JSON 写值
+        // 操作控件：图按域名/仓库名传给服务端，不往 JSON 写值
         return `<div class="flex flex-col gap-[4px]">
           <span class="ad-label">${esc(f.label)}</span>
-          <button type="button" class="ad-btn-ghost" data-act="avatar" data-idx="${scope}" data-from="${esc(f.nameFrom ?? 'domain')}">上传头像图</button>
+          <button type="button" class="ad-btn-ghost" data-act="avatar" data-idx="${scope}" data-from="${esc(f.nameFrom ?? 'domain')}" data-kind="${esc(f.uploadKind ?? 'avatar')}">上传图片</button>
           ${hint}
         </div>`
       default:
@@ -479,7 +482,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     const act = btn.dataset.act
 
     if (act === 'avatar') {
-      pickAvatar(i, btn.dataset.from || 'domain')
+      pickAvatar(i, btn.dataset.from || 'domain', btn.dataset.kind || 'avatar')
       return
     }
     if (act === 'gh') {
@@ -560,22 +563,23 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     }
   }
 
-  // ---- 头像上传（友链 / 关于页友链共用，按域名命名）----
+  // ---- 按名图片上传（友链头像按域名 / 项目配图按仓库名）----
 
   const avFile = $<HTMLInputElement>('[data-avatar-file]')
   let avName = ''
+  let avKind = 'avatar'
 
-  function pickAvatar(i: number, nameFrom: string) {
+  function pickAvatar(i: number, nameFrom: string, kind: string) {
     const item = list()[i]
     if (!item) return
-    const name = String(item[nameFrom] ?? '')
-      .trim()
-      .toLowerCase()
+    // 项目配图的来源字段是 owner/repo：取仓库名段；域名不含斜杠，不受影响
+    const name = (String(item[nameFrom] ?? '').trim().toLowerCase().split('/').pop() ?? '')
     if (!name) {
-      toast('先把域名填好 —— 头像文件按域名命名', false)
+      toast(`先把${kind === 'project' ? ' GitHub 链接' : '域名'}填好 —— 图片按它命名`, false)
       return
     }
     avName = name
+    avKind = kind
     avFile.click()
   }
 
@@ -583,12 +587,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     const file = avFile.files?.[0]
     if (!file) return
     const fd = new FormData()
-    fd.append('kind', 'avatar')
+    fd.append('kind', avKind)
     fd.append('name', avName)
     fd.append('file', file)
     try {
       const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
-      toast(`头像已存进 ${res.path} —— dev 站热更新，正式站要重新构建`)
+      toast(`图片已存进 ${res.path} —— dev 站热更新，正式站要重新构建`)
     } catch (err) {
       report(err)
     } finally {

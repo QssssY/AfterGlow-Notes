@@ -11,6 +11,7 @@ import PageHead from '~/components/projects/PageHead.astro'
 import StackPanel from '~/components/projects/StackPanel.astro'
 import { repoUrl, repos } from '~/config'
 import BaseLayout from '~/layouts/BaseLayout.astro'
+import { projectThumb } from '~/utils/project-thumbs'
 
 // repos[0] 是主推项目，进 Featured 卡；其余进下面的网格
 const [featured, ...rest] = repos
@@ -75,6 +76,7 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
           updated={relative(featured.pushed)}
           repo={featured.repo}
           href={repoUrl(featured.repo)}
+          thumb={projectThumb(featured.repo)}
         />
       </div>
 
@@ -102,6 +104,7 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
                 stars={repo.stars}
                 repo={repo.repo}
                 href={repoUrl(repo.repo)}
+                thumb={projectThumb(repo.repo)}
                 full
               />
             </div>

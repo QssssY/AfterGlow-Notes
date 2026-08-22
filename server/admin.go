@@ -4,8 +4,9 @@
 // 所有「改内容」都落成仓库里的文件：
 //   - 文章        → src/content/posts/<slug>.md（YAML front-matter + 正文）
 //   - 站点数据    → src/data/<name>.json（站点文案 / 关于页 / 项目 / 友链 / 播放列表等）
-//   - 上传        → 封面进 src/content/posts/_covers/，插图进 public/images/uploads/，
-//                   友链头像按域名进 images/blogroll/，音乐进 public/music/
+//   - 上传        → 封面进 src/content/posts/_covers/，插图进 public/images/uploads/（内容寻址去重），
+//                   友链头像按域名进 images/blogroll/，项目配图按仓库名进 images/projects/，
+//                   音乐进 public/music/
 //
 // dev 模式下 astro dev 监听这些文件，保存即热更新；部署后改完要重新构建
 // （/api/admin/build 可配一条构建命令，没配就提示手动构建）。
@@ -73,6 +74,11 @@ func (a *adminState) musicDir() string { return filepath.Join(a.blogDir, "public
 // 友链头像目录：文件名 = 域名，前端按域名 glob（src/utils/blogroll-avatars.ts）
 func (a *adminState) blogAvatarsDir() string {
 	return filepath.Join(a.blogDir, "images", "blogroll")
+}
+
+// 项目配图目录：文件名 = 仓库名（小写），前端按名 glob（src/utils/project-thumbs.ts）
+func (a *adminState) projectThumbsDir() string {
+	return filepath.Join(a.blogDir, "images", "projects")
 }
 
 // 站点数据文件白名单 —— 新增一种内容 = 这里加一行 + src/data 放文件 + config.ts 引入
@@ -597,6 +603,27 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		dst = filepath.Join(s.admin.blogAvatarsDir(), domain+ext)
 		ret = "images/blogroll/" + domain + ext
 
+	case "project":
+		// 项目卡配图：按仓库名（小写、只留 a-z0-9-）存进 images/projects/，
+		// 和友链头像同一套按名 glob 的路子，也走 Astro 资产管线做构建期压缩
+		name := nameSan.ReplaceAllString(strings.ToLower(strings.TrimSpace(r.FormValue("name"))), "-")
+		name = strings.Trim(name, "-")
+		if name == "" {
+			fail(w, http.StatusBadRequest, "项目配图上传要带仓库名")
+			return
+		}
+		if !imageExts[ext] {
+			fail(w, http.StatusBadRequest, "配图只收 png / jpg / webp / gif / avif")
+			return
+		}
+		for old := range imageExts {
+			if old != ext {
+				os.Remove(filepath.Join(s.admin.projectThumbsDir(), name+old))
+			}
+		}
+		dst = filepath.Join(s.admin.projectThumbsDir(), name+ext)
+		ret = "images/projects/" + name + ext
+
 	case "music":
 		if !musicExts[ext] {
 			fail(w, http.StatusBadRequest, "音乐只收 mp3 / m4a / ogg / flac / lrc")
@@ -612,7 +639,7 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		ret = "/music/" + base + ext
 
 	default:
-		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / music")
+		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / project / music")
 		return
 	}
 

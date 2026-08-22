@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
 import placeholderArt from '../../images/placeholder-art.png'
 
@@ -13,9 +14,11 @@ interface Props {
   full?: boolean
   /** owner/repo；给了就让 RepoStars 的脚本来刷新 star 数 */
   repo?: string | undefined
+  /** 项目配图（管理端上传，utils/project-thumbs.ts 按仓库名取）；没有退回占位图 */
+  thumb?: ImageMetadata | undefined
 }
 
-const { title, desc, stack, stars, href, full = false, repo } = Astro.props
+const { title, desc, stack, stars, href, full = false, repo, thumb } = Astro.props
 ---
 
 <!-- Project Card · blog.pen XnV5M -->
@@ -30,10 +33,9 @@ const { title, desc, stack, stars, href, full = false, repo } = Astro.props
     full ? 'h-full w-full' : 'w-[260px]',
   ]}
 >
-  <!-- 还没有项目截图：先用品牌占位图（scripts/gen-placeholder-art.mjs 生成），
-       以后有真图就在这里换成对应的 import -->
+  <!-- 配图在管理端「项目」页签上传（按仓库名存 images/projects/）；没传用品牌占位图 -->
   <Image
-    src={placeholderArt}
+    src={thumb ?? placeholderArt}
     alt=""
     width={792}
     height={396}
