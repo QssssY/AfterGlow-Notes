@@ -14,8 +14,8 @@ const KEYWORD = '#FFC98B'
 const VALUE = '#9FE0C8'
 const DIM = '#A2988E'
 
-export const hearthCode = {
-  name: 'hearth',
+export const afterglowCode = {
+  name: 'afterglow',
   type: 'dark',
   colors: {
     'editor.background': BG,

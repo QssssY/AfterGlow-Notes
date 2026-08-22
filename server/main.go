@@ -1,4 +1,4 @@
-// 炉火录的动态数据服务 —— 点赞与阅读计数。
+// 余晖录的动态数据服务 —— 点赞与阅读计数。
 //
 // 站点本体是纯静态（Astro 构建产物），这个服务只管两件访客产生的数据：
 //   - 点赞：每 (slug, visitor) 一票，可点可取消；visitor 是浏览器端生成的匿名随机 id
@@ -56,7 +56,7 @@ type server struct {
 
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8787", "监听地址（生产上放在 Caddy/Nginx 反代之后）")
-	dbPath := flag.String("db", "hearth.db", "SQLite 数据库文件路径")
+	dbPath := flag.String("db", "afterglow.db", "SQLite 数据库文件路径")
 	origin := flag.String("origin", "*", "CORS 允许的来源，如 https://example.com；* 表示不限")
 	maxWrites := flag.Int("max-writes", 200, "每个 IP 每天允许的写操作次数")
 	adminPass := flag.String("admin-pass", os.Getenv("ADMIN_PASSWORD"), "管理后台口令；不设则管理接口整组关闭")

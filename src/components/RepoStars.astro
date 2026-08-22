@@ -35,7 +35,7 @@
 
   const read = (repo: string): Hit | null => {
     try {
-      const raw = localStorage.getItem(`hearth:gh:${repo}`)
+      const raw = localStorage.getItem(`afterglow:gh:${repo}`)
       return raw ? (JSON.parse(raw) as Hit) : null
     } catch {
       return null
@@ -43,7 +43,7 @@
   }
   const write = (repo: string, hit: Hit) => {
     try {
-      localStorage.setItem(`hearth:gh:${repo}`, JSON.stringify(hit))
+      localStorage.setItem(`afterglow:gh:${repo}`, JSON.stringify(hit))
     } catch {
       // 隐私模式存不了：退化成每次整页加载拉一轮
     }

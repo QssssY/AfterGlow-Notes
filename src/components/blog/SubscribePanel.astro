@@ -51,7 +51,7 @@ import Panel from '~/components/Panel.astro'
         const input = form.querySelector<HTMLInputElement>('input[name="email"]')
         if (!to || !input) return
 
-        const subject = encodeURIComponent('订阅炉火录')
+        const subject = encodeURIComponent('订阅余晖录')
         const body = encodeURIComponent(`请把这个邮箱加入订阅：${input.value}`)
         location.href = `mailto:${to}?subject=${subject}&body=${body}`
       })

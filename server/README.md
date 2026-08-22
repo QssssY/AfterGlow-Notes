@@ -19,8 +19,8 @@
 
 ```bash
 cd server
-go build -o hearth-api.exe .
-./hearth-api.exe -admin-pass 你的口令        # 默认 127.0.0.1:8787，数据库 ./hearth.db
+go build -o afterglow-api.exe .
+./afterglow-api.exe -admin-pass 你的口令        # 默认 127.0.0.1:8787，数据库 ./afterglow.db
 ```
 
 站点这边构建时告诉前端服务在哪：
@@ -48,22 +48,22 @@ PUBLIC_API_BASE=http://127.0.0.1:8787 pnpm build
 
 ```bash
 cd server
-GOOS=linux GOARCH=amd64 go build -o hearth-api .
-scp hearth-api root@你的服务器:/opt/hearth/
+GOOS=linux GOARCH=amd64 go build -o afterglow-api .
+scp afterglow-api root@你的服务器:/opt/afterglow/
 ```
 
-**2. systemd 常驻**（`/etc/systemd/system/hearth-api.service`）：
+**2. systemd 常驻**（`/etc/systemd/system/afterglow-api.service`）：
 
 ```ini
 [Unit]
-Description=hearth blog api
+Description=afterglow blog api
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/hearth
+WorkingDirectory=/opt/afterglow
 # 服务器上也想用管理台的话：把仓库 clone 到机器上，加
-#   -admin-pass 你的口令 -blog-dir /opt/hearth/blog -build-cmd "pnpm build"
-ExecStart=/opt/hearth/hearth-api -addr 127.0.0.1:8787 -db /opt/hearth/hearth.db -origin https://你的域名
+#   -admin-pass 你的口令 -blog-dir /opt/afterglow/blog -build-cmd "pnpm build"
+ExecStart=/opt/afterglow/afterglow-api -addr 127.0.0.1:8787 -db /opt/afterglow/afterglow.db -origin https://你的域名
 Restart=always
 User=www-data
 
@@ -72,7 +72,7 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-systemctl daemon-reload && systemctl enable --now hearth-api
+systemctl daemon-reload && systemctl enable --now afterglow-api
 ```
 
 **3. Caddy 反代**（自动 HTTPS；`X-Forwarded-For` 由它补，限流才认得出访客 IP）：
@@ -89,7 +89,7 @@ api.你的域名 {
 
 ## 运维备忘
 
-- **备份** = 拷走 `hearth.db` 一个文件（`sqlite3 hearth.db ".backup b.db"` 更稳）
+- **备份** = 拷走 `afterglow.db` 一个文件（`sqlite3 afterglow.db ".backup b.db"` 更稳）
 - **带宽**：这个 API 每次应答几十字节，1M 带宽毫无压力；吃带宽的是静态资源，站点前面记得套 CDN
 - **限流**：`-max-writes`（默认 200/IP/天）；被限到会返回 429，前端静默降级不报错
 - **CORS**：`-origin` 生产上写成站点的完整来源（如 `https://blog.example.com`），默认 `*` 只适合本地调试

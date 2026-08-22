@@ -10,7 +10,7 @@
 
 import { apiBase } from '~/config'
 
-const VISITOR_KEY = 'hearth:visitor'
+const VISITOR_KEY = 'afterglow:visitor'
 
 export function visitorId(): string {
   try {

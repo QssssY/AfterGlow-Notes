@@ -74,7 +74,7 @@ const { slug, updated } = Astro.props
   document.addEventListener('astro:page-load', () => {
     for (const button of document.querySelectorAll<HTMLElement>('[data-like][data-like-slug]')) {
       const slug = button.dataset.likeSlug!
-      const KEY = `hearth:liked:${slug}`
+      const KEY = `afterglow:liked:${slug}`
       const label = button.querySelector<HTMLElement>('[data-like-label]')
 
       // localStorage 在隐私模式下会抛，包起来后点赞退化成本次会话有效

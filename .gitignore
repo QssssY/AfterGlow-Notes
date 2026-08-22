@@ -27,7 +27,7 @@ Thumbs.db
 
 # Go 服务的本地构建产物与数据库（部署产物在服务器上，不进仓库）
 server/*.exe
-server/hearth-api
+server/afterglow-api
 server/*.db
 server/*.db-*
 
