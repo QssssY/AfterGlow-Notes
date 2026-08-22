@@ -14,6 +14,16 @@ export const site = {
 } as const
 
 /**
+ * 动态数据服务（server/ 里的 Go 后端）的地址，如 https://api.example.com。
+ * 构建时用环境变量注入：PUBLIC_API_BASE=… pnpm build。
+ * 不设就是纯本机模式：点赞只存访客自己的浏览器，「N 次阅读」整块不渲染 —— 不编数字。
+ */
+export const apiBase = ((import.meta.env.PUBLIC_API_BASE as string | undefined) ?? '').replace(
+  /\/+$/,
+  '',
+)
+
+/**
  * 对外联系邮箱 —— 订阅面板与申请友链都用它拼 mailto。
  * 两处表单都没有后端，提交时打开访客自己的邮件客户端并预填内容；
  * 以后接了订阅服务或表单服务，改掉各自的 submit 处理即可。
@@ -170,11 +180,13 @@ export const repoNote = '只列还在动的仓库，状态按最近一次提交�
 
 /**
  * 细则 FINE PRINT（关于页左栏）—— 说的是这个站真实的做法：
- * 没接统计脚本、评论走 mailto、字体和图片都自托管（见 global.css 顶部）。
+ * 阅读与点赞只存匿名随机 id 的计数（见 server/main.go，不存 IP/UA）、
+ * 评论走 mailto、字体和图片都自托管（见 global.css 顶部）。
+ * 设计稿原句是「访问量只看服务端日志，不落库」——接了计数服务后不再属实，改掉。
  */
 export const finePrint = {
   blurb: '没有埋点，没有广告，也不卖数据给任何人。',
-  points: ['访问量只看服务端日志，不落库', '评论用邮件代替，不另存一份人', '字体和图片全部自托管'],
+  points: ['阅读数只记匿名总数，不记来路', '评论用邮件代替，不另存一份人', '字体和图片全部自托管'],
   reply: '来信一般三天内回，长信回得慢些。',
 } as const
 

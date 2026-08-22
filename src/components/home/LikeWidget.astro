@@ -40,6 +40,7 @@ import { likes } from '~/config'
 </div>
 
 <script>
+  import { getLikes, postLike } from '~/scripts/api'
   import { likeBurst } from '~/scripts/like-burst'
 
   const KEY = 'firefly:liked'
@@ -66,17 +67,39 @@ import { likes } from '~/config'
     const count = document.querySelector<HTMLElement>('[data-like-count]')
 
     let liked = read()
+    // 服务端总数；null = 后端没配或没应答，显示 config 里的占位基数
+    let total: number | null = null
+
     const render = () => {
       button.setAttribute('aria-pressed', String(liked))
-      if (count) count.textContent = String(base + (liked ? 1 : 0))
+      // 设计稿写法不带千分位（20118）
+      if (count) count.textContent = String(total ?? base + (liked ? 1 : 0))
     }
     render()
+
+    // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）
+    getLikes('site').then((state) => {
+      if (!state) return
+      liked = state.liked
+      total = state.count
+      write(liked)
+      render()
+    })
 
     button.addEventListener('click', () => {
       liked = !liked
       write(liked)
+      if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
       render()
       if (liked) likeBurst(button)
+
+      postLike('site', liked ? 'like' : 'unlike').then((state) => {
+        if (!state) return
+        liked = state.liked
+        total = state.count
+        write(liked)
+        render()
+      })
     })
   }
 </script>
