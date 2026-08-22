@@ -1,0 +1,62 @@
+---
+import { Icon } from 'astro-icon/components'
+import Panel from '~/components/Panel.astro'
+
+/**
+ * 致谢 CREDITS · 关于页左栏第三块（用户点名加的声明，设计语言照 FINE PRINT）。
+ *
+ * 声明个人学习项目身份 + 致谢两个借鉴的开源博客：
+ * 界面雏形与静态站基础设施参考了 CuteLeaf/Firefly，
+ * 紧凑布局、粘性策略和首页大时钟学的 YYsuni/2025-blog-public。
+ */
+const credits = [
+  {
+    name: 'CuteLeaf / Firefly',
+    note: '界面雏形与 Astro 基础设施',
+    href: 'https://github.com/CuteLeaf/Firefly',
+  },
+  {
+    name: 'YYsuni / 2025-blog-public',
+    note: '紧凑布局与首页大时钟',
+    href: 'https://github.com/YYsuni/2025-blog-public',
+  },
+]
+---
+
+<Panel caption="致 谢  CREDITS">
+  <p class="w-full text-[12px]/[1.55] font-normal text-ink-soft">
+    这是一个个人学习项目：从设计稿到前后端代码都是练手之作，边搭边学。
+  </p>
+
+  {
+    credits.map((credit) => (
+      <a
+        href={credit.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group flex h-fit w-full shrink-0 flex-col gap-[2px]"
+      >
+        <span class="flex w-full flex-row items-center gap-[6px]">
+          <span class="size-[4px] shrink-0 rounded-full bg-ink-muted" />
+          <span class="min-w-0 flex-1 truncate text-[12.5px]/[1.5] font-medium text-ink">
+            {credit.name}
+          </span>
+          <Icon
+            name="lucide:arrow-up-right"
+            class="size-[12px] shrink-0 text-brand-ink transition-transform group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"
+          />
+        </span>
+        <span class="pl-[12px] text-[11.5px]/[1.5] font-normal text-ink-muted">{credit.note}</span>
+      </a>
+    ))
+  }
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <Icon name="lucide:heart" class="size-[13px] shrink-0 text-brand-ink" />
+    <span class="flex-1 text-[11.5px]/[1.5] font-normal text-ink-soft">
+      感谢两位作者的开源分享，站里学来的每一处都注明在代码注释里。
+    </span>
+  </span>
+</Panel>

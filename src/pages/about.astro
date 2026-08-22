@@ -4,6 +4,7 @@ import NavBar from '~/components/NavBar.astro'
 import Sidebar from '~/components/Sidebar.astro'
 import AboutMe from '~/components/about/AboutMe.astro'
 import BuildPanel from '~/components/about/BuildPanel.astro'
+import CreditsPanel from '~/components/about/CreditsPanel.astro'
 import ChangelogCard from '~/components/about/ChangelogCard.astro'
 import FriendsPanel from '~/components/about/FriendsPanel.astro'
 import PrivacyPanel from '~/components/about/PrivacyPanel.astro'
@@ -57,6 +58,7 @@ const friends = friendsData.map((f) => ({ ...f, avatar: blogrollAvatar(f.domain)
       >
         <BuildPanel />
         <PrivacyPanel />
+        <CreditsPanel />
       </div>
     </div>
 
