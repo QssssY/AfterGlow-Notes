@@ -4,6 +4,7 @@ description: 我的 AI 求职应用的后端账本：直连线程池与 MQ 的�
 date: 2026-08-22
 tags: [Java, 后端, AI, 架构]
 category: 后端工程
+cover: ./_covers/offcat-async-pipeline.webp
 ---
 
 [offCat](https://github.com/QssssY/offCat) 是我做得最重的一个项目：面向求职场景的 AI 应用，简历诊断、多模式模拟面试、JD 匹配、模板导出，外加社区、会员配额和管理后台。Spring Boot 3.2 + JDK 21 + MyBatis-Plus + RabbitMQ + Redis + MySQL，`db/migrations` 里躺着九十多个按任务编号的迁移脚本——这个数字本身就是开发过程的年轮。

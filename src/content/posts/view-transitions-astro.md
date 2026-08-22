@@ -4,6 +4,7 @@ description: 同名元素跨页 morphing、主题切换从点击处圆形揭示�
 date: 2026-08-22
 tags: [前端, 动效, Astro]
 category: 前端工程
+cover: ./_covers/view-transitions-astro.webp
 ---
 
 多页静态站的原罪是换页那一下白闪：整个文档换掉重画，再快也是"刷新"，成不了"过渡"。View Transitions API 就是浏览器给这件事的原生答案——这个站的换页动效和主题切换全靠它，没装任何动画库。

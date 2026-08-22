@@ -4,6 +4,7 @@ description: 内容进仓库、访客数据进 SQLite。管理后台的每一次
 date: 2026-08-22
 tags: [架构, Git, 建站]
 category: 建站笔记
+cover: ./_covers/git-as-cms.webp
 ---
 
 给博客做网页管理端的时候，第一个架构决定就把自己问住了：文章和站点数据存哪？直觉答案是"当然上个数据库"——轻量点的话 SQLite 一个文件就搞定。最后我没这么做：**管理端的每一次保存，落下来的都是仓库里的文件**。文章是 `src/content/posts/` 下的 Markdown，站点数据是 `src/data/` 下的 JSON。

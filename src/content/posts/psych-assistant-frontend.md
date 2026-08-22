@@ -4,6 +4,7 @@ description: ai-psychological-assistant 复盘：原生 EventSource 接不了 PO
 date: 2026-08-22
 tags: [Vue, AI, 前端]
 category: 前端工程
+cover: ./_covers/psych-assistant-frontend.webp
 ---
 
 [ai-psychological-assistant](https://github.com/QssssY/ai-psychological-assistant) 是我做的 AI 情感陪伴应用的前端：Vue 3.5 + Vite + Element Plus + Pinia，核心是一个流式对话页和一本情绪日记。心理陪伴类产品的前端和普通聊天界面看着一样，做起来不一样——**情绪本身是个要渲染的状态**。

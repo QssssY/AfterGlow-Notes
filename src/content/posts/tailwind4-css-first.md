@@ -4,6 +4,7 @@ description: tailwind.config.js 退场，@theme 和 @custom-variant 上位。用
 date: 2026-08-21
 tags: [Tailwind, CSS, 前端]
 category: 前端工程
+cover: ./_covers/tailwind4-css-first.webp
 ---
 
 Tailwind 4 最大的变化不是快了多少倍，而是**配置从 JavaScript 搬进了 CSS**。老版本那个几百行的 `tailwind.config.js` 没有了，主题、变体、自定义工具类，全部用 CSS 指令声明。这个站从第一天就用 4，把踩过的几个点记下来。

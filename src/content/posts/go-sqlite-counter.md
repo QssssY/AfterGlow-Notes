@@ -4,6 +4,7 @@ description: 静态站没有后端，但计数需要一个。两张表、匿名�
 date: 2026-08-21
 tags: [Go, SQLite, 后端]
 category: 后端工程
+cover: ./_covers/go-sqlite-counter.webp
 ---
 
 静态博客有一个绕不开的矛盾：页面可以是死的，但点赞和阅读数必须是活的。市面上的解法要么接第三方统计（把访客数据交出去），要么上 serverless 函数加云数据库（为两个计数器养一整套云资源）。我选了最土的路：自己写一个 Go 服务。

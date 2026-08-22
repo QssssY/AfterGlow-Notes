@@ -4,6 +4,7 @@ description: 复盘我的 mini-vue 仓库：effect 栈怎么解决嵌套、targe
 date: 2026-08-22
 tags: [Vue, 源码, 前端]
 category: 前端工程
+cover: ./_covers/mini-vue-reactivity.webp
 ---
 
 [mini-vue](https://github.com/QssssY/mini-vue) 是我逼自己把 Vue 3 核心从头写一遍的仓库——响应式、运行时、编译器三个模块各自实现，配了十二组 Jest 测试。这篇先复盘响应式，因为它是整棵树的根，而且核心文件 `effect.js` 只有 59 行。

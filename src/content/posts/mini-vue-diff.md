@@ -4,6 +4,7 @@ description: mini-vue 复盘第二篇：patch 的分层派发、带 key children
 date: 2026-08-22
 tags: [Vue, 算法, 前端]
 category: 前端工程
+cover: ./_covers/mini-vue-diff.webp
 ---
 
 接着上篇的响应式，这篇拆 [mini-vue](https://github.com/QssssY/mini-vue) 的 runtime——381 行的 `render.js`，核心是那道所有面试都爱问的题：**diff 到底怎么把 DOM 操作降到最少？**

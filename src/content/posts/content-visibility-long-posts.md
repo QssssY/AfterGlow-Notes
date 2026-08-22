@@ -4,6 +4,7 @@ description: 视口外的段落完全跳过渲染，滚到附近才画。虚拟�
 date: 2026-08-22
 tags: [CSS, 性能, 前端]
 category: 前端工程
+cover: ./_covers/content-visibility-long-posts.webp
 ---
 
 给博客做性能优化时列过一条"文章加虚拟滚动"。研究了一圈，结论是：**对静态长文，真·虚拟滚动是反模式；它想要的东西，CSS 原生就有**。

@@ -4,6 +4,7 @@ description: CJK 字体是网页性能的天敌。构建期扫描站内用字做
 date: 2026-08-22
 tags: [字体, 性能, 前端]
 category: 前端工程
+cover: ./_covers/chinese-webfont-subsetting.webp
 ---
 
 设计稿指定正文用 Noto Sans SC。这五个字说出来轻巧，落地时是一道体积题：**中文字体一个字重就有一万多个字形，文件 1.1MB 起步**，四个字重原样上线就是四五兆——比整个站的其余部分加起来还重。
