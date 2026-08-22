@@ -19,8 +19,8 @@ interface Props {
   /** 移动端底部 Tab Bar */
   tabBar?: boolean
   /**
-   * 桌面端顶部内边距。设计稿现在所有页面的 Body 都从 y72 起
-   * （首页那排 Header 大按钮这轮被挪进了侧栏，48 那一档只剩组件画廊在用）。
+   * 桌面端顶部内边距。设计稿的 Body 从 y72 起，但用户嫌顶上空得慌，
+   * 全站统一走默认的 48；72 档保留着以备回调。
    */
   topPad?: 48 | 72
 }
@@ -123,8 +123,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     {tabBar && <TabBar />}
 
     <script>
-      // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的单个循环按钮
-      const ORDER = ['light', 'dark', 'auto']
+      // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的明暗直切按钮
       const query = matchMedia('(prefers-color-scheme: dark)')
       /**
        * 切换瞬间给全站颜色挂一个短过渡（见 global.css 的 .theme-anim）。
@@ -158,7 +157,9 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         if (current() === 'auto') apply('auto')
       })
 
-      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类补回来，暗色下不闪白
+      // 换页瞬间（新文档就位、尚未绘制）先把 dark 类补回来，暗色下不闪白；
+      // 同时挂 during-nav：换页不重播 @starting-style 的入场浮现 ——
+      // 整页卡片每切一次导航就浮一次，高频切换晃眼睛（见 global.css 对应规则）
       document.addEventListener('astro:after-swap', () => {
         const choice = current()
         document.documentElement.classList.toggle(
@@ -166,18 +167,26 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
           choice === 'dark' || (choice === 'auto' && query.matches),
         )
         document.documentElement.dataset.theme = choice
+        document.documentElement.classList.add('during-nav')
       })
 
       // 首次加载与每次换页都会触发：在当前 DOM 上重绑控件
       document.addEventListener('astro:page-load', () => {
         apply(current())
 
+        // 新页首帧渲染完再摘掉 during-nav，入场过渡恢复给下一次「整页刷新」用
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => document.documentElement.classList.remove('during-nav')),
+        )
+
         for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
           chip.addEventListener('click', () => apply(chip.dataset.themeChoice!, true))
         }
         for (const button of document.querySelectorAll('[data-theme-cycle]')) {
           button.addEventListener('click', () => {
-            apply(ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length]!, true)
+            // 移动端只有这一颗按钮：在明暗之间直切。三档循环里的「自动」
+            // 常与当前系统外观同色，点上去毫无反应，像是要点两次才生效。
+            apply(document.documentElement.classList.contains('dark') ? 'light' : 'dark', true)
           })
         }
       })

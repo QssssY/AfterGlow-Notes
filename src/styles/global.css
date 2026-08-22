@@ -412,6 +412,12 @@
       translate: 0 12px;
     }
   }
+  /* 客户端路由换页时不重播入场：整页卡片每切一次导航就浮一次，晃眼。
+     astro:after-swap 挂上 during-nav、新页首帧后摘掉（见 BaseLayout），
+     过渡被瞬时化后 @starting-style 的起点直接跳到终态。 */
+  html.during-nav :is(.glass, .glass-row, .glass-panel) {
+    transition-duration: 0s !important;
+  }
 
   /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版）。
      transition 是整条覆盖不是合并，所以这里要把入场用的 opacity 一并带上。 */
