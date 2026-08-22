@@ -711,25 +711,48 @@ img.img-pending {
   contain-intrinsic-size: auto 62px;
 }
 
-/* ─── 主题切换的圆形波纹（重实现，零 View Transitions）───
-   一枚目标主题底色的圆从点击点扩散铺满视口（transform 合成器动画，
-   主线程再忙也满帧）；铺满之后才瞬时换肤 —— 全页样式重算发生在
-   纯色盖布底下，看不见就不存在「卡」；随后盖布 220ms 淡出，新主题显影。
-   旧版（startViewTransition 双向快照 + 裁切动画）的卡点是重算挤在动画
-   开始之前，负载下必顿，已弃用 —— 别回去。
-   底色须与 :root/.dark 的 --cream 一致（写死是有意的：CSS 变量在这里
-   只会解析出「当前」主题的值，拿不到「目标」主题的）。 */
-.theme-wave {
-  position: fixed;
-  z-index: 9999;
-  pointer-events: none;
-  border-radius: 50%;
-  background: #141210;
-  transform: translate(-50%, -50%) scale(0);
-  will-change: transform, opacity;
+/* ─── 主题切换的圆形揭示（View Transitions 版，带满配防卡措施）───
+   圆内显影的是「真实的新主题页面」（用户点名要这个，纯色波纹版已否）。
+   旧版的三个卡点逐一处理：
+   ① 动画写死在 CSS、变量（--reveal-*）在 startViewTransition 之前落好 ——
+      伪元素树一建立原子生效，不存在 ready 后再挂 WAAPI 的闪现竞态；
+   ② 前 12.5%（约 60ms）新页以 0.001 透明度整层铺出（视觉上仍是旧页）：
+      逼合成器提前把新主题的瓦片全部栅格化 —— 旧版扫到一半掉帧，
+      就是圆扫过处瓦片现栅格造成的，预热后扩散全程走缓存纹理；
+   ③ 无限循环动画（等化条/橙点/时钟冒号/扫带）在揭示期间按停（见下），
+      否则实时层每帧都要重栅格化。
+   换肤重算本身仍在动画开始前（VT 结构使然），空闲机器约 20ms 无感。 */
+@keyframes theme-reveal-in {
+  0%,
+  12.4% {
+    clip-path: circle(var(--reveal-r, 150vmax) at var(--reveal-x, 50%) var(--reveal-y, 40px));
+    opacity: 0.001;
+    animation-timing-function: linear;
+  }
+  12.5% {
+    clip-path: circle(0px at var(--reveal-x, 50%) var(--reveal-y, 40px));
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  100% {
+    clip-path: circle(var(--reveal-r, 150vmax) at var(--reveal-x, 50%) var(--reveal-y, 40px));
+    opacity: 1;
+  }
 }
-.theme-wave.to-light {
-  background: #f7f1e7;
+/* 覆盖下方换页用的 animation:none（html.theme-vt 特异性更高）；
+   旧快照不做任何动画，始终以原样垫底，圆形边界是唯一的过渡 */
+html.theme-vt::view-transition-old(root) {
+  animation: none;
+}
+html.theme-vt::view-transition-new(root) {
+  animation: theme-reveal-in 480ms both;
+}
+/* 揭示进行中按停无限循环动画：它们动一帧，新页实时快照就要整层重栅格化 */
+html.theme-vt :is([data-eq] > span, .site-dot, [data-np-icon] path, [data-clock-colon]) {
+  animation-play-state: paused !important;
+}
+html.theme-vt .skeleton::after {
+  animation-play-state: paused !important;
 }
 
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。

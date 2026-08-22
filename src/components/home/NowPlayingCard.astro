@@ -399,6 +399,12 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   const tick = () => {
     const el = audio()
     if (el.paused) return
+    // 主题圆形揭示进行中：暂停逐帧 DOM 写入（条形/歌词），
+    // 否则揭示的实时快照每帧都要整层重栅格化。循环保持心跳，揭示完自动恢复
+    if (document.documentElement.classList.contains('theme-vt')) {
+      raf = requestAnimationFrame(tick)
+      return
+    }
     if (analyser && freq) {
       analyser.getByteFrequencyData(freq)
       const usable = Math.floor(freq.length * 0.7) // 高频段基本是空的，砍掉

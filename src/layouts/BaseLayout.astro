@@ -191,52 +191,53 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
       }
 
       /**
-       * 圆形波纹切换（用户点名要回圆形，但旧 View Transitions 版有卡顿 bug）：
-       * ① 目标主题底色的圆从点击点扩散铺满 —— transform 合成器动画，主线程忙也满帧；
-       * ② 铺满后才 apply()：全页样式重算发生在盖布底下，看不见就不存在「卡」，
-       *    再等两帧确保新主题真的画上去了；
-       * ③ 盖布淡出，新主题显影。
-       * 旧版的病根是重算挤在裁切动画开始之前，负载下点了没反应然后猛地切 —— 别回去。
+       * 圆形揭示（View Transitions）：圆内显影真实的新主题页面。
+       * 动画本体在 global.css 的 theme-reveal-in（含防卡三措施的注释），
+       * 这里只负责：算圆心/半径写进变量 → 挂 theme-vt → 开过渡 → 收尾。
+       * 不翻转 / 连点 / 不支持 / 减少动态 → 退化为瞬时翻转。
        */
-      let waving = false
-      async function applyWithWave(choice: string, ev?: MouseEvent) {
+      let revealing = false
+      const revealCleanup = () => {
+        const rootStyle = document.documentElement.style
+        document.documentElement.classList.remove('theme-vt')
+        rootStyle.removeProperty('--reveal-x')
+        rootStyle.removeProperty('--reveal-y')
+        rootStyle.removeProperty('--reveal-r')
+        revealing = false
+      }
+      function applyWithReveal(choice: string, ev?: MouseEvent) {
         const willDark = choice === 'dark' || (choice === 'auto' && query.matches)
         const flips = willDark !== document.documentElement.classList.contains('dark')
-        if (!flips || waving || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (
+          !flips ||
+          revealing ||
+          !document.startViewTransition ||
+          matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
           apply(choice)
           return
         }
-        waving = true
+        revealing = true
         const x = ev?.clientX ?? innerWidth / 2
         const y = ev?.clientY ?? 40
         const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-        const wave = document.createElement('div')
-        wave.className = willDark ? 'theme-wave' : 'theme-wave to-light'
-        wave.style.left = `${x}px`
-        wave.style.top = `${y}px`
-        wave.style.width = `${Math.ceil(r) * 2}px`
-        wave.style.height = `${Math.ceil(r) * 2}px`
-        document.body.append(wave)
-        try {
-          await wave.animate(
-            { transform: ['translate(-50%, -50%) scale(0)', 'translate(-50%, -50%) scale(1)'] },
-            { duration: 320, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
-          ).finished
-          apply(choice)
-          // 盖布下让新主题先出一帧，淡出时底下才不会闪旧色
-          await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-          await wave.animate(
-            { opacity: [1, 0] },
-            { duration: 220, easing: 'ease-out', fill: 'forwards' },
-          ).finished
-        } catch {
-          // 动画被打断（换页把盖布连 body 一起换掉 / 标签页转后台）：主题在 finally 落实
-        } finally {
-          apply(choice) // 幂等；保证任何路径都完成切换
-          wave.remove()
-          waving = false
-        }
+        const rootStyle = document.documentElement.style
+        rootStyle.setProperty('--reveal-x', `${x}px`)
+        rootStyle.setProperty('--reveal-y', `${y}px`)
+        rootStyle.setProperty('--reveal-r', `${Math.ceil(r)}px`)
+        document.documentElement.classList.add('theme-vt')
+        const vt = document.startViewTransition(() => apply(choice))
+        vt.finished.finally(() => {
+          // 收尾重算（摘类恢复循环动画）挪出最后一帧，扩散满屏后不顿；
+          // revealing 等收尾完再放开，连点时迟到的清理才不会拆下一轮的台
+          setTimeout(revealCleanup, 80)
+        })
       }
+      // 揭示进行中用户点了站内链接：先把揭示的规则拆干净，
+      // 免得换页的 View Transition 沾上 theme-vt 的裁切动画
+      document.addEventListener('astro:before-preparation', () => {
+        if (revealing) revealCleanup()
+      })
 
       const current = () => localStorage.getItem('theme') ?? 'light'
 
@@ -261,13 +262,13 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
         apply(current())
 
         for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
-          chip.addEventListener('click', (e) => applyWithWave(chip.dataset.themeChoice!, e))
+          chip.addEventListener('click', (e) => applyWithReveal(chip.dataset.themeChoice!, e))
         }
         for (const button of document.querySelectorAll('[data-theme-cycle]')) {
           button.addEventListener('click', (e) => {
             // 移动端/图标条只有这一颗按钮：在明暗之间直切。三档循环里的「自动」
             // 常与当前系统外观同色，点上去毫无反应，像是要点两次才生效。
-            applyWithWave(
+            applyWithReveal(
               document.documentElement.classList.contains('dark') ? 'light' : 'dark',
               e as MouseEvent,
             )
