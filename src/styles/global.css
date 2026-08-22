@@ -711,11 +711,26 @@ img.img-pending {
   contain-intrinsic-size: auto 62px;
 }
 
-/* ─── 主题切换（照搬 YYsuni）：瞬时翻转，零动画 ───
-   他的「深夜」只是一组 CSS 变量预设，点击即换值 —— 全仓没有
-   startViewTransition，也没有全页颜色过渡。瞬时翻转只有一次样式重算，
-   没有任何会掉帧的动画，机器再忙也只是极短的一拍，不存在「卡顿感」。
-   此前的圆形揭示（双向快照 + 裁切动画）在负载下必卡，已整体移除。 */
+/* ─── 主题切换的圆形波纹（重实现，零 View Transitions）───
+   一枚目标主题底色的圆从点击点扩散铺满视口（transform 合成器动画，
+   主线程再忙也满帧）；铺满之后才瞬时换肤 —— 全页样式重算发生在
+   纯色盖布底下，看不见就不存在「卡」；随后盖布 220ms 淡出，新主题显影。
+   旧版（startViewTransition 双向快照 + 裁切动画）的卡点是重算挤在动画
+   开始之前，负载下必顿，已弃用 —— 别回去。
+   底色须与 :root/.dark 的 --cream 一致（写死是有意的：CSS 变量在这里
+   只会解析出「当前」主题的值，拿不到「目标」主题的）。 */
+.theme-wave {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 50%;
+  background: #141210;
+  transform: translate(-50%, -50%) scale(0);
+  will-change: transform, opacity;
+}
+.theme-wave.to-light {
+  background: #f7f1e7;
+}
 
 /* 回到顶部小方块：没滚出头部时藏起（缩小+下沉+不可点）。
    浮现/收起的过渡由上面 .glass 交互规则的 opacity/translate/scale 通道接管；
