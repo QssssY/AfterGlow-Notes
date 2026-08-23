@@ -1,0 +1,146 @@
+---
+/**
+ * 统计页 —— 服务端一直在收的 views/likes 数据，终于聚成能看的曲线。
+ * 数据源是 /api/admin/stats（近 30 天逐日）与 /api/admin/linkcheck（友链巡检）。
+ * 图表是纯 HTML 柱状（每天一列：宽柱 = 阅读，窄柱 = 访客），不引第三方图表库 ——
+ * 管理台的临时皮肤没必要为 30 根柱子多拉一个依赖。
+ */
+import AdminLayout from '~/layouts/AdminLayout.astro'
+---
+
+<AdminLayout title="统计" active="stats">
+  <section class="grid grid-cols-2 gap-[14px] xl:grid-cols-4">
+    <div class="ad-stat"><b data-stat="online">—</b><span>此刻在线</span></div>
+    <!-- views 按 UTC 天分桶，北京时间早上 8 点才「翻天」—— 文案如实标注，别让人以为数据丢了 -->
+    <div class="ad-stat"><b data-stat="today">—</b><span>今日阅读（UTC 日）</span></div>
+    <div class="ad-stat"><b data-stat="month">—</b><span>近 30 天阅读</span></div>
+    <div class="ad-stat"><b data-stat="visitors">—</b><span>独立访客（累计）</span></div>
+  </section>
+
+  <section class="ad-card flex flex-col gap-[14px] p-[24px]">
+    <div class="flex flex-wrap items-baseline justify-between gap-[8px]">
+      <span class="text-[14px] font-medium text-ink">近 30 天</span>
+      <span class="ad-hint">
+        <i class="inline-block size-[9px] rounded-[2px] align-middle" style="background: var(--brand)"></i> 阅读
+        <i class="ml-[10px] inline-block size-[9px] rounded-[2px] align-middle" style="background: var(--leaf)"></i> 访客
+        · 悬停看单日明细
+      </span>
+    </div>
+    <div data-chart class="flex h-[180px] items-end gap-[3px]">
+      <span class="ad-hint">加载中…</span>
+    </div>
+    <div class="flex justify-between">
+      <span class="ad-hint" data-chart-from></span>
+      <span class="ad-hint" data-chart-to></span>
+    </div>
+  </section>
+
+  <section class="ad-card flex flex-col gap-[14px] p-[24px]">
+    <div class="flex flex-wrap items-center gap-[10px]">
+      <span class="text-[14px] font-medium text-ink">友链巡检</span>
+      <span class="ad-hint" data-lc-meta>加载中…</span>
+      <span class="flex-1"></span>
+      <button type="button" data-lc-run class="ad-btn-ghost">重新检测</button>
+    </div>
+    <div data-lc-list class="flex flex-col gap-[8px]"></div>
+    <p class="ad-hint">
+      服务端每 12 小时自动巡一轮 blogroll 与 friends 里的链接（HEAD 优先，被拒换 GET）。
+      标红的多半是真挂了，但也可能只是对方反爬 —— 点开确认再动手下链接。
+    </p>
+  </section>
+</AdminLayout>
+
+<script>
+  import { $, api, cacheGet, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
+  import type { LinkCheck, Stats } from '~/scripts/admin'
+
+  // ---- 曲线与总量（缓存回放秒出，网络校正）----
+
+  function renderStats(st: Stats) {
+    $('[data-stat="online"]').textContent = String(st.online)
+    $('[data-stat="today"]').textContent = String(st.days.at(-1)?.views ?? 0)
+    $('[data-stat="month"]').textContent = String(st.days.reduce((n, d) => n + d.views, 0))
+    $('[data-stat="visitors"]').textContent = String(st.totals.visitors)
+
+    const chart = $('[data-chart]')
+    const max = Math.max(1, ...st.days.map((d) => Math.max(d.views, d.visitors)))
+    // 高度百分比；有量但不足 2% 的抬到 2%，别让个位数矮成看不见
+    const pct = (n: number) => (n <= 0 ? 0 : Math.max(2, (n / max) * 100))
+    chart.innerHTML = st.days
+      .map(
+        (d) => `<div class="flex h-full flex-1 items-end justify-center gap-[2px]"
+          title="${d.day}：${d.views} 次阅读 · ${d.visitors} 位访客 · ${d.likes} 个赞">
+          <span class="w-[55%] rounded-t-[3px]" style="background: var(--brand); opacity: .8; height: ${pct(d.views)}%"></span>
+          <span class="w-[26%] rounded-t-[3px]" style="background: var(--leaf); height: ${pct(d.visitors)}%"></span>
+        </div>`,
+      )
+      .join('')
+    $('[data-chart-from]').textContent = st.days[0]?.day ?? ''
+    $('[data-chart-to]').textContent = st.days.at(-1)?.day ?? ''
+  }
+  swrAdmin('stats', () => api<Stats>('/api/admin/stats'), renderStats).catch(report)
+
+  // ---- 友链巡检 ----
+  // 有轮询语义，不走 swrAdmin：只把「已完成」的结果入缓存（检测中的瞬态不存），
+  // 进页先回放上次结果，再照常拉最新的。
+
+  const meta = $('[data-lc-meta]')
+  const list = $('[data-lc-list]')
+  const runBtn = $<HTMLButtonElement>('[data-lc-run]')
+
+  function renderLinks(lc: LinkCheck) {
+    runBtn.disabled = lc.running
+    meta.textContent = lc.running
+      ? '检测中…'
+      : lc.checkedAt
+        ? `上次检测 ${new Date(lc.checkedAt).toLocaleString()}`
+        : '还没跑过（服务启动约 30 秒后自动首测）'
+
+    const results = lc.results ?? []
+    if (results.length > 0) {
+      // 挂了的排前面 —— 这页存在的意义就是让死链无处躲
+      const rows = [...results].sort((a, b) => Number(a.ok) - Number(b.ok))
+      list.innerHTML = rows
+        .map((r) => {
+          const note = r.ok
+            ? `${r.status} · ${r.ms}ms`
+            : r.status
+              ? `HTTP ${r.status}`
+              : (r.err ?? '连接失败').slice(0, 72)
+          return `<div class="flex items-center gap-[10px]">
+            <span class="size-[8px] shrink-0 rounded-full" style="background: ${r.ok ? 'var(--leaf)' : '#c25548'}"></span>
+            <span class="w-[64px] shrink-0 text-[11px] text-ink-muted">${r.source === 'blogroll' ? '友链页' : '关于页'}</span>
+            <a class="truncate text-[13px] text-ink hover:text-brand-ink" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.name || r.url)}</a>
+            <span class="flex-1"></span>
+            <span class="shrink-0 text-[12px] text-ink-muted" title="${esc(r.err ?? '')}">${esc(note)}</span>
+          </div>`
+        })
+        .join('')
+    } else if (!lc.running) {
+      list.innerHTML = '<span class="ad-hint">没有可检测的链接</span>'
+    }
+  }
+
+  async function loadLinks() {
+    const lc = await api<LinkCheck>('/api/admin/linkcheck')
+    if (!lc.running) cachePut('linkcheck', lc)
+    renderLinks(lc)
+    if (lc.running) setTimeout(() => loadLinks().catch(report), 3000)
+  }
+
+  const cachedLinks = cacheGet<LinkCheck>('linkcheck')
+  if (cachedLinks) renderLinks(cachedLinks)
+  loadLinks().catch(report)
+
+  runBtn.addEventListener('click', async () => {
+    try {
+      runBtn.disabled = true
+      await api('/api/admin/linkcheck', { method: 'POST' })
+      toast('检测已开始')
+      await loadLinks()
+    } catch (err) {
+      runBtn.disabled = false
+      report(err)
+    }
+  })
+</script>

@@ -38,7 +38,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { api, esc, report, toast, today } from '~/scripts/admin'
+  import { $, api, esc, report, toast, today } from '~/scripts/admin'
 
   // ---- 字段规格：新增一种可编辑内容 = 这里加一段 + server/admin.go 白名单加一行 ----
 
@@ -304,7 +304,6 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   let value: unknown = null
   let dirty = false
 
-  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
   const tabs = $('[data-tabs]')
   const editor = $('[data-editor]')
 

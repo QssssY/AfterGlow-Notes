@@ -68,7 +68,7 @@ const { slug, updated } = Astro.props
 </div>
 
 <script>
-  import { getLikes, postLike } from '~/scripts/api'
+  import { postLike, swr, swrPatch, touch } from '~/scripts/api'
   import { likeBurst } from '~/scripts/like-burst'
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
@@ -107,10 +107,11 @@ const { slug, updated } = Astro.props
       }
       render()
 
-      getLikes(slug).then((state) => {
-        if (!state) return
+      // 合并接口一个往返拿齐（touch 同时记阅读，和文章页脚本共用同一次 POST）；
+      // swr 先回放上次的数字 —— 换页瞬时的站上，计数不慢半拍
+      swr(`touch:${slug}`, () => touch(slug), (state) => {
         liked = state.liked
-        total = state.count
+        total = state.likes
         write(liked)
         render()
       })
@@ -128,6 +129,8 @@ const { slug, updated } = Astro.props
           total = state.count
           write(liked)
           render()
+          // 缓存同步：下次回放别闪回点赞前的旧态
+          swrPatch(`touch:${slug}`, { likes: state.count, liked: state.liked })
         })
       })
     }

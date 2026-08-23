@@ -8,12 +8,9 @@
  * 想换成真照片：直接覆盖同名文件重新构建即可。
  * 重新生成：node scripts/gen-placeholder-art.mjs
  */
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-
-const require = createRequire(import.meta.url)
-const sharp = require('sharp')
+import sharp from 'sharp'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const out = (name) => path.join(root, 'images', name)
@@ -101,8 +98,10 @@ const svgs = {
   ${firefly(620, 300, 4.4)}${firefly(660, 130, 2.6, C.gold)}${firefly(80, 330, 3.2)}
 </svg>`,
 
-  // 通用占位 —— 复刻站里 aurora 的柔光语言：几团径向渐变 + 一只居中的萤火虫标记
-  'placeholder-art.png': `
+  // 通用占位 —— 复刻站里 aurora 的柔光语言：几团径向渐变 + 一只居中的萤火虫标记。
+  // 出 webp：这张会真的进产物（项目卡兜底图），png 版 205KB、webp 同观感 ~40KB ——
+  // 1M 带宽上省下的就是一秒多的加载
+  'placeholder-art.webp': `
 <svg xmlns="http://www.w3.org/2000/svg" width="1584" height="792" viewBox="0 0 1584 792">
   <defs>
     <radialGradient id="g1"><stop offset="0" stop-color="${C.brand}" stop-opacity=".2"/><stop offset="1" stop-color="${C.brand}" stop-opacity="0"/></radialGradient>
@@ -123,6 +122,8 @@ const svgs = {
 }
 
 for (const [name, svg] of Object.entries(svgs)) {
-  await sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toFile(out(name))
+  const img = sharp(Buffer.from(svg))
+  if (name.endsWith('.webp')) await img.webp({ quality: 90 }).toFile(out(name))
+  else await img.png({ compressionLevel: 9 }).toFile(out(name))
   console.log('written', name)
 }

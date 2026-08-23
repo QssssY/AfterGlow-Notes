@@ -38,7 +38,6 @@ const groups = groupByYear(posts)
 <BaseLayout
   title={`#${tag}`}
   description={`标签「${tag}」下的 ${posts.length} 篇文章`}
-  rail={false}
 >
   {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
   <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">

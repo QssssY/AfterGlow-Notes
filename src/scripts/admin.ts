@@ -6,13 +6,70 @@
  */
 import { apiBase } from '~/config'
 
-export const API = apiBase || 'http://127.0.0.1:8787'
+// null = 没配 → 本机默认端口；'' = 同源部署（PUBLIC_API_BASE=/）→ 相对路径
+export const API = apiBase ?? 'http://127.0.0.1:8787'
 
 const TOKEN_KEY = 'afterglow:admin:token'
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t)
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY)
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY)
+  // 登出（含 401 被踢）连缓存的后台数据一起清 —— 别把管理数据留给下一个用这台浏览器的人
+  try {
+    for (const k of Object.keys(sessionStorage)) {
+      if (k.startsWith(CACHE_PREFIX)) sessionStorage.removeItem(k)
+    }
+  } catch {
+    // sessionStorage 不可用时本来也没存过
+  }
+}
+
+/*
+ * ---- 管理数据的 sessionStorage 缓存：页签切换秒渲染 ----
+ *
+ * 管理台没挂客户端路由，每次切页签都是整页加载 + 重新拉数据，页面要空着
+ * 「加载中…」等一个往返（分体部署时还是跨大洋的往返）。这里学站点前台的
+ * SWR：上次的应答先渲染出来，最新应答到了再原地校正。
+ * 存 sessionStorage 而不是 localStorage：关浏览器即清，后台数据不落盘过夜。
+ */
+const CACHE_PREFIX = 'afterglow:admin:cache:'
+
+export function cacheGet<T>(key: string): T | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_PREFIX + key)
+    return raw === null ? null : (JSON.parse(raw) as T)
+  } catch {
+    return null
+  }
+}
+
+export function cachePut(key: string, value: unknown) {
+  try {
+    sessionStorage.setItem(CACHE_PREFIX + key, JSON.stringify(value))
+  } catch {
+    // 存不了就每次现拉
+  }
+}
+
+/** swrAdmin：缓存先渲染、网络再校正。返回网络那一程，调用方照旧 .catch(report) */
+export async function swrAdmin<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  apply: (value: T) => void,
+): Promise<void> {
+  const cached = cacheGet<T>(key)
+  if (cached !== null) {
+    try {
+      apply(cached)
+    } catch {
+      // 缓存的形状过期了（接口字段改了）：当没有缓存，等网络应答
+    }
+  }
+  const fresh = await fetcher()
+  cachePut(key, fresh)
+  apply(fresh)
+}
 
 /** 带 token 的请求；401 一律送回登录页。body 传对象自动 JSON 化，传 FormData 原样发 */
 export async function api<T>(
@@ -66,6 +123,9 @@ export function report(err: unknown) {
 export const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
+/** 页面脚本的 DOM 快捷手：断言必中 —— 管理页的静态骨架都在同文件里，选不到是笔误 */
+export const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
+
 /** 本地时区的 YYYY-MM-DD（toISOString 是 UTC，晚上八点后会跳到「明天」） */
 export function today(): string {
   const d = new Date()
@@ -103,4 +163,33 @@ export interface Summary {
   topViews: { slug: string; count: number }[] | null
   topLikes: { slug: string; count: number }[] | null
   buildCmd: boolean
+}
+
+export interface DayStat {
+  day: string
+  views: number
+  visitors: number
+  likes: number
+}
+
+export interface Stats {
+  online: number
+  days: DayStat[]
+  totals: { views: number; visitors: number; siteLikes: number; postLikes: number }
+}
+
+export interface LinkCheckResult {
+  source: 'blogroll' | 'friends'
+  name: string
+  url: string
+  ok: boolean
+  status?: number
+  ms: number
+  err?: string
+}
+
+export interface LinkCheck {
+  running: boolean
+  checkedAt?: string
+  results: LinkCheckResult[] | null
 }

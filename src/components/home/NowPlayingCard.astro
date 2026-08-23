@@ -199,7 +199,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 </div>
 
 <script>
-  import { nowPlaying } from '~/config'
+  import { musicBase, nowPlaying } from '~/config'
 
   /**
    * 播放器控制层。音频实体是模块级的 new Audio() —— 不进 DOM：
@@ -220,8 +220,16 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   const tracks: readonly Track[] = nowPlaying.playlist
   const trackLabel = (t: Track) => (t.artist ? `${t.title} — ${t.artist}` : t.title)
 
+  // 音乐可能不与页面同源（分体部署时歌在小机子上，见 config.ts 的 musicBase）
+  const musicUrl = (p: string) => musicBase + p
+
   let cur = 0
-  const player = new Audio(tracks[0]!.src)
+  const player = new Audio()
+  // 跨域音源必须挂 anonymous + 服务端 CORS：Web Audio 的频谱分析要读采样，
+  // 不满足同源策略时 analyser 只会输出一排零（等化条永远躺平）。
+  // 同源时不挂 —— 避免给本地/单机模式引入任何行为变化。必须在赋 src 之前设。
+  if (musicBase) player.crossOrigin = 'anonymous'
+  player.src = musicUrl(tracks[0]!.src)
   player.preload = 'none'
 
   // 音量跨页跨曲记忆；没存过保持默认 1（Number(null)=0 会静音，必须判 null）
@@ -288,7 +296,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     if (!lrcCache.has(track.lrc)) {
       lrcCache.set(
         track.lrc,
-        fetch(track.lrc)
+        fetch(musicUrl(track.lrc))
           .then((res) => (res.ok ? res.text() : ''))
           .then((text) => {
             const raw: LrcLine[] = []
@@ -497,7 +505,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     const track = tracks[cur]!
     lrcLines = []
     shownText = ''
-    player.src = track.src
+    player.src = musicUrl(track.src)
     for (const b of binds) {
       if (b.progress) b.progress.style.width = '0%'
       b.card.setAttribute('aria-label', `播放 ${trackLabel(track)}`)

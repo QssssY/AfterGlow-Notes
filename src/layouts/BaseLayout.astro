@@ -20,8 +20,6 @@ interface Props {
   ogType?: 'website' | 'article'
   /** 文章发布时间，用于 article:published_time */
   publishedAt?: Date | undefined
-  /** 竖排站名装饰层，组件画廊这类页面不需要 */
-  rail?: boolean
   /** 移动端底部 Tab Bar */
   tabBar?: boolean
   /**
@@ -37,7 +35,6 @@ const {
   ogSlug = 'site',
   ogType = 'website',
   publishedAt,
-  rail = true,
   tabBar = true,
   topPad = 48,
 } = Astro.props
@@ -122,8 +119,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
 
       <div class="relative z-10 mx-auto w-full max-w-[1440px]">
         {/* 竖排站名（VerticalRail）已收起：设计稿那版右上角是空的，布局迭代后
-            它在哪都别扭（压卡 / 悬浮都被用户否了）。组件保留，想复出加一行即可；
-            rail prop 暂留，免得动一圈页面。 */}
+            它在哪都别扭（压卡 / 悬浮都被用户否了）。组件保留，想复出加一行即可。 */}
         {/* 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右。
             换页动效照搬 YYsuni：瞬时切换 + 新页卡片错峰弹入（global.css 的 card-enter），
             不再挂任何 View Transitions 共享元素名 —— 玻璃卡快照会变成模糊空板 */}

@@ -57,14 +57,15 @@ const { stats, contacts } = Astro.props
 </div>
 
 <script>
-  import { getLikes } from '~/scripts/api'
-  // 「次喜欢」的真实数字：后端在就现查回填，不在就保持 — 占位
+  import { getLikes, swr } from '~/scripts/api'
+  // 「次喜欢」的真实数字：后端在就现查回填，不在就保持 — 占位。
+  // swr 先回放上次的数字（秒出），网络应答到了再校正
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
     const el = document.querySelector<HTMLElement>('[data-stat-likes]')
     if (!el) return
-    getLikes('site').then((state) => {
-      if (state) el.textContent = String(state.count)
+    swr('likes:site', () => getLikes('site'), (state) => {
+      el.textContent = String(state.count)
     })
   })
 </script>

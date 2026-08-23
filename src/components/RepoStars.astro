@@ -51,7 +51,7 @@
 
   /** 一次批量问自家代理；代理不在或响应不齐时返回 null，退回逐个直连 */
   const fetchViaProxy = async (names: string[]) => {
-    if (!apiBase) return null
+    if (apiBase === null) return null
     try {
       const res = await fetch(`${apiBase}/api/github?repos=${encodeURIComponent(names.join(','))}`)
       if (!res.ok) return null

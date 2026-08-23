@@ -42,7 +42,7 @@ const contacts = [
 const friends = friendsData.map((f) => ({ ...f, avatar: blogrollAvatar(f.domain) }))
 ---
 
-<BaseLayout title="关于网站" rail={false}>
+<BaseLayout title="关于网站">
   {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
   <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
     <div class="pointer-events-auto w-fit"><NavBar /></div>

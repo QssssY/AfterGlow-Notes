@@ -43,16 +43,11 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { api, esc, report, toast } from '~/scripts/admin'
+  import { $, api, esc, report, swrAdmin, toast } from '~/scripts/admin'
   import type { PostListItem, Summary } from '~/scripts/admin'
 
-  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
-
-  async function load() {
-    const [sum, posts] = await Promise.all([
-      api<Summary>('/api/admin/summary'),
-      api<PostListItem[]>('/api/admin/posts'),
-    ])
+  // 渲染是幂等的整块重写：缓存回放一次、网络校正一次
+  function render({ sum, posts }: { sum: Summary; posts: PostListItem[] }) {
     for (const key of ['posts', 'drafts', 'views', 'postLikes', 'siteLikes'] as const) {
       $(`[data-stat="${key}"]`).textContent = String(sum[key])
     }
@@ -80,7 +75,18 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       btn.title = '服务端没配 -build-cmd；本地 dev 不需要构建'
     }
   }
-  load().catch(report)
+
+  swrAdmin(
+    'overview',
+    async () => {
+      const [sum, posts] = await Promise.all([
+        api<Summary>('/api/admin/summary'),
+        api<PostListItem[]>('/api/admin/posts'),
+      ])
+      return { sum, posts }
+    },
+    render,
+  ).catch(report)
 
   // ---- 构建：POST 触发，然后轮询 GET 直到收工 ----
   const btn = $<HTMLButtonElement>('[data-build]')

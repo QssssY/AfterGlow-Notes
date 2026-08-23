@@ -56,10 +56,10 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
   </div>
 </div>
 
-<script type="application/json" data-hot-posts set:html={blob} />
+<script is:inline type="application/json" data-hot-posts set:html={blob} />
 
 <script>
-  import { getHot } from '~/scripts/api'
+  import { getHot, swr } from '~/scripts/api'
 
   interface PostRef {
     slug: string
@@ -82,8 +82,9 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
     const rows = [...card.querySelectorAll<HTMLAnchorElement>('[data-hot-row]')]
     if (rows.length === 0 || posts.length === 0) return
 
-    getHot(rows.length).then((res) => {
-      if (!res || res.items.length === 0) return // 后端不在：保持最新三篇兜底
+    // swr 先回放上次的榜单（秒出），网络应答到了再校正；apply 是幂等的整卡重写
+    swr(`hot:${rows.length}`, () => getHot(rows.length), (res) => {
+      if (res.items.length === 0) return // 后端不在：保持最新三篇兜底
 
       // 榜单里可能有已删除文章的 slug（构建里没有对应页），跳过；
       // 不足三条时拿最新文章补位，补位的不显示数字

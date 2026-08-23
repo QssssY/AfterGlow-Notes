@@ -1,8 +1,14 @@
-// 余晖录的动态数据服务 —— 点赞与阅读计数。
+// 余晖录的服务端 —— 静态托管 + 访客数据，一个二进制全包。
 //
-// 站点本体是纯静态（Astro 构建产物），这个服务只管两件访客产生的数据：
+// 站点本体是纯静态（Astro 构建产物）。这个服务两种开法：
+//   - 纯 API 模式（默认）：只管访客数据，站点由别处托管
+//   - 全站模式（-site dist）：连静态产物一起扛 —— 内存 + 预压缩 + 协商缓存
+//     （static.go），同源之下 /api/* 不再有 CORS 预检，部署也只剩一个进程
+//
+// 访客数据：
 //   - 点赞：每 (slug, visitor) 一票，可点可取消；visitor 是浏览器端生成的匿名随机 id
 //   - 阅读：每 (slug, visitor, 日) 记一次，同一人同一天重复打开不加数
+//   - 在线：最近 5 分钟活跃的 visitor 数，只进内存（visitors.go）
 //
 // 有意不存的东西：IP、UA、来路 —— 关于页「细则」承诺过不做画像，
 // 限流用的 IP 只进内存不落库，进程一重启就没了。
@@ -23,7 +29,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -48,6 +53,18 @@ type server struct {
 	// GitHub 数据代理的服务端缓存（github.go）
 	github *ghCache
 
+	// 静态站点托管（static.go）；-site 不设则为 nil，只当纯 API 用
+	static *staticSite
+
+	// 在线人数（visitors.go）：匿名 visitor 的 5 分钟活跃窗口，只进内存
+	presence *presence
+
+	// /api/hot 的 30 秒微缓存（visitors.go）
+	hot *hotCache
+
+	// 友链巡检（linkcheck.go）；跟管理后台一起启用，结果只给站长看
+	links *linkChecker
+
 	// 写操作限流：每 IP 每天最多 maxWrites 次，只在内存里记
 	mu        sync.Mutex
 	writeDay  string
@@ -63,6 +80,8 @@ func main() {
 	adminPass := flag.String("admin-pass", os.Getenv("ADMIN_PASSWORD"), "管理后台口令；不设则管理接口整组关闭")
 	blogDir := flag.String("blog-dir", "..", "博客仓库根目录（管理接口读写文章与数据文件）")
 	buildCmd := flag.String("build-cmd", os.Getenv("BLOG_BUILD_CMD"), "可选：重新构建站点的命令（如 pnpm build），/api/admin/build 用")
+	siteDir := flag.String("site", "", "静态站点目录（Astro 构建产物 dist）；设了就由本服务直接托管整个站点")
+	musicDir := flag.String("music", "", "音乐目录；设了就在 /music/* 供给（音乐是版权物不进仓库，分体部署的歌从这里走）")
 	flag.Parse()
 
 	db, err := sql.Open("sqlite", *dbPath+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)")
@@ -95,19 +114,54 @@ func main() {
 		writes:    map[string]int{},
 		maxWrites: *maxWrites,
 		github:    newGhCache(os.Getenv("GITHUB_TOKEN")),
+		presence:  newPresence(),
+		hot:       newHotCache(),
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/likes", s.cors(s.handleLikes))
 	mux.HandleFunc("/api/views", s.cors(s.handleViews))
+	mux.HandleFunc("/api/touch", s.cors(s.handleTouch))
+	mux.HandleFunc("/api/online", s.cors(s.handleOnline))
 	mux.HandleFunc("/api/hot", s.cors(s.handleHot))
 	mux.HandleFunc("/api/github", s.cors(s.handleGithub))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("ok"))
 	})
 
+	// 静态托管（static.go）：挂在 "/" 上兜底 —— ServeMux 按最长前缀匹配，
+	// 上面的 /api/* 和 /healthz 优先，剩下的全按站点文件处理
+	if *siteDir != "" {
+		st, err := newStaticSite(*siteDir)
+		if err != nil {
+			log.Fatalf("加载静态站点失败: %v", err)
+		}
+		s.static = st
+		mux.HandleFunc("/", s.static.serve)
+	}
+
+	// 音乐目录（static.go 的 musicHandler）：/music/ 前缀比 "/" 更长，
+	// 与 -site 同开时这里优先 —— 服务器的音乐目录是唯一事实源
+	musicAbs := ""
+	if *musicDir != "" {
+		abs, err := filepath.Abs(*musicDir)
+		if err != nil {
+			log.Fatalf("解析 -music 失败: %v", err)
+		}
+		if info, err := os.Stat(abs); err != nil || !info.IsDir() {
+			log.Fatalf("-music 不是目录: %s", abs)
+		}
+		musicAbs = abs
+		mux.HandleFunc("/music/", s.cors(musicHandler(abs)))
+		log.Printf("music dir: %s", abs)
+	}
+
 	// 管理后台（admin.go）：不设口令就完全不注册，对外零暴露
 	if *adminPass != "" {
+		if reason := weakPassReason(*adminPass); reason != "" {
+			log.Fatalf("管理口令太弱（%s）。仓库是公开的，口令是管理台唯一的门 ——\n"+
+				"  换成至少 12 位、不含站名等常见字样的随机串，比如：openssl rand -base64 18", reason)
+		}
 		abs, err := filepath.Abs(*blogDir)
 		if err != nil {
 			log.Fatalf("解析 -blog-dir 失败: %v", err)
@@ -119,9 +173,15 @@ func main() {
 			pass:     *adminPass,
 			blogDir:  abs,
 			buildCmd: *buildCmd,
-			sessions: map[string]time.Time{},
-			tries:    map[string]int{},
+			// 配了 -music 时管理台传歌落它（服务器目录）；没配才落仓库的
+			// public/music（本地开发；该目录 gitignored，不会被提交）
+			musicOverride: musicAbs,
+			sessions:      map[string]time.Time{},
+			tries:         map[string]int{},
 		}
+		// 友链巡检跟管理台一起启停：结果只有站长会看，没后台就不白跑
+		s.links = newLinkChecker(abs)
+		s.links.start()
 		registerAdminRoutes(mux, s)
 		log.Printf("admin enabled (blog-dir=%s, build-cmd=%q)", abs, *buildCmd)
 	}
@@ -137,7 +197,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("listening on %s (db=%s origin=%s)", *addr, *dbPath, *origin)
+		log.Printf("listening on %s (db=%s origin=%s site=%q)", *addr, *dbPath, *origin, *siteDir)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("listen: %v", err)
 		}
@@ -177,27 +237,38 @@ func fail(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
 
-// clientIP 只用于内存限流，不写盘。信任反代补的头（部署要求见 README）。
+// clientIP 只用于内存限流，不写盘。
+//
+// 代理头（X-Forwarded-For / X-Real-Ip）只在直连对端是本机或内网地址时才可信 ——
+// 也就是 README 里的标准部署：服务监听 127.0.0.1，Caddy 同机反代补头。
+// 若服务被直接暴露在公网，这两个头谁都能伪造：无条件信任的话，攻击者每次
+// 换一个假 XFF 就能把限流桶洗掉，登录口令的暴力尝试就不设防了。
 func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if i := strings.IndexByte(xff, ','); i > 0 {
-			return strings.TrimSpace(xff[:i])
-		}
-		return strings.TrimSpace(xff)
-	}
-	if rip := r.Header.Get("X-Real-Ip"); rip != "" {
-		return rip
-	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		host = r.RemoteAddr
+	}
+	if peer := net.ParseIP(host); peer != nil && (peer.IsLoopback() || peer.IsPrivate()) {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			if i := strings.IndexByte(xff, ','); i > 0 {
+				return strings.TrimSpace(xff[:i])
+			}
+			return strings.TrimSpace(xff)
+		}
+		if rip := r.Header.Get("X-Real-Ip"); rip != "" {
+			return rip
+		}
 	}
 	return host
 }
 
+// utcDay：所有按「天」记的东西（阅读去重、写限流、登录限流）统一用这个 UTC 日 ——
+// 管理台统计页的「今日（UTC 日）」文案与这里同源
+func utcDay() string { return time.Now().UTC().Format("2006-01-02") }
+
 // allowWrite 做每 IP 每天的写限流；跨天时整表清零
 func (s *server) allowWrite(r *http.Request) bool {
-	day := time.Now().UTC().Format("2006-01-02")
+	day := utcDay()
 	ip := clientIP(r)
 
 	s.mu.Lock()
@@ -314,6 +385,16 @@ func (s *server) handleLikes(w http.ResponseWriter, r *http.Request) {
 
 // ---- 阅读计数 ----
 
+// recordView 记一次阅读；(slug, visitor, UTC 日) 是主键，同人同天重复打开不加数。
+// /api/views 和 /api/touch 共用 —— 「怎样才算一次阅读」只在这一处定义
+func (s *server) recordView(slug, visitor string) error {
+	_, err := s.db.Exec(
+		`INSERT INTO views (slug, visitor, day) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+		slug, visitor, utcDay(),
+	)
+	return err
+}
+
 func (s *server) viewCount(slug string) (int, error) {
 	var n int
 	err := s.db.QueryRow(`SELECT COUNT(*) FROM views WHERE slug = ?`, slug).Scan(&n)
@@ -344,11 +425,7 @@ func (s *server) handleViews(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			return
 		}
-		day := time.Now().UTC().Format("2006-01-02")
-		if _, err := s.db.Exec(
-			`INSERT INTO views (slug, visitor, day) VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
-			b.Slug, b.Visitor, day,
-		); err != nil {
+		if err := s.recordView(b.Slug, b.Visitor); err != nil {
 			fail(w, http.StatusInternalServerError, "写入失败")
 			return
 		}
@@ -368,17 +445,24 @@ func (s *server) handleViews(w http.ResponseWriter, r *http.Request) {
 
 // handleHot 返回阅读数最高的前 N 篇（首页「大家在看」卡用）。
 // 只出聚合计数，不带任何 visitor 维度；'site' 是全站点赞的保留 slug，不算文章。
+// 全员看到的是同一份榜单，所以走两层缓存：服务端 30 秒（免 GROUP BY 全表扫）、
+// 浏览器 60 秒（换页回来不回源）。
 func (s *server) handleHot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		fail(w, http.StatusMethodNotAllowed, "只支持 GET")
 		return
 	}
-	limit := 3
-	if q := r.URL.Query().Get("limit"); q != "" {
-		if n, err := strconv.Atoi(q); err == nil && n >= 1 && n <= 10 {
-			limit = n
-		}
+	limit := hotLimit(r)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Cache-Control 只在成功出口设：提前设的话 fail(500) 也会带着 max-age=60
+	// 出门，浏览器和中间缓存会把错误存整整一分钟
+	if body, ok := s.hot.get(limit); ok {
+		w.Header().Set("Cache-Control", "public, max-age=60")
+		w.Write(body)
+		return
 	}
+
 	rows, err := s.db.Query(
 		`SELECT slug, COUNT(*) AS n FROM views WHERE slug != 'site'
 		 GROUP BY slug ORDER BY n DESC, slug LIMIT ?`, limit)
@@ -401,5 +485,12 @@ func (s *server) handleHot(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, it)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+	body, err := json.Marshal(map[string]any{"items": items})
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "查询失败")
+		return
+	}
+	s.hot.put(limit, body)
+	w.Header().Set("Cache-Control", "public, max-age=60")
+	w.Write(body)
 }

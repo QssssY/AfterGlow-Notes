@@ -16,7 +16,7 @@ import '~/styles/admin.css'
 interface Props {
   title: string
   /** 顶部导航高亮项 */
-  active?: 'dashboard' | 'posts' | 'data' | undefined
+  active?: 'dashboard' | 'posts' | 'data' | 'stats' | undefined
   /** 登录页不做前置跳转检查 */
   guard?: boolean
 }
@@ -26,6 +26,7 @@ const tabs = [
   { key: 'dashboard', label: '概览', href: '/admin' },
   { key: 'posts', label: '文章', href: '/admin/posts' },
   { key: 'data', label: '站点数据', href: '/admin/data' },
+  { key: 'stats', label: '统计', href: '/admin/stats' },
 ] as const
 ---
 

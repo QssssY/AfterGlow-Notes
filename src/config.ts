@@ -35,14 +35,39 @@ export const site = {
 }
 
 /**
- * 动态数据服务（server/ 里的 Go 后端）的地址，如 https://api.example.com。
- * 构建时用环境变量注入：PUBLIC_API_BASE=… pnpm build。
- * 不设就是纯本机模式：点赞只存访客自己的浏览器，「N 次阅读」整块不渲染 —— 不编数字。
+ * 动态数据服务（server/ 里的 Go 后端）的地址。构建时用环境变量注入：
+ *   PUBLIC_API_BASE=https://api.example.com  独立域名（跨域）
+ *   PUBLIC_API_BASE=same-origin（或 /）       同源 —— Go 服务用 -site dist 托管全站时用：
+ *                                            请求走相对路径，免预检、免第二条 TLS 连接。
+ *                                            Windows 的 Git Bash 里必须写 same-origin：
+ *                                            单个 / 会被 MSYS 路径转换偷换成 Git 安装目录
+ *                                            （实测变成 D:/develop/Git），烧进产物全站失灵
+ *   不设                                      纯本机模式：点赞只存访客自己的浏览器，
+ *                                            「N 次阅读」整块不渲染 —— 不编数字
+ *
+ * null = 未配置（禁用）；'' = 同源。判断是否可用要用 === null，别用真值判断 ——
+ * 空字符串是合法的「同源」值。
  */
-export const apiBase = ((import.meta.env.PUBLIC_API_BASE as string | undefined) ?? '').replace(
-  /\/+$/,
-  '',
-)
+const rawApiBase = ((import.meta.env.PUBLIC_API_BASE as string | undefined) ?? '').trim()
+export const apiBase: string | null =
+  rawApiBase === ''
+    ? null
+    : rawApiBase === '/' || rawApiBase === 'same-origin'
+      ? ''
+      : rawApiBase.replace(/\/+$/, '')
+
+/**
+ * 音乐文件的来源前缀。音乐是版权物，不进 git 仓库（见 README 许可节）——
+ * 文件躺在磁盘的 public/music/（gitignored）或服务器的 -music 目录里。
+ *   不设                                本地开发 / 单机全站：public/music 同源可达，原样工作
+ *   PUBLIC_MUSIC_BASE=https://api.域名  分体部署：页面在平台 CDN 上（产物里没有音乐），
+ *                                      歌从小机子走（Go 服务的 -music 目录供给）
+ * 跨域取歌时播放器会给 <audio> 挂 crossorigin —— 频谱分析要读采样，
+ * 非同源音源不带 CORS 的话 Web Audio 会拿不到数据（见 NowPlayingCard）。
+ */
+export const musicBase = ((import.meta.env.PUBLIC_MUSIC_BASE as string | undefined) ?? '')
+  .trim()
+  .replace(/\/+$/, '')
 
 /**
  * 对外联系邮箱 —— 订阅面板与申请友链都用它拼 mailto。
@@ -208,7 +233,8 @@ export const finePrint = {
 
 /**
  * Now Playing —— 真播放器，按播放列表走：一首放完自动下一首、到底循环。
- * 加歌 = mp3（和可选的 LRC）丢进 public/music/，这里加一行；
+ * 加歌 = mp3（和可选的 LRC）丢进 public/music/（该目录 gitignored，版权物不进仓库；
+ * 分体部署时丢进服务器的 -music 目录），这里加一行；
  * 没有 lrc 的歌只显示曲名，不做歌词跟随。多于一首时卡上会出现「下一首」按钮。
  * bars 是未播放时等化条的「定格假谱」高度（取自设计稿），播放时由实时频谱接管。
  */

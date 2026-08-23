@@ -89,10 +89,9 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
 <script>
   import { marked } from 'marked'
-  import { api, report, SLUG_RE, toast, today } from '~/scripts/admin'
+  import { $, api, report, SLUG_RE, toast, today } from '~/scripts/admin'
   import type { PostMeta } from '~/scripts/admin'
 
-  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!
   const field = (k: string) => $(`[data-f="${k}"]`) as HTMLInputElement | HTMLTextAreaElement
 
   const slugInput = field('slug') as HTMLInputElement

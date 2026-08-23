@@ -3,7 +3,7 @@
  *
  * 管理端「项目」页签的「上传配图」按仓库名（小写、只留 a-z0-9-）落文件，
  * 这里 glob 同一规则匹配；没有对应文件时返回 undefined，
- * 组件退回品牌占位图（placeholder-art.png）。机制同友链头像。
+ * 组件退回品牌占位图（placeholder-art.webp）。机制同友链头像。
  */
 import type { ImageMetadata } from 'astro'
 

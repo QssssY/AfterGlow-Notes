@@ -5,8 +5,8 @@
 //   - 文章        → src/content/posts/<slug>.md（YAML front-matter + 正文）
 //   - 站点数据    → src/data/<name>.json（站点文案 / 关于页 / 项目 / 友链 / 播放列表等）
 //   - 上传        → 封面进 src/content/posts/_covers/，插图进 public/images/uploads/（内容寻址去重），
-//                   友链头像按域名进 images/blogroll/，项目配图按仓库名进 images/projects/，
-//                   音乐进 public/music/
+//     友链头像按域名进 images/blogroll/，项目配图按仓库名进 images/projects/，
+//     音乐进 public/music/
 //
 // dev 模式下 astro dev 监听这些文件，保存即热更新；部署后改完要重新构建
 // （/api/admin/build 可配一条构建命令，没配就提示手动构建）。
@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -42,9 +43,10 @@ import (
 )
 
 type adminState struct {
-	pass     string // 登录口令
-	blogDir  string // 仓库根目录（绝对路径）
-	buildCmd string // 可选：重新构建站点的命令
+	pass          string // 登录口令
+	blogDir       string // 仓库根目录（绝对路径）
+	buildCmd      string // 可选：重新构建站点的命令
+	musicOverride string // -music 目录；非空时传歌落这里而不是仓库的 public/music
 
 	mu       sync.Mutex
 	sessions map[string]time.Time // token → 过期时刻
@@ -69,7 +71,14 @@ func (a *adminState) dataDir() string   { return filepath.Join(a.blogDir, "src",
 func (a *adminState) uploadsDir() string {
 	return filepath.Join(a.blogDir, "public", "images", "uploads")
 }
-func (a *adminState) musicDir() string { return filepath.Join(a.blogDir, "public", "music") }
+// 音乐目录：音乐是版权物不进仓库 —— 配了 -music 就落服务器目录（分体部署），
+// 没配才落仓库的 public/music（本地开发用，该目录 gitignored）
+func (a *adminState) musicDir() string {
+	if a.musicOverride != "" {
+		return a.musicOverride
+	}
+	return filepath.Join(a.blogDir, "public", "music")
+}
 
 // 友链头像目录：文件名 = 域名，前端按域名 glob（src/utils/blogroll-avatars.ts）
 func (a *adminState) blogAvatarsDir() string {
@@ -126,9 +135,27 @@ func registerAdminRoutes(mux *http.ServeMux, s *server) {
 	mux.HandleFunc("/api/admin/data/{name}", s.cors(s.adminAuth(s.adminData)))
 	mux.HandleFunc("/api/admin/upload", s.cors(s.adminAuth(s.adminUpload)))
 	mux.HandleFunc("/api/admin/build", s.cors(s.adminAuth(s.adminBuild)))
+	mux.HandleFunc("/api/admin/stats", s.cors(s.adminAuth(s.adminStats)))
+	mux.HandleFunc("/api/admin/linkcheck", s.cors(s.adminAuth(s.handleLinkCheck)))
 }
 
 // ---- 鉴权 ----
+
+// weakPassReason：口令强度的硬门槛，过不了直接拒绝启动。
+// 仓库是开源的，管理台的一切防护都建立在「口令不可猜」上 —— 长度不够、
+// 或者含有看一眼仓库就能想到的字样（站名/admin/password），都不许用。
+func weakPassReason(pass string) string {
+	if len(pass) < 12 {
+		return "长度不足 12 位"
+	}
+	lower := strings.ToLower(pass)
+	for _, w := range []string{"afterglow", "admin", "password", "123456", "qwerty"} {
+		if strings.Contains(lower, w) {
+			return "包含太好猜的字样「" + w + "」"
+		}
+	}
+	return ""
+}
 
 func randomToken() string {
 	b := make([]byte, 32)
@@ -146,7 +173,7 @@ func (s *server) adminLogin(w http.ResponseWriter, r *http.Request) {
 	a := s.admin
 
 	// 口令尝试限流：每 IP 每天 20 次，跨天清零（和点赞限流同款、但更紧）
-	day := time.Now().UTC().Format("2006-01-02")
+	day := utcDay()
 	ip := clientIP(r)
 	a.mu.Lock()
 	if a.triesDay != day {
@@ -169,6 +196,8 @@ func (s *server) adminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if subtle.ConstantTimeCompare([]byte(b.Password), []byte(a.pass)) != 1 {
+		// 猜错一次至少付 400ms —— 叠上每 IP 每天 20 次的限流，在线暴力猜没有生存空间
+		time.Sleep(400 * time.Millisecond)
 		fail(w, http.StatusUnauthorized, "口令不对")
 		return
 	}
@@ -757,6 +786,103 @@ func (s *server) adminSummary(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ---- 统计 ----
+
+// adminStats：管理台「统计」页的数据源 —— 近 30 天逐日 阅读/访客/点赞、总量、在线人数。
+// views 表本来就存着 (slug, visitor, day)，这里只是把躺着的数据聚成曲线，不新增任何采集。
+func (s *server) adminStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		fail(w, http.StatusMethodNotAllowed, "只支持 GET")
+		return
+	}
+
+	const days = 30
+	now := time.Now().UTC()
+	since := now.AddDate(0, 0, -(days - 1)).Format("2006-01-02")
+
+	type dayStat struct {
+		Day      string `json:"day"`
+		Views    int    `json:"views"`
+		Visitors int    `json:"visitors"`
+		Likes    int    `json:"likes"`
+	}
+	// 先铺满 30 天的零值序列，再往里填 —— 没访问的日子在图上也要占位
+	byDay := map[string]*dayStat{}
+	series := make([]*dayStat, 0, days)
+	for i := 0; i < days; i++ {
+		d := now.AddDate(0, 0, -(days - 1 - i)).Format("2006-01-02")
+		st := &dayStat{Day: d}
+		byDay[d] = st
+		series = append(series, st)
+	}
+
+	// 查询失败宁可整页报错，也不端出一版全 0 的「假数据」—— 排查故障时
+	// 「数据清零」和「查不到数据」是两个完全不同的方向，不能混为一谈
+	rows, err := s.db.Query(
+		`SELECT day, COUNT(*), COUNT(DISTINCT visitor) FROM views WHERE day >= ? GROUP BY day`,
+		since,
+	)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "统计查询失败")
+		return
+	}
+	for rows.Next() {
+		var d string
+		var v, u int
+		if rows.Scan(&d, &v, &u) == nil {
+			if st := byDay[d]; st != nil {
+				st.Views, st.Visitors = v, u
+			}
+		}
+	}
+	rows.Close()
+
+	// likes 的 created 是 'YYYY-MM-DD HH:MM:SS'，字符串比较对日期前缀成立
+	rows, err = s.db.Query(
+		`SELECT substr(created, 1, 10) AS d, COUNT(*) FROM likes WHERE created >= ? GROUP BY d`,
+		since,
+	)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "统计查询失败")
+		return
+	}
+	for rows.Next() {
+		var d string
+		var n int
+		if rows.Scan(&d, &n) == nil {
+			if st := byDay[d]; st != nil {
+				st.Likes = n
+			}
+		}
+	}
+	rows.Close()
+
+	// 总量：views 一趟扫描出两个数；likes 用 COUNT+FILTER 一趟分出站赞/文章赞
+	//（不用 SUM(CASE…)：空表时 SUM 出 NULL 会 Scan 报错，COUNT 恒出 0）
+	var totalViews, totalVisitors, siteLikes, postLikes int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*), COUNT(DISTINCT visitor) FROM views`,
+	).Scan(&totalViews, &totalVisitors); err != nil {
+		fail(w, http.StatusInternalServerError, "统计查询失败")
+		return
+	}
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FILTER (WHERE slug = 'site'), COUNT(*) FILTER (WHERE slug != 'site') FROM likes`,
+	).Scan(&siteLikes, &postLikes); err != nil {
+		fail(w, http.StatusInternalServerError, "统计查询失败")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"online": s.presence.count(),
+		"days":   series,
+		"totals": map[string]int{
+			"views": totalViews, "visitors": totalVisitors,
+			"siteLikes": siteLikes, "postLikes": postLikes,
+		},
+	})
+}
+
 // ---- 构建 ----
 
 func (s *server) adminBuild(w http.ResponseWriter, r *http.Request) {
@@ -807,6 +933,13 @@ func (s *server) adminBuild(w http.ResponseWriter, r *http.Request) {
 				Took:       time.Since(start).Round(time.Second).String(),
 			}
 			a.buildMu.Unlock()
+
+			// 全站模式下构建成功 → 热替换静态缓存，新产物立即上线，不用重启进程
+			if err == nil && s.static != nil {
+				if rerr := s.static.Reload(); rerr != nil {
+					log.Printf("static reload failed: %v", rerr)
+				}
+			}
 		}()
 		writeJSON(w, http.StatusAccepted, map[string]bool{"started": true})
 

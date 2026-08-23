@@ -34,7 +34,7 @@ const groups = groupByYear(page.data)
 const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
 ---
 
-<BaseLayout title="文章" description={`按时间倒叙的写作记录 —— 共 ${total} 篇`} rail={false}>
+<BaseLayout title="文章" description={`按时间倒叙的写作记录 —— 共 ${total} 篇`}>
   {/*
     设计稿这轮删掉了满宽的萤火虫 Banner：文章列表改成内容栏顶部的 Page Head，
     篇数与字数从副标题挪进右侧那两格统计（原来左栏那块 Stats 面板说的是同一件事，

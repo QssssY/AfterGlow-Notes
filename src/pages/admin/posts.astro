@@ -25,7 +25,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { api, esc, report, toast } from '~/scripts/admin'
+  import { api, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
   import type { PostListItem } from '~/scripts/admin'
 
   const list = document.querySelector<HTMLElement>('[data-list]')!
@@ -81,11 +81,11 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   searchInput.addEventListener('input', show)
   draftsOnly.addEventListener('change', show)
 
-  async function load() {
-    posts = await api<PostListItem[]>('/api/admin/posts')
+  // 缓存回放秒出列表，网络应答再校正（swrAdmin 见 scripts/admin.ts）
+  swrAdmin('posts', () => api<PostListItem[]>('/api/admin/posts'), (p) => {
+    posts = p
     show()
-  }
-  load().catch((err) => {
+  }).catch((err) => {
     list.innerHTML = ''
     report(err)
   })
@@ -99,6 +99,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     try {
       await api(`/api/admin/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' })
       posts = posts.filter((p) => p.slug !== slug)
+      cachePut('posts', posts) // 同步缓存，别让删掉的行在下次回放里诈尸
       card.remove()
       toast('已删除')
     } catch (err) {

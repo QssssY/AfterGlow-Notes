@@ -1,5 +1,7 @@
 import { glob } from 'astro/loaders'
-import { defineCollection, z } from 'astro:content'
+import { defineCollection } from 'astro:content'
+// z 从 astro/zod 直取：astro:content 的再导出已废弃，Astro 7 会移除
+import { z } from 'astro/zod'
 
 const posts = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),

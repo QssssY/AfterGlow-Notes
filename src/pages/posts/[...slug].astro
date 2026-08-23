@@ -68,7 +68,6 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
   ogSlug={post.id}
   ogType="article"
   publishedAt={post.data.date}
-  rail={false}
 >
   <ReadingProgress />
 
@@ -220,18 +219,19 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
 
 <script>
   // 记一次阅读并回填「N 次阅读」。slug 从点赞按钮身上拿（同一篇文章）。
-  // 后端没配 / 没应答时 postView 返回 null，两个 span 保持 hidden —— 不编数字。
-  import { postView } from '~/scripts/api'
+  // touch 是合并接口（阅读 + 点赞态一个往返），和 ArticleActions 共用同一次 POST；
+  // 后端没配 / 没应答时返回 null，两个 span 保持 hidden —— 不编数字。
+  import { swr, touch } from '~/scripts/api'
 
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化（进别的文章也算一次阅读）
   document.addEventListener('astro:page-load', () => {
     const slug = document.querySelector<HTMLElement>('[data-like-slug]')?.dataset.likeSlug
     if (slug) {
-      postView(slug).then((res) => {
-        if (!res || res.count <= 0) return
+      swr(`touch:${slug}`, () => touch(slug), (state) => {
+        if (state.views <= 0) return
         const label = document.querySelector<HTMLElement>('[data-views-label]')
         // 设计稿写法带千分位：2,148 次阅读
-        if (label) label.textContent = `${res.count.toLocaleString('en-US')} 次阅读`
+        if (label) label.textContent = `${state.views.toLocaleString('en-US')} 次阅读`
         for (const el of document.querySelectorAll('[data-views]')) el.removeAttribute('hidden')
       })
     }

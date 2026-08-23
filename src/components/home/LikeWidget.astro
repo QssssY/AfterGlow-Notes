@@ -49,7 +49,7 @@ import { Icon } from 'astro-icon/components'
 </div>
 
 <script>
-  import { getLikes, postLike } from '~/scripts/api'
+  import { getLikes, postLike, swr, swrPatch } from '~/scripts/api'
   import { likeBurst } from '~/scripts/like-burst'
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
@@ -89,9 +89,9 @@ import { Icon } from 'astro-icon/components'
     }
     render()
 
-    // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）
-    getLikes('site').then((state) => {
-      if (!state) return
+    // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）；
+    // swr 先回放上次的总数（秒出），网络应答到了再校正
+    swr('likes:site', () => getLikes('site'), (state) => {
       liked = state.liked
       total = state.count
       write(liked)
@@ -112,6 +112,8 @@ import { Icon } from 'astro-icon/components'
           total = state.count
           write(liked)
           render()
+          // 缓存同步：下次回放别闪回点赞前的旧态
+          swrPatch('likes:site', state)
         })
       })
     }
