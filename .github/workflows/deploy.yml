@@ -1,12 +1,19 @@
-# 余晖录 · push 即上线
+# 余晖录 · push 即构建发布，服务器定时自取（晚高峰跨境拥塞版）
 #
-# 触发：push 到 main（或手动 workflow_dispatch）。
-# 做什么：与 scripts/deploy.sh 同一套流程的 CI 版 —— pnpm 构建 → 上传 dist 与
-#         仓库快照 → 服务器原子换目录 → 重启 afterglow → 公网体检。
-# 差别：歌曲不随 CI 走（版权物不进仓库），新增/替换音乐仍在本机跑
-#         bash scripts/deploy.sh，它只增量补服务器缺的文件。
-# 前提：仓库 Secrets 里有 DEPLOY_SSH_KEY（专用部署私钥，公钥在服务器
-#         authorized_keys，注释 afterglow-ci-deploy）与 DEPLOY_KNOWN_HOSTS。
+# 为什么不是 CI 直连服务器部署：runner 在海外、服务器在北京，22 端口
+# 的 SSH 数据传输在跨境晚高峰会被拥塞拖死（连接能建立、认证能过、
+# 传输爬不动），重试多少次都白搭 —— 物理链路问题，不是代码问题。
+#
+# 三条互补的部署路：
+#   1. CI（本文件）：构建 → 产物发布到 GitHub Release（tag 固定 deploy，
+#      产物覆盖）。runner→GitHub 同侧网络，永远秒绿；
+#   2. 服务器：systemd timer 每 5 分钟跑 /opt/afterglow/pull-deploy.sh，
+#      发现 Release 变了就下载换装 —— 链路空闲时几分钟内落地，拥塞时
+#      挂着下一轮重试，永不报错刷存在感；
+#   3. 本机：bash scripts/deploy.sh（国内线路直连，30 秒）—— 着急上线
+#      或加歌（音乐不进仓库，只有这条路能送）时用。
+# 前提：仓库 Secrets 的 DEPLOY_SSH_KEY / DEPLOY_KNOWN_HOSTS 已不需要，
+#      本流程零 SSH。
 name: deploy
 
 on:
@@ -14,16 +21,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# 连续 push 时只保最后一笔，避免排队重部署
 concurrency:
   group: deploy
   cancel-in-progress: true
 
+permissions:
+  contents: write # 往 Release 写产物
+
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
-    # 全量安装 + 构建实测过 14 分钟，15 会误杀慢 run
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -45,52 +53,19 @@ jobs:
           tar -C dist --exclude='./music' -czf /tmp/dist.tgz .
           git ls-files -z | tar --null -T - -czf /tmp/blog.tgz
 
-      - name: 配置 SSH
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          install -m 600 /dev/null ~/.ssh/id_ed25519
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
-          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-
-      - name: 上传 + 原子替换 + 重启（单连接 + 硬超时 + 高重试）
+      - name: 发布到 Release（tag 固定 deploy，产物覆盖）
         env:
-          HOST: root@106.12.72.232
-          ROOT: /opt/afterglow
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # 服务器 22 端口被全网爆破扫描，百度云安全代理对外国机房 IP 随机
-          # 丢包 —— runner 单条连接成功率只有两三成。对策：① 全部走一条
-          # ssh 连接（两个 tar 拼流从 stdin 过去，远端按字节切开后自己换
-          # 目录重启），不搞 scp+ssh 两连击；② timeout 硬掐单次挂死；
-          # ③ 8 次重试兜概率。
-          BLOG_SIZE=$(stat -c%s /tmp/blog.tgz)
-          for i in 1 2 3 4 5 6 7 8; do
-            if cat /tmp/blog.tgz /tmp/dist.tgz | timeout 150 ssh "$HOST" "set -e
-              head -c $BLOG_SIZE > /tmp/blog.tgz
-              tail -c +$((BLOG_SIZE + 1)) > /tmp/dist.tgz
-              mkdir -p $ROOT/blog && tar -xzf /tmp/blog.tgz -C $ROOT/blog
-              rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
-              tar -xzf /tmp/dist.tgz -C $ROOT/dist.new
-              rm -rf $ROOT/dist.prev
-              if [ -d $ROOT/dist ]; then mv $ROOT/dist $ROOT/dist.prev; fi
-              mv $ROOT/dist.new $ROOT/dist
-              systemctl restart afterglow
-              rm -f /tmp/dist.tgz /tmp/blog.tgz"; then
-              echo "第 $i 次尝试成功"
-              exit 0
-            fi
-            echo "第 $i 次被云安全丢包掐断，6s 后重试"
-            sleep 6
-          done
-          echo '❌ 八次都失败：大概率百度云安全在拦截，去控制台「云安全→主机安全」看一眼'
-          exit 1
+          SHA=$(git rev-parse --short HEAD)
+          gh release delete deploy --yes --cleanup-tag 2>/dev/null || true
+          gh release create deploy /tmp/dist.tgz /tmp/blog.tgz \
+            --title "自动部署产物 ${SHA}" \
+            --notes "服务器 pull-deploy 定时器自取；本机秒发用 bash scripts/deploy.sh" \
+            --prerelease
+          echo "✓ 产物已发布，服务器将在下一个 5 分钟窗口自取"
 
-      - name: 公网体检
+      - name: 提示部署链路
         run: |
-          sleep 8   # 服务启动要预载静态文件，给足窗口
-          for i in 1 2 3 4 5; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 8 http://106.12.72.232/ || true)
-            [ "$code" = 200 ] && break
-            sleep 5
-          done
-          echo "GET / → $code"
-          [ "$code" = 200 ] || { echo '❌ 首页不通：查服务器 journalctl -u afterglow -n 50'; exit 1; }
+          echo "==> 部署状态看服务器：journalctl -u afterglow-pull -n 20"
+          echo "==> 着急上线：本机 bash scripts/deploy.sh（国内线路 30 秒）"
