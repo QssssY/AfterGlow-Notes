@@ -69,7 +69,6 @@ const { slug, updated } = Astro.props
 
 <script>
   import { postLike, swr, swrPatch, touch } from '~/scripts/api'
-  import { copyText } from '~/scripts/clipboard'
   import { likeBurst } from '~/scripts/like-burst'
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
@@ -146,6 +145,8 @@ const { slug, updated } = Astro.props
 </script>
 
 <script>
+  import { copyText } from '~/scripts/clipboard'
+
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
     for (const button of document.querySelectorAll<HTMLElement>('[data-copy-link]')) {
