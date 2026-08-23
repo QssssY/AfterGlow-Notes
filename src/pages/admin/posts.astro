@@ -22,10 +22,16 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   <div data-list class="flex flex-col gap-[12px]">
     <span class="ad-hint">加载中…</span>
   </div>
+
+  <div data-pager hidden class="flex items-center justify-center gap-[12px]">
+    <button type="button" data-page-prev class="ad-btn-ghost">‹ 上一页</button>
+    <span data-page-info class="ad-hint"></span>
+    <button type="button" data-page-next class="ad-btn-ghost">下一页 ›</button>
+  </div>
 </AdminLayout>
 
 <script>
-  import { api, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
+  import { $, api, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
   import type { PostListItem } from '~/scripts/admin'
 
   const list = document.querySelector<HTMLElement>('[data-list]')!
@@ -57,6 +63,14 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   let posts: PostListItem[] = []
 
+  // 分页：和归档页同款每页 10 篇；筛选变化时回到第一页
+  const PAGE_SIZE = 10
+  let page = 1
+  const pager = $('[data-pager]')
+  const pageInfo = $('[data-page-info]')
+  const prevBtn = $<HTMLButtonElement>('[data-page-prev]')
+  const nextBtn = $<HTMLButtonElement>('[data-page-next]')
+
   function show() {
     const q = searchInput.value.trim().toLowerCase()
     const filtered = posts.filter((p) => {
@@ -73,13 +87,37 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       list.innerHTML = posts.length
         ? '<span class="ad-hint">没有匹配的文章。</span>'
         : '<span class="ad-hint">还没有文章，点右上角写第一篇。</span>'
+      pager.hidden = true
       return
     }
-    list.innerHTML = filtered.map(row).join('')
+    const pages = Math.ceil(filtered.length / PAGE_SIZE)
+    page = Math.min(Math.max(1, page), pages)
+    list.innerHTML = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(row).join('')
+    pager.hidden = pages <= 1
+    pageInfo.textContent = `第 ${page} / ${pages} 页 · 共 ${filtered.length} 篇`
+    prevBtn.disabled = page <= 1
+    nextBtn.disabled = page >= pages
   }
 
-  searchInput.addEventListener('input', show)
-  draftsOnly.addEventListener('change', show)
+  prevBtn.addEventListener('click', () => {
+    page -= 1
+    show()
+    scrollTo({ top: 0, behavior: 'smooth' })
+  })
+  nextBtn.addEventListener('click', () => {
+    page += 1
+    show()
+    scrollTo({ top: 0, behavior: 'smooth' })
+  })
+
+  searchInput.addEventListener('input', () => {
+    page = 1
+    show()
+  })
+  draftsOnly.addEventListener('change', () => {
+    page = 1
+    show()
+  })
 
   // 缓存回放秒出列表，网络应答再校正（swrAdmin 见 scripts/admin.ts）
   swrAdmin('posts', () => api<PostListItem[]>('/api/admin/posts'), (p) => {
@@ -100,7 +138,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       await api(`/api/admin/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' })
       posts = posts.filter((p) => p.slug !== slug)
       cachePut('posts', posts) // 同步缓存，别让删掉的行在下次回放里诈尸
-      card.remove()
+      show() // 整页重排：删掉末页最后一条时页码自动回夹
       toast('已删除')
     } catch (err) {
       report(err)

@@ -112,17 +112,20 @@
   .ad-btn-ghost:hover {
     background-color: var(--card-solid);
     translate: 0 -1px;
+    scale: 1.04;
   }
   .ad-btn-primary:hover {
     translate: 0 -1px;
+    scale: 1.04;
   }
   .ad-btn-danger:hover {
     background-color: var(--like-tint);
     translate: 0 -1px;
+    scale: 1.04;
   }
 }
 :is(.ad-btn, .ad-btn-primary, .ad-btn-ghost, .ad-btn-danger):active {
-  scale: 0.96;
+  scale: 0.95;
   translate: 0 0;
 }
 :is(.ad-btn, .ad-btn-primary, .ad-btn-ghost, .ad-btn-danger)[disabled] {
@@ -326,4 +329,269 @@
   padding: 6px 12px;
   border: 1px solid var(--hairline);
   font-size: 13.5px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 丝滑三件套（照搬 YYsuni write 后台的观感来源）：
+ * 卡片错峰浮现 + 按钮 hover 微缩放（上面已并入）+ 图表生长动画。
+ * 入场类由 AdminLayout 尾部脚本按屏上顺序编号，模式同前台 BaseLayout。
+ * ───────────────────────────────────────────────────────────── */
+@keyframes ad-enter {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+    scale: 0.97;
+  }
+}
+.ad-enter {
+  animation: ad-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--ad-i, 0) * 70ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ad-enter { animation: none; }
+}
+
+/* ---- 统计图（stats.astro）：柱子生长 + 零值日的基线呼吸点 ---- */
+.ad-chart {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 180px;
+}
+/* 三条横向参考线：max / 1/2 / 基线 —— 空白期也有节奏可读 */
+.ad-chart::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--hairline), var(--hairline)) top / 100% 1px no-repeat,
+    linear-gradient(var(--hairline), var(--hairline)) center / 100% 1px no-repeat,
+    linear-gradient(var(--hairline), var(--hairline)) bottom / 100% 1px no-repeat;
+  opacity: 0.6;
+}
+.ad-chart-max {
+  position: absolute;
+  top: -7px;
+  right: 0;
+  font-size: 11px;
+  color: var(--ink-muted);
+  background: var(--card);
+  padding: 0 6px;
+  border-radius: 6px;
+}
+.ad-col {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  height: 100%;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+.ad-col:hover {
+  background-color: var(--chip);
+}
+@keyframes ad-bar-grow {
+  from { scale: 1 0; }
+}
+.ad-bar {
+  width: 42%;
+  max-width: 14px;
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+  animation: ad-bar-grow 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--ad-i, 0) * 14ms + 0.15s);
+}
+.ad-bar--views { background: var(--brand); opacity: 0.85; }
+.ad-bar--visitors { background: var(--leaf); width: 22%; max-width: 8px; }
+/* 没有任何数据的日子：一粒基线圆点占住节拍，30 天不再是一片空白 */
+.ad-dot {
+  position: absolute;
+  bottom: -1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ink-muted);
+  opacity: 0.3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ad-bar { animation: none; }
+}
+
+/* 图表区间切换（7 / 30 天）：小号分段按钮，选中态用品牌 tint */
+.ad-range {
+  border: 0;
+  border-radius: 10px;
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-family: var(--font-body);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, scale 0.2s var(--spring);
+}
+.ad-range:hover { scale: 1.05; }
+.ad-range:active { scale: 0.95; }
+.ad-range[aria-pressed='true'] {
+  background-color: var(--fire-tint);
+  outline-color: transparent;
+  color: var(--brand-ink);
+}
+
+/* ---- 标签胶囊输入（编辑器侧栏，YYsuni TagInput 式） ---- */
+.ad-tagbox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border-radius: 12px;
+  background-color: var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  padding: 8px 10px;
+  cursor: text;
+  transition: outline-color 0.15s ease;
+}
+.ad-tagbox:focus-within {
+  outline: 1.5px solid var(--brand);
+  outline-offset: -0.75px;
+}
+.ad-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 8px;
+  background-color: var(--fire-tint);
+  color: var(--brand-ink);
+  padding: 3px 8px;
+  font-size: 12.5px;
+  animation: ad-enter 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ad-tag button {
+  border: 0;
+  background: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+.ad-tag button:hover { opacity: 1; }
+.ad-tagbox input {
+  flex: 1;
+  min-width: 90px;
+  border: 0;
+  outline: 0;
+  background: none;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  padding: 3px 2px;
+}
+
+/* ---- 站点图片预览瓦片（站点信息页签，YYsuni 网站设置式）：
+   有图显图、悬停出「更换」，没图是虚线加号位。六个位置排一行，快照仨自然相邻 ---- */
+.ad-imgtiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+}
+.ad-imgtile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 132px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.ad-imgtile-pic {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96px;
+  border-radius: 16px;
+  background: var(--chip);
+  outline: 1.5px dashed var(--hairline);
+  outline-offset: -0.75px;
+  overflow: hidden;
+  transition: outline-color 0.15s ease, scale 0.2s var(--spring);
+}
+.ad-imgtile:hover .ad-imgtile-pic {
+  outline-color: var(--brand);
+  scale: 1.03;
+}
+.ad-imgtile-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ad-imgtile-pic:has(img) {
+  outline-style: solid;
+}
+.ad-imgtile-pic::after {
+  content: '更换';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+  background: #00000059;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.ad-imgtile:hover .ad-imgtile-pic:has(img)::after {
+  opacity: 1;
+}
+.ad-imgtile-empty {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink-muted);
+}
+.ad-imgtile-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* ---- 封面拖拽区（编辑器侧栏） ---- */
+.ad-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 96px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--hairline);
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: center;
+  padding: 14px;
+  transition: border-color 0.15s ease, background-color 0.15s ease, scale 0.2s var(--spring);
+}
+.ad-drop:hover {
+  border-color: var(--brand);
+  background-color: var(--chip);
+}
+.ad-drop[data-over] {
+  border-color: var(--brand);
+  background-color: var(--fire-tint);
+  scale: 1.02;
 }

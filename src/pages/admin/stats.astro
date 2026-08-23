@@ -9,24 +9,29 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 ---
 
 <AdminLayout title="统计" active="stats">
-  <section class="grid grid-cols-2 gap-[14px] xl:grid-cols-4">
+  <section class="grid grid-cols-2 gap-[14px] xl:grid-cols-5">
     <div class="ad-stat"><b data-stat="online">—</b><span>此刻在线</span></div>
     <!-- views 按 UTC 天分桶，北京时间早上 8 点才「翻天」—— 文案如实标注，别让人以为数据丢了 -->
     <div class="ad-stat"><b data-stat="today">—</b><span>今日阅读（UTC 日）</span></div>
+    <div class="ad-stat"><b data-stat="week">—</b><span>近 7 天阅读</span></div>
     <div class="ad-stat"><b data-stat="month">—</b><span>近 30 天阅读</span></div>
     <div class="ad-stat"><b data-stat="visitors">—</b><span>独立访客（累计）</span></div>
   </section>
 
   <section class="ad-card flex flex-col gap-[14px] p-[24px]">
-    <div class="flex flex-wrap items-baseline justify-between gap-[8px]">
-      <span class="text-[14px] font-medium text-ink">近 30 天</span>
+    <div class="flex flex-wrap items-center justify-between gap-[8px]">
+      <div class="flex items-center gap-[8px]">
+        <!-- 区间只有 7/30：views 表按天分桶（有意不存时分秒），「今天」画不成小时曲线 -->
+        <button type="button" class="ad-range" data-range="7" aria-pressed="false">近 7 天</button>
+        <button type="button" class="ad-range" data-range="30" aria-pressed="true">近 30 天</button>
+      </div>
       <span class="ad-hint">
         <i class="inline-block size-[9px] rounded-[2px] align-middle" style="background: var(--brand)"></i> 阅读
         <i class="ml-[10px] inline-block size-[9px] rounded-[2px] align-middle" style="background: var(--leaf)"></i> 访客
         · 悬停看单日明细
       </span>
     </div>
-    <div data-chart class="flex h-[180px] items-end gap-[3px]">
+    <div data-chart class="ad-chart">
       <span class="ad-hint">加载中…</span>
     </div>
     <div class="flex justify-between">
@@ -56,27 +61,58 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   // ---- 曲线与总量（缓存回放秒出，网络校正）----
 
+  // 图表区间（7 / 30 天）：服务端一直给 30 天，切档只是客户端切片
+  let rangeDays = 30
+  let lastDays: Stats['days'] = []
+
+  function renderChart() {
+    const chart = $('[data-chart]')
+    const days = lastDays.slice(-rangeDays)
+    if (days.length === 0) return
+    const max = Math.max(1, ...days.map((d) => Math.max(d.views, d.visitors)))
+    // 高度百分比；有量但不足 3% 的抬到 3%，别让个位数矮成看不见
+    const pct = (n: number) => (n <= 0 ? 0 : Math.max(3, (n / max) * 100))
+    // SWR 会回放缓存再网络校正：数据和区间都没变就不重绘，生长动画不连播两遍
+    const sig = rangeDays + ':' + JSON.stringify(days)
+    if (chart.dataset.sig === sig) return
+    chart.dataset.sig = sig
+    // 没有任何数据的日子给一粒基线圆点占节拍 —— 新站前 28 天不再是一片空白；
+    // 柱子按日序错峰生长（--ad-i 进 animation-delay，见 admin.css）
+    chart.innerHTML =
+      `<span class="ad-chart-max">峰值 ${max}</span>` +
+      days
+        .map((d, i) => {
+          const title = `${d.day}：${d.views} 次阅读 · ${d.visitors} 位访客 · ${d.likes} 个赞`
+          const bars =
+            d.views <= 0 && d.visitors <= 0
+              ? '<span class="ad-dot"></span>'
+              : `<span class="ad-bar ad-bar--views" style="--ad-i:${i}; height:${pct(d.views)}%"></span>` +
+                `<span class="ad-bar ad-bar--visitors" style="--ad-i:${i}; height:${pct(d.visitors)}%"></span>`
+          return `<div class="ad-col" title="${title}">${bars}</div>`
+        })
+        .join('')
+    $('[data-chart-from]').textContent = days[0]?.day ?? ''
+    $('[data-chart-to]').textContent = days.at(-1)?.day ?? ''
+  }
+
+  for (const btn of document.querySelectorAll<HTMLElement>('[data-range]')) {
+    btn.addEventListener('click', () => {
+      rangeDays = Number(btn.dataset.range)
+      for (const b of document.querySelectorAll<HTMLElement>('[data-range]')) {
+        b.setAttribute('aria-pressed', String(b === btn))
+      }
+      renderChart()
+    })
+  }
+
   function renderStats(st: Stats) {
     $('[data-stat="online"]').textContent = String(st.online)
     $('[data-stat="today"]').textContent = String(st.days.at(-1)?.views ?? 0)
+    $('[data-stat="week"]').textContent = String(st.days.slice(-7).reduce((n, d) => n + d.views, 0))
     $('[data-stat="month"]').textContent = String(st.days.reduce((n, d) => n + d.views, 0))
     $('[data-stat="visitors"]').textContent = String(st.totals.visitors)
-
-    const chart = $('[data-chart]')
-    const max = Math.max(1, ...st.days.map((d) => Math.max(d.views, d.visitors)))
-    // 高度百分比；有量但不足 2% 的抬到 2%，别让个位数矮成看不见
-    const pct = (n: number) => (n <= 0 ? 0 : Math.max(2, (n / max) * 100))
-    chart.innerHTML = st.days
-      .map(
-        (d) => `<div class="flex h-full flex-1 items-end justify-center gap-[2px]"
-          title="${d.day}：${d.views} 次阅读 · ${d.visitors} 位访客 · ${d.likes} 个赞">
-          <span class="w-[55%] rounded-t-[3px]" style="background: var(--brand); opacity: .8; height: ${pct(d.views)}%"></span>
-          <span class="w-[26%] rounded-t-[3px]" style="background: var(--leaf); height: ${pct(d.visitors)}%"></span>
-        </div>`,
-      )
-      .join('')
-    $('[data-chart-from]').textContent = st.days[0]?.day ?? ''
-    $('[data-chart-to]').textContent = st.days.at(-1)?.day ?? ''
+    lastDays = st.days
+    renderChart()
   }
   swrAdmin('stats', () => api<Stats>('/api/admin/stats'), renderStats).catch(report)
 

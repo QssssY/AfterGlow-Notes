@@ -1,0 +1,271 @@
+---
+/**
+ * 主题色配置 —— UI 概念抄 YYsuni 网站设置的「色彩配置」（基础颜色 + 预设 +
+ * 随机配色），落地走我们的 git-as-CMS：保存写 src/data/theme.json，
+ * utils/theme.ts 把它编译成内联覆盖（dev 保存即热更新，正式站重新构建生效）。
+ * 改动会即时应用在管理台自身上做预览 —— 管理台和前台共用同一套 token。
+ */
+import AdminLayout from '~/layouts/AdminLayout.astro'
+
+const FIELDS = [
+  ['brand', '主题色'],
+  ['brandInk', '主题深（链接强调）'],
+  ['fireWarm', '暖调辅助'],
+  ['leaf', '点缀绿'],
+  ['leafDeep', '深绿'],
+  ['cream', '背景'],
+  ['ink', '墨色（正文）'],
+  ['inkSoft', '次级墨'],
+] as const
+
+const MODES = [
+  ['light', '浅色模式'],
+  ['dark', '深色模式'],
+] as const
+---
+
+<AdminLayout title="主题" active="theme">
+  <div class="flex flex-wrap items-center justify-between gap-[10px]">
+    <h1 class="font-display text-[22px] text-ink">主题色</h1>
+    <div class="flex items-center gap-[8px]">
+      <button type="button" data-random class="ad-btn-ghost">🎲 随机配色</button>
+      <button type="button" data-reset class="ad-btn-ghost">恢复默认</button>
+      <button type="button" data-save class="ad-btn-primary">保存</button>
+    </div>
+  </div>
+
+  <section class="ad-card flex flex-col gap-[16px] p-[24px]">
+    <span class="text-[14px] font-medium text-ink">基础颜色</span>
+    <div class="grid gap-[20px] xl:grid-cols-2">
+      {
+        MODES.map(([mode, modeLabel]) => (
+          <div class="flex flex-col gap-[10px]">
+            <span class="ad-label">{modeLabel}</span>
+            <div class="grid grid-cols-2 gap-x-[16px] gap-y-[10px]">
+              {FIELDS.map(([key, label]) => (
+                <label class="flex cursor-pointer items-center gap-[10px]">
+                  <input type="color" class="ad-swatch" data-c={`${mode}.${key}`} />
+                  <span class="text-[13px] text-ink">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <p class="ad-hint">
+      颜色即时预览在管理台自身；「保存」写进 <code>src/data/theme.json</code> ——
+      本地 dev 保存即热更新，正式站要重新构建。默认值不写入文件，恢复默认 = 清空覆盖。
+      主题色的两枚衍生（图钉底色 / 光晕）保存时自动按主题色算好。
+    </p>
+  </section>
+
+  <section class="ad-card flex flex-col gap-[14px] p-[24px]">
+    <span class="text-[14px] font-medium text-ink">预设配色</span>
+    <div data-presets class="flex flex-col gap-[10px]"></div>
+    <p class="ad-hint">点「套用」填入色票并即时预览，满意再点右上角保存；不满意就恢复默认。</p>
+  </section>
+</AdminLayout>
+
+<style>
+  .ad-swatch {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border: 0;
+    padding: 0;
+    border-radius: 12px;
+    background: none;
+    cursor: pointer;
+    transition: scale 0.2s var(--spring);
+  }
+  .ad-swatch:hover {
+    scale: 1.08;
+  }
+  .ad-swatch::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  .ad-swatch::-webkit-color-swatch {
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+  }
+</style>
+
+<script>
+  import { $, api, report, toast } from '~/scripts/admin'
+
+  type Mode = 'light' | 'dark'
+  type Palette = Record<string, string>
+
+  // global.css 的默认值（不写入文件的基准；改 global.css 记得同步这里）
+  const DEFAULTS: Record<Mode, Palette> = {
+    light: {
+      brand: '#d9812b', brandInk: '#a85b12', fireWarm: '#c9741f',
+      leaf: '#2a7a66', leafDeep: '#1f5e4e',
+      cream: '#f7f1e7', ink: '#5b423f', inkSoft: '#7a6555',
+    },
+    dark: {
+      brand: '#f2a94e', brandInk: '#f2a94e', fireWarm: '#f5c07a',
+      leaf: '#5bc4a8', leafDeep: '#8fdcc6',
+      cream: '#141210', ink: '#f1e8dd', inkSoft: '#c3b3a2',
+    },
+  }
+  const VARS: Palette = {
+    brand: '--brand', brandInk: '--brand-ink', fireWarm: '--fire-warm',
+    leaf: '--leaf', leafDeep: '--leaf-deep',
+    cream: '--cream', ink: '--ink', inkSoft: '--ink-soft',
+  }
+
+  // 预设：每套都是 浅+深 全量（余晖默认不在列 —— 那是「恢复默认」）
+  const PRESETS: { name: string; light: Palette; dark: Palette }[] = [
+    {
+      name: '松风',
+      light: { brand: '#3f8b68', brandInk: '#1f6a4b', fireWarm: '#357e5d', leaf: '#d9944b', leafDeep: '#b96f2a', cream: '#f0f4ec', ink: '#3c4a40', inkSoft: '#5e7264' },
+      dark: { brand: '#7bc9a4', brandInk: '#7bc9a4', fireWarm: '#97d6b8', leaf: '#f2b36b', leafDeep: '#f7c98f', cream: '#101512', ink: '#e2efe5', inkSoft: '#a8c0af' },
+    },
+    {
+      name: '晴空',
+      light: { brand: '#3d8fd1', brandInk: '#1f6ba8', fireWarm: '#3583c4', leaf: '#e0a23e', leafDeep: '#c4860f', cream: '#eff5fa', ink: '#35434f', inkSoft: '#5b7080' },
+      dark: { brand: '#7fbcec', brandInk: '#7fbcec', fireWarm: '#9ecdf2', leaf: '#f2c169', leafDeep: '#f7d592', cream: '#0e1216', ink: '#e4edf4', inkSoft: '#a3b8c8' },
+    },
+    {
+      name: '落樱',
+      light: { brand: '#d96a8b', brandInk: '#b04263', fireWarm: '#c95e7e', leaf: '#6fa287', leafDeep: '#4c8168', cream: '#faf1f1', ink: '#52403f', inkSoft: '#77605f' },
+      dark: { brand: '#f0a0b8', brandInk: '#f0a0b8', fireWarm: '#f5b8ca', leaf: '#8fc9ac', leafDeep: '#b3dcc5', cream: '#161012', ink: '#f2e6e6', inkSoft: '#c6acac' },
+    },
+  ]
+
+  const picker = (mode: Mode, key: string) => $(`[data-c="${mode}.${key}"]`) as HTMLInputElement
+  const each = (fn: (mode: Mode, key: string) => void) => {
+    for (const mode of ['light', 'dark'] as Mode[]) for (const key of Object.keys(VARS)) fn(mode, key)
+  }
+
+  // ---- 即时预览：把「当前明暗模式」那套值内联到 <html> 上（内联赢过一切规则）----
+  function applyLive() {
+    const mode: Mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    for (const key of Object.keys(VARS)) {
+      const v = picker(mode, key).value
+      if (v.toLowerCase() === DEFAULTS[mode][key]) document.documentElement.style.removeProperty(VARS[key])
+      else document.documentElement.style.setProperty(VARS[key], v)
+    }
+    const brand = picker(mode, 'brand').value
+    if (brand.toLowerCase() === DEFAULTS[mode].brand) {
+      document.documentElement.style.removeProperty('--fire-tint')
+      document.documentElement.style.removeProperty('--glow-fire')
+    } else {
+      document.documentElement.style.setProperty('--fire-tint', brand + (mode === 'light' ? '1f' : '24'))
+      document.documentElement.style.setProperty('--glow-fire', brand + 'b3')
+    }
+  }
+  function clearLive() {
+    for (const key of Object.keys(VARS)) document.documentElement.style.removeProperty(VARS[key])
+    document.documentElement.style.removeProperty('--fire-tint')
+    document.documentElement.style.removeProperty('--glow-fire')
+  }
+
+  each((mode, key) => picker(mode, key).addEventListener('input', applyLive))
+
+  function fill(light: Palette, dark: Palette) {
+    const sets: Record<Mode, Palette> = { light, dark }
+    each((mode, key) => {
+      picker(mode, key).value = sets[mode][key] ?? DEFAULTS[mode][key]
+    })
+    applyLive()
+  }
+
+  // ---- 读取现状 ----
+  api<{ light?: Palette; dark?: Palette }>('/api/admin/data/theme')
+    .then((t) => fill({ ...DEFAULTS.light, ...t.light }, { ...DEFAULTS.dark, ...t.dark }))
+    .catch(report)
+
+  // ---- 预设 ----
+  const presetBox = $('[data-presets]')
+  for (const p of PRESETS) {
+    const row = document.createElement('div')
+    row.className = 'flex flex-wrap items-center gap-[10px]'
+    const strip = document.createElement('div')
+    strip.className = 'flex items-center gap-[6px]'
+    for (const key of ['brand', 'fireWarm', 'leaf', 'leafDeep', 'cream'] as const) {
+      const s = document.createElement('span')
+      s.className = 'inline-block size-[28px] rounded-[9px]'
+      s.style.background = p.light[key]
+      s.style.outline = '1px solid var(--hairline)'
+      strip.append(s)
+    }
+    const name = document.createElement('span')
+    name.className = 'w-[56px] text-[13px] text-ink'
+    name.textContent = p.name
+    const use = document.createElement('button')
+    use.type = 'button'
+    use.className = 'ad-btn-ghost'
+    use.textContent = '套用'
+    use.addEventListener('click', () => {
+      fill(p.light, p.dark)
+      toast(`已套用「${p.name}」，右上角保存后生效`)
+    })
+    row.append(strip, name, use)
+    presetBox.append(row)
+  }
+
+  // ---- 随机配色：同一色相推两套明暗，主色和点缀绿隔 150° 保证有对比 ----
+  function hsl(h: number, s: number, l: number): string {
+    const a = (s / 100) * Math.min(l / 100, 1 - l / 100)
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12
+      const c = l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
+      return Math.round(255 * c).toString(16).padStart(2, '0')
+    }
+    return `#${f(0)}${f(8)}${f(4)}`
+  }
+  $('[data-random]').addEventListener('click', () => {
+    const h = Math.floor(Math.random() * 360)
+    const g = (h + 150) % 360
+    fill(
+      {
+        brand: hsl(h, 64, 48), brandInk: hsl(h, 70, 34), fireWarm: hsl((h + 8) % 360, 60, 45),
+        leaf: hsl(g, 48, 36), leafDeep: hsl(g, 52, 26),
+        cream: hsl(h, 45, 95), ink: hsl(h, 18, 28), inkSoft: hsl(h, 14, 42),
+      },
+      {
+        brand: hsl(h, 72, 64), brandInk: hsl(h, 72, 64), fireWarm: hsl((h + 8) % 360, 68, 72),
+        leaf: hsl(g, 45, 60), leafDeep: hsl(g, 50, 72),
+        cream: hsl(h, 18, 7), ink: hsl(h, 25, 91), inkSoft: hsl(h, 15, 70),
+      },
+    )
+    toast('掷了一把骰子 —— 满意就保存，不满意再掷')
+  })
+
+  // ---- 保存：只写与默认不同的项；主题色变了就顺手写衍生的两枚 ----
+  $('[data-save]').addEventListener('click', async () => {
+    const out: Record<Mode, Palette> = { light: {}, dark: {} }
+    each((mode, key) => {
+      const v = picker(mode, key).value.toLowerCase()
+      if (v !== DEFAULTS[mode][key]) out[mode][key] = v
+    })
+    for (const mode of ['light', 'dark'] as Mode[]) {
+      if (out[mode].brand) {
+        out[mode].fireTint = out[mode].brand + (mode === 'light' ? '1f' : '24')
+        out[mode].glowFire = out[mode].brand + 'b3'
+      }
+    }
+    try {
+      await api('/api/admin/data/theme', { method: 'PUT', body: out })
+      const n = Object.keys(out.light).length + Object.keys(out.dark).length
+      toast(n > 0 ? '已保存 —— dev 即时生效，正式站重新构建后生效' : '已保存（当前就是默认配色）')
+    } catch (err) {
+      report(err)
+    }
+  })
+
+  // ---- 恢复默认 ----
+  $('[data-reset]').addEventListener('click', async () => {
+    fill(DEFAULTS.light, DEFAULTS.dark)
+    clearLive()
+    try {
+      await api('/api/admin/data/theme', { method: 'PUT', body: { light: {}, dark: {} } })
+      toast('已恢复默认配色')
+    } catch (err) {
+      report(err)
+    }
+  })
+</script>

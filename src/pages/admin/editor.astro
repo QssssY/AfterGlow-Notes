@@ -1,89 +1,99 @@
 ---
+/**
+ * 写文章 —— 布局与手感照搬 YYsuni/2025-blog-public 的 write 后台：
+ * 主编辑卡（标题+slug 一行、巨型正文框）+ 320px 侧栏（封面 / 元信息 / 插图
+ * 三段错峰入场）+ 顶部悬浮操作组；预览是「就地整屏切换」而不是原来的
+ * 卡内切换。编辑手感三件：Ctrl+B/I/K 与 Tab 缩进（execCommand 保撤销栈）、
+ * 粘贴或拖拽图片直接上传插入、标签是胶囊式输入。
+ * 数据流不变：读写走 /api/admin/posts/{slug}，图片走 /api/admin/upload。
+ */
 import AdminLayout from '~/layouts/AdminLayout.astro'
 ---
 
 <AdminLayout title="写文章" active="posts">
   <div class="flex flex-wrap items-center justify-between gap-[10px]">
-    <h1 data-head class="font-display text-[22px] text-ink">写新文章</h1>
+    <div class="flex items-center gap-[10px]">
+      <h1 data-head class="font-display text-[22px] text-ink">写新文章</h1>
+      <span data-mode-badge hidden class="ad-chip ad-chip--draft">编辑模式</span>
+    </div>
     <div class="flex items-center gap-[8px]">
       <a data-view hidden class="ad-btn-ghost" target="_blank" rel="noopener">在站点里看 ↗</a>
+      <button type="button" data-md-import class="ad-btn-ghost">导入 MD</button>
+      <button type="button" data-preview-toggle class="ad-btn-ghost" aria-pressed="false">预览</button>
       <button type="button" data-save class="ad-btn-primary">保存（Ctrl+S）</button>
+      <input type="file" data-md-file accept=".md,.markdown,.txt" hidden />
     </div>
   </div>
 
-  <section class="ad-card flex flex-col gap-[14px] p-[24px]">
-    <div class="grid gap-[14px] xl:grid-cols-2">
-      <label class="flex flex-col xl:col-span-2">
-        <span class="ad-label">标题</span>
-        <input class="ad-input" data-f="title" />
-      </label>
-
-      <label class="flex flex-col">
-        <span class="ad-label">slug（网址：/posts/这里；小写字母、数字、短横线）</span>
-        <input class="ad-input ad-mono" data-f="slug" placeholder="my-first-post" />
-      </label>
-
-      <div class="grid grid-cols-2 gap-[14px]">
-        <label class="flex flex-col">
-          <span class="ad-label">日期</span>
-          <input class="ad-input" type="date" data-f="date" />
-        </label>
-        <label class="flex flex-col">
-          <span class="ad-label">更新于（可空）</span>
-          <input class="ad-input" type="date" data-f="updated" />
-        </label>
+  <!-- 写作区：主编辑卡 + 侧栏（YYsuni write 布局） -->
+  <div data-write class="flex flex-col items-start gap-[20px] xl:flex-row">
+    <section class="ad-card flex w-full min-w-0 flex-1 flex-col gap-[12px] p-[24px]">
+      <div class="flex flex-col gap-[12px] xl:flex-row">
+        <input class="ad-input xl:flex-1" data-f="title" placeholder="标题" />
+        {/* ad-input 自带 width:100%（无层级样式压得过 xl:w-* 工具类），
+            所以用 max-w 收住 slug —— 它没被 .ad-input 占用，能正常生效 */}
+        <input class="ad-input ad-mono xl:max-w-[240px]" data-f="slug" placeholder="slug（my-first-post）" />
       </div>
+      <textarea
+        class="ad-textarea ad-mono min-h-[62vh] flex-1"
+        data-f="body"
+        placeholder="## 从这里开始写&#10;&#10;支持全部 Markdown 语法。图片直接粘贴或拖进来，会自动上传并插到光标处；&#10;Ctrl+B 加粗 · Ctrl+I 斜体 · Ctrl+K 链接 · Tab 缩进 · Ctrl+S 保存。"></textarea>
+      <p class="ad-hint">
+        语法备忘：<code>## 小标题</code>、<code>**加粗**</code>、<code>[文字](链接)</code>、
+        <code>```ts</code> 开代码块、<code>&gt; 引用</code>。预览是快速排版检查（marked 渲染），正式效果以文章页为准。
+      </p>
+    </section>
 
-      <label class="flex flex-col">
-        <span class="ad-label">分类（可空）</span>
-        <input class="ad-input" data-f="category" placeholder="前端工程" />
-      </label>
+    <div class="flex w-full shrink-0 flex-col gap-[20px] xl:w-[320px]">
+      <section class="ad-card flex flex-col gap-[12px] p-[20px]">
+        <span class="text-[14px] font-medium text-ink">封面</span>
+        <div data-cover-drop class="ad-drop">
+          <span data-cover-empty>点击选择，或把图片拖进来</span>
+          <span data-cover-name hidden class="ad-chip"></span>
+        </div>
+        <button type="button" class="ad-btn-danger self-start" data-cover-clear hidden>去掉封面</button>
+        <input type="file" data-cover-file accept="image/*" hidden />
+      </section>
 
-      <label class="flex flex-col">
-        <span class="ad-label">标签（逗号分隔）</span>
-        <input class="ad-input" data-f="tags" placeholder="前端, Astro" />
-      </label>
+      <section class="ad-card flex flex-col gap-[12px] p-[20px]">
+        <span class="text-[14px] font-medium text-ink">元信息</span>
+        <textarea class="ad-textarea" rows="3" data-f="description" placeholder="为这篇文章写一段简短摘要（列表和 SEO 用，可空）"></textarea>
 
-      <label class="flex flex-col xl:col-span-2">
-        <span class="ad-label">摘要（列表和 SEO 用，可空）</span>
-        <textarea class="ad-textarea" rows="2" data-f="description"></textarea>
-      </label>
+        <div data-tagbox class="ad-tagbox">
+          <input data-tag-input placeholder="添加标签（回车确认）" />
+        </div>
+
+        <input class="ad-input" data-f="category" placeholder="分类（可空，如：前端工程）" />
+
+        <div class="grid grid-cols-2 gap-[10px]">
+          <label class="flex flex-col">
+            <span class="ad-label">日期</span>
+            <input class="ad-input" type="date" data-f="date" />
+          </label>
+          <label class="flex flex-col">
+            <span class="ad-label">更新于（可空）</span>
+            <input class="ad-input" type="date" data-f="updated" />
+          </label>
+        </div>
+
+        <label class="flex cursor-pointer items-center gap-[8px] text-[13px] text-ink select-none">
+          <input type="checkbox" class="ad-check" data-f="draft" />
+          存成草稿（不出现在站点上）
+        </label>
+      </section>
+
+      <section class="ad-card flex flex-col gap-[10px] p-[20px]">
+        <span class="text-[14px] font-medium text-ink">插图</span>
+        <button type="button" class="ad-btn-ghost self-start" data-img-pick>选择图片插入正文</button>
+        <p class="ad-hint">更快的方式：截图后直接在正文里 Ctrl+V，或把图片文件拖到正文框上。</p>
+        <input type="file" data-img-file accept="image/*" multiple hidden />
+      </section>
     </div>
+  </div>
 
-    <div class="flex flex-wrap items-center gap-[14px]">
-      <label class="flex items-center gap-[8px] text-[13px] text-ink">
-        <input type="checkbox" class="ad-check" data-f="draft" />
-        存成草稿（不出现在站点上）
-      </label>
-
-      <span class="mx-[4px] h-[16px] w-px bg-hairline"></span>
-
-      <button type="button" class="ad-btn-ghost" data-cover-pick>上传封面</button>
-      <span class="ad-hint" data-cover-name>没有封面</span>
-      <button type="button" class="ad-btn-danger" data-cover-clear hidden>去掉封面</button>
-      <input type="file" data-cover-file accept="image/*" hidden />
-    </div>
-  </section>
-
-  <section class="ad-card flex flex-col gap-[12px] p-[24px]">
-    <div class="flex flex-wrap items-center justify-between gap-[10px]">
-      <span class="text-[14px] font-medium text-ink">正文（Markdown）</span>
-      <div class="flex items-center gap-[8px]">
-        <button type="button" class="ad-btn-ghost" data-preview-toggle aria-pressed="false">预览</button>
-        <button type="button" class="ad-btn-ghost" data-img-pick>插入图片</button>
-        <input type="file" data-img-file accept="image/*" hidden />
-      </div>
-    </div>
-    <textarea
-      class="ad-textarea ad-mono min-h-[56vh]"
-      data-f="body"
-      placeholder="## 从这里开始写&#10;&#10;支持全部 Markdown 语法，代码块、引用、图片都行。"></textarea>
-    <div data-preview hidden class="ad-prose min-h-[56vh]"></div>
-    <p class="ad-hint">
-      语法备忘：<code>## 小标题</code>、<code>**加粗**</code>、<code>[文字](链接)</code>、
-      <code>```ts</code> 开代码块、<code>&gt; 引用</code>。图片用上面的按钮传，会自动插到光标处。
-      预览是快速排版检查（marked 渲染），正式效果以文章页为准。
-    </p>
+  <!-- 就地全屏预览（YYsuni WritePreview 式）：整个写作区让位给渲染结果 -->
+  <section data-preview-panel hidden class="ad-card p-[24px] xl:p-[40px]">
+    <div class="ad-prose mx-auto max-w-[820px]" data-preview></div>
   </section>
 </AdminLayout>
 
@@ -95,10 +105,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   const field = (k: string) => $(`[data-f="${k}"]`) as HTMLInputElement | HTMLTextAreaElement
 
   const slugInput = field('slug') as HTMLInputElement
+  const body = field('body') as HTMLTextAreaElement
   const viewLink = $<HTMLAnchorElement>('[data-view]')
 
   let editing = new URLSearchParams(location.search).get('slug') ?? ''
   let cover = ''
+  let tags: string[] = []
   let dirty = false
 
   document.addEventListener('input', () => (dirty = true))
@@ -106,16 +118,316 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     if (dirty) e.preventDefault()
   })
 
-  function showCover() {
-    $('[data-cover-name]').textContent = cover ? cover.replace('./_covers/', '') : '没有封面'
-    $('[data-cover-clear]').hidden = !cover
+  // ---- 光标处插入：优先 execCommand —— 它走浏览器编辑管线，Ctrl+Z 撤销栈不断 ----
+  function insertText(text: string) {
+    body.focus()
+    if (!document.execCommand('insertText', false, text)) {
+      const { selectionStart, selectionEnd, value } = body
+      body.value = value.slice(0, selectionStart) + text + value.slice(selectionEnd)
+      const at = selectionStart + text.length
+      body.setSelectionRange(at, at)
+      dirty = true
+    }
   }
 
+  // ---- Markdown 快捷键（照搬 YYsuni：B/I 可加可解，K 选中 url 待替换，Tab 缩进）----
+  const DEFAULT_TEXT = '文字'
+  body.addEventListener('keydown', (e) => {
+    const { selectionStart, selectionEnd, value } = body
+    const selected = value.slice(selectionStart, selectionEnd)
+
+    const toggleWrap = (mark: string) => {
+      e.preventDefault()
+      const before = value.slice(0, selectionStart)
+      const after = value.slice(selectionEnd)
+      // 已经包着同款记号：把记号连着选中一起替换回纯文本
+      if (selected && before.endsWith(mark) && after.startsWith(mark)) {
+        body.setSelectionRange(selectionStart - mark.length, selectionEnd + mark.length)
+        insertText(selected)
+        return
+      }
+      const text = selected || DEFAULT_TEXT
+      insertText(`${mark}${text}${mark}`)
+      if (!selected) {
+        // 没选中就给占位词，插完选中它 —— 直接打字覆盖
+        setTimeout(() => {
+          body.setSelectionRange(selectionStart + mark.length, selectionStart + mark.length + DEFAULT_TEXT.length)
+        }, 0)
+      }
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') return toggleWrap('**')
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') return toggleWrap('*')
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault()
+      const text = selected || DEFAULT_TEXT
+      insertText(`[${text}](url)`)
+      setTimeout(() => {
+        const urlStart = selectionStart + text.length + 3
+        body.setSelectionRange(urlStart, urlStart + 3)
+      }, 0)
+      return
+    }
+
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault()
+      insertText('\t')
+      return
+    }
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault()
+      const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+      const lineEnd = value.indexOf('\n', selectionStart)
+      const line = value.slice(lineStart, lineEnd === -1 ? undefined : lineEnd)
+      const eat = line.startsWith('\t') ? 1 : line.startsWith('  ') ? 2 : 0
+      if (eat > 0) {
+        body.setSelectionRange(lineStart, lineStart + eat)
+        insertText('')
+      }
+    }
+  })
+
+  // ---- 图片：按钮 / 粘贴 / 拖拽 三条路汇到同一个上传（内容寻址去重在服务端）----
+  async function uploadIntoBody(files: File[]) {
+    const images = files.filter((f) => f.type.startsWith('image/'))
+    if (images.length === 0) return
+    for (const file of images) {
+      const fd = new FormData()
+      fd.append('kind', 'image')
+      fd.append('file', file)
+      try {
+        const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+        insertText(`\n![](${res.path})\n`)
+      } catch (err) {
+        report(err)
+        return
+      }
+    }
+    toast(images.length > 1 ? `已插入 ${images.length} 张图片` : '图片已插入正文')
+  }
+
+  const imgFile = $<HTMLInputElement>('[data-img-file]')
+  $('[data-img-pick]').addEventListener('click', () => imgFile.click())
+  imgFile.addEventListener('change', async () => {
+    await uploadIntoBody([...(imgFile.files ?? [])])
+    imgFile.value = ''
+  })
+
+  body.addEventListener('paste', (e) => {
+    const files = [...(e.clipboardData?.items ?? [])]
+      .filter((it) => it.type.startsWith('image/'))
+      .map((it) => it.getAsFile())
+      .filter((f): f is File => f !== null)
+    if (files.length > 0) {
+      e.preventDefault()
+      uploadIntoBody(files)
+    }
+  })
+  body.addEventListener('dragover', (e) => e.preventDefault())
+  body.addEventListener('drop', (e) => {
+    const files = [...(e.dataTransfer?.files ?? [])]
+    if (files.some((f) => f.type.startsWith('image/'))) {
+      e.preventDefault()
+      uploadIntoBody(files)
+    }
+  })
+
+  // ---- 标签：胶囊输入（回车/逗号添加，× 或空输入退格删除）----
+  const tagbox = $('[data-tagbox]')
+  const tagInput = $<HTMLInputElement>('[data-tag-input]')
+
+  function renderTags() {
+    for (const chip of tagbox.querySelectorAll('.ad-tag')) chip.remove()
+    for (const [i, t] of tags.entries()) {
+      const chip = document.createElement('span')
+      chip.className = 'ad-tag'
+      chip.append(`#${t}`)
+      const x = document.createElement('button')
+      x.type = 'button'
+      x.textContent = '×'
+      x.addEventListener('click', () => {
+        tags.splice(i, 1)
+        dirty = true
+        renderTags()
+      })
+      chip.append(x)
+      tagbox.insertBefore(chip, tagInput)
+    }
+  }
+  function addTag() {
+    const t = tagInput.value.trim().replace(/^#/, '')
+    if (t && !tags.includes(t)) {
+      tags.push(t)
+      dirty = true
+      renderTags()
+    }
+    tagInput.value = ''
+  }
+  tagbox.addEventListener('click', () => tagInput.focus())
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === '，') {
+      e.preventDefault()
+      addTag()
+    }
+    if (e.key === 'Backspace' && tagInput.value === '' && tags.length > 0) {
+      tags.pop()
+      dirty = true
+      renderTags()
+    }
+  })
+  tagInput.addEventListener('blur', addTag)
+
+  // ---- 封面：点击或拖拽（按 slug 命名存 _covers/，所以要先有 slug）----
+  const coverDrop = $('[data-cover-drop]')
+  const coverFile = $<HTMLInputElement>('[data-cover-file]')
+
+  function showCover() {
+    $('[data-cover-empty]').hidden = !!cover
+    const name = $('[data-cover-name]')
+    name.hidden = !cover
+    name.textContent = cover.replace('./_covers/', '')
+    $('[data-cover-clear]').hidden = !cover
+  }
+  function slugReady(): string | null {
+    const slug = slugInput.value.trim()
+    if (!SLUG_RE.test(slug)) {
+      toast('先把 slug 填好 —— 封面文件按 slug 命名存进 _covers/', false)
+      slugInput.focus()
+      return null
+    }
+    return slug
+  }
+  async function uploadCover(file: File) {
+    const slug = slugReady()
+    if (!slug) return
+    const fd = new FormData()
+    fd.append('kind', 'cover')
+    fd.append('slug', slug)
+    fd.append('file', file)
+    try {
+      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      cover = res.path
+      dirty = true
+      showCover()
+      toast('封面已上传，保存后生效')
+    } catch (err) {
+      report(err)
+    }
+  }
+  coverDrop.addEventListener('click', () => {
+    if (slugReady()) coverFile.click()
+  })
+  coverDrop.addEventListener('dragover', (e) => {
+    e.preventDefault()
+    coverDrop.toggleAttribute('data-over', true)
+  })
+  coverDrop.addEventListener('dragleave', () => coverDrop.toggleAttribute('data-over', false))
+  coverDrop.addEventListener('drop', (e) => {
+    e.preventDefault()
+    coverDrop.toggleAttribute('data-over', false)
+    const file = [...(e.dataTransfer?.files ?? [])].find((f) => f.type.startsWith('image/'))
+    if (file) uploadCover(file)
+  })
+  coverFile.addEventListener('change', async () => {
+    const file = coverFile.files?.[0]
+    if (file) await uploadCover(file)
+    coverFile.value = ''
+  })
+  $('[data-cover-clear]').addEventListener('click', () => {
+    cover = ''
+    dirty = true
+    showCover()
+  })
+
+  // ---- 就地全屏预览：写作区整个让位（YYsuni WritePreview 的手感）----
+  const writeWrap = $('[data-write]')
+  const previewPanel = $('[data-preview-panel]')
+  const previewBtn = $('[data-preview-toggle]')
+  previewBtn.addEventListener('click', () => {
+    const showing = previewPanel.hidden
+    if (showing) {
+      $('[data-preview]').innerHTML = marked.parse(body.value, { async: false }) as string
+    }
+    previewPanel.hidden = !showing
+    writeWrap.hidden = showing
+    previewBtn.setAttribute('aria-pressed', String(showing))
+    previewBtn.textContent = showing ? '继续写' : '预览'
+  })
+
+  // ---- 导入 MD（抄 YYsuni 的按钮，加料：带 front-matter 的文件自动回填字段）----
+  const mdFile = $<HTMLInputElement>('[data-md-file]')
+  $('[data-md-import]').addEventListener('click', () => mdFile.click())
+
+  function importMarkdown(text: string, fileName: string) {
+    text = text.replace(/^﻿/, '')
+    const fm = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(text)
+    if (!fm) {
+      body.value = text
+    } else {
+      const yaml = fm[1]!
+      body.value = text.slice(fm[0].length).replace(/^\r?\n/, '')
+      const unquote = (s: string) => s.replace(/^['"]|['"]$/g, '').trim()
+      const line = (k: string) => {
+        const m = new RegExp(`^${k}:[ \\t]*(.+)$`, 'm').exec(yaml)
+        return m ? unquote(m[1]!.trim()) : ''
+      }
+      const setIf = (k: string, v: string) => {
+        if (v) field(k).value = v
+      }
+      setIf('title', line('title'))
+      setIf('description', line('description'))
+      setIf('category', line('category'))
+      const date = line('date')
+      if (/^\d{4}-\d{2}-\d{2}/.test(date)) field('date').value = date.slice(0, 10)
+      const updated = line('updated')
+      if (/^\d{4}-\d{2}-\d{2}/.test(updated)) field('updated').value = updated.slice(0, 10)
+      const draft = line('draft')
+      if (draft) (field('draft') as HTMLInputElement).checked = draft === 'true'
+      // 封面只认本仓库的 _covers 路径（服务端也只收这个格式），外来路径丢弃
+      const cov = line('cover')
+      if (/^\.\/_covers\//.test(cov)) {
+        cover = cov
+        showCover()
+      }
+      // tags：行内 [a, b] 或块列表 "- x" 两种写法都认
+      const inline = /^tags:[ \t]*\[(.*)\]/m.exec(yaml)
+      const block = /^tags:[ \t]*\r?\n((?:[ \t]+-[ \t]*.+(?:\r?\n)?)+)/m.exec(yaml)
+      if (inline) {
+        tags = inline[1]!.split(',').map((s) => unquote(s.trim())).filter(Boolean)
+      } else if (block) {
+        tags = block[1]!.split(/\r?\n/).map((l) => unquote(l.replace(/^[ \t]+-[ \t]*/, ''))).filter(Boolean)
+      }
+      renderTags()
+    }
+    // 还没定 slug 的新文章：拿文件名兜底（净化成合法 slug）
+    if (!editing && !slugInput.value.trim()) {
+      const guess = fileName.replace(/\.(md|markdown|txt)$/i, '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '')
+      if (SLUG_RE.test(guess)) slugInput.value = guess
+    }
+    dirty = true
+    toast(fm ? '已导入，front-matter 回填完毕' : '已导入 Markdown')
+  }
+
+  mdFile.addEventListener('change', async () => {
+    const file = mdFile.files?.[0]
+    if (file) {
+      try {
+        importMarkdown(await file.text(), file.name)
+      } catch {
+        toast('读取文件失败', false)
+      }
+    }
+    mdFile.value = ''
+  })
+
+  // ---- 编辑态与读写 ----
   function enterEditMode(slug: string) {
     editing = slug
     slugInput.value = slug
     slugInput.disabled = true
     $('[data-head]').textContent = '编辑文章'
+    $('[data-mode-badge]').hidden = false
     viewLink.hidden = false
     viewLink.href = `/posts/${slug}`
     history.replaceState(null, '', `?slug=${encodeURIComponent(slug)}`)
@@ -132,10 +444,11 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     field('date').value = m.date
     field('updated').value = m.updated ?? ''
     field('category').value = m.category ?? ''
-    field('tags').value = m.tags.join(', ')
     field('description').value = m.description ?? ''
     ;(field('draft') as HTMLInputElement).checked = m.draft
-    field('body').value = post.body
+    body.value = post.body
+    tags = [...m.tags]
+    renderTags()
     cover = m.cover ?? ''
     showCover()
     enterEditMode(post.slug)
@@ -143,7 +456,6 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   }
   load().catch(report)
 
-  // ---- 保存 ----
   async function save() {
     const slug = slugInput.value.trim()
     if (!SLUG_RE.test(slug)) {
@@ -151,15 +463,13 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       slugInput.focus()
       return
     }
+    addTag() // 输入框里敲了一半没回车的标签也带上
     const meta: PostMeta = {
       title: field('title').value.trim(),
       description: field('description').value.trim() || undefined,
       date: field('date').value,
       updated: field('updated').value || undefined,
-      tags: field('tags')
-        .value.split(/[,，]/)
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tags,
       category: field('category').value.trim() || undefined,
       cover: cover || undefined,
       draft: (field('draft') as HTMLInputElement).checked,
@@ -171,7 +481,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     try {
       await api(`/api/admin/posts/${encodeURIComponent(slug)}`, {
         method: 'PUT',
-        body: { meta, body: field('body').value },
+        body: { meta, body: body.value },
       })
       dirty = false
       if (!editing) enterEditMode(slug)
@@ -186,83 +496,6 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault()
       save()
-    }
-  })
-
-  // ---- 封面 ----
-  const coverFile = $<HTMLInputElement>('[data-cover-file]')
-  $('[data-cover-pick]').addEventListener('click', () => {
-    const slug = slugInput.value.trim()
-    if (!SLUG_RE.test(slug)) {
-      toast('先把 slug 填好 —— 封面文件按 slug 命名存进 _covers/', false)
-      slugInput.focus()
-      return
-    }
-    coverFile.click()
-  })
-  coverFile.addEventListener('change', async () => {
-    const file = coverFile.files?.[0]
-    if (!file) return
-    const fd = new FormData()
-    fd.append('kind', 'cover')
-    fd.append('slug', slugInput.value.trim())
-    fd.append('file', file)
-    try {
-      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
-      cover = res.path
-      dirty = true
-      showCover()
-      toast('封面已上传，保存后生效')
-    } catch (err) {
-      report(err)
-    } finally {
-      coverFile.value = ''
-    }
-  })
-  $('[data-cover-clear]').addEventListener('click', () => {
-    cover = ''
-    dirty = true
-    showCover()
-  })
-
-  // ---- Markdown 预览（写作时的快速排版检查；正式渲染以文章页为准）----
-  const previewBox = $('[data-preview]')
-  const previewBtn = $('[data-preview-toggle]')
-  previewBtn.addEventListener('click', () => {
-    const showing = previewBox.hidden
-    if (showing) {
-      // 自己的内容自己预览，marked 直接渲染；expressive-code 的代码块特效这里没有
-      previewBox.innerHTML = marked.parse(field('body').value, { async: false })
-    }
-    previewBox.hidden = !showing
-    field('body').hidden = showing
-    previewBtn.setAttribute('aria-pressed', String(showing))
-    previewBtn.textContent = showing ? '继续写' : '预览'
-  })
-
-  // ---- 正文插图 ----
-  const imgFile = $<HTMLInputElement>('[data-img-file]')
-  $('[data-img-pick]').addEventListener('click', () => imgFile.click())
-  imgFile.addEventListener('change', async () => {
-    const file = imgFile.files?.[0]
-    if (!file) return
-    const fd = new FormData()
-    fd.append('kind', 'image')
-    fd.append('file', file)
-    try {
-      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
-      const body = field('body') as HTMLTextAreaElement
-      const at = body.selectionStart ?? body.value.length
-      const snippet = `\n![](${res.path})\n`
-      body.value = body.value.slice(0, at) + snippet + body.value.slice(at)
-      body.focus()
-      body.selectionStart = body.selectionEnd = at + snippet.length
-      dirty = true
-      toast('图片已插入正文')
-    } catch (err) {
-      report(err)
-    } finally {
-      imgFile.value = ''
     }
   })
 </script>

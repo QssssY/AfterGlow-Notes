@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"os/exec"
@@ -114,6 +115,7 @@ var dataFiles = map[string]struct {
 	"tools":     {"array", 0},
 	"site":      {"object", 0},
 	"about":     {"object", 0},
+	"theme":     {"object", 0},
 	"changelog": {"array", 1},
 	"friends":   {"array", 0},
 	"socials":   {"array", 1},
@@ -137,6 +139,47 @@ func registerAdminRoutes(mux *http.ServeMux, s *server) {
 	mux.HandleFunc("/api/admin/build", s.cors(s.adminAuth(s.adminBuild)))
 	mux.HandleFunc("/api/admin/stats", s.cors(s.adminAuth(s.adminStats)))
 	mux.HandleFunc("/api/admin/linkcheck", s.cors(s.adminAuth(s.handleLinkCheck)))
+	mux.HandleFunc("/api/admin/asset/site/{name}", s.cors(s.adminAuth(s.adminSiteAsset)))
+}
+
+// adminSiteAsset：站点图片的预览供给 —— 它们存在 Astro 资产目录（不是 public/），
+// 没有可直接引用的 URL；管理台的 <img> 又带不了 Bearer 头，所以前端 fetch
+// 这里再转 blob。只认白名单名字，这些图本来就会出现在公开页面上，不涉密。
+func (s *server) adminSiteAsset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		fail(w, http.StatusMethodNotAllowed, "只支持 GET")
+		return
+	}
+	name := r.PathValue("name")
+	if !siteImageNames[name] {
+		fail(w, http.StatusNotFound, "没有这个图片位")
+		return
+	}
+	for _, ext := range []string{".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"} {
+		data, err := os.ReadFile(filepath.Join(s.admin.siteImagesDir(), name+ext))
+		if err != nil {
+			continue
+		}
+		w.Header().Set("Content-Type", mime.TypeByExtension(ext))
+		w.Header().Set("Cache-Control", "no-store")
+		w.Write(data)
+		return
+	}
+	// 没传过 → 给仓库自带的默认图（映射与 src/utils/site-images.ts 保持一致），
+	// 管理台的预览瓦片才不会是一排空加号
+	defaults := map[string]string{
+		"avatar": "cat001.jpg", "art": "bg.png",
+		"snapshot-1": "snapshot-dusk.png", "snapshot-2": "snapshot-field.png", "snapshot-3": "snapshot-lantern.png",
+	}
+	if def, ok := defaults[name]; ok {
+		if data, err := os.ReadFile(filepath.Join(s.admin.blogDir, "images", def)); err == nil {
+			w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(def)))
+			w.Header().Set("Cache-Control", "no-store")
+			w.Write(data)
+			return
+		}
+	}
+	fail(w, http.StatusNotFound, "这个位置还没传过图")
 }
 
 // ---- 鉴权 ----
@@ -682,6 +725,27 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		dst = filepath.Join(s.admin.siteImagesDir(), name+ext)
 		ret = "images/site/" + name + ext
 
+	case "favicon":
+		// 站标：SVG 落 public/favicon.svg（矢量主用，任意尺寸都利）；
+		// PNG 则同一份内容写 favicon-32.png 与 apple-touch-icon.png 两个位置
+		//（浏览器自会缩放，建议方形 ≥180px）。public/ 原样进产物，文件名固定
+		pub := filepath.Join(s.admin.blogDir, "public")
+		switch ext {
+		case ".svg":
+			dst = filepath.Join(pub, "favicon.svg")
+			ret = "/favicon.svg"
+		case ".png":
+			if err := os.WriteFile(filepath.Join(pub, "apple-touch-icon.png"), data, 0o644); err != nil {
+				fail(w, http.StatusInternalServerError, "写入失败: "+err.Error())
+				return
+			}
+			dst = filepath.Join(pub, "favicon-32.png")
+			ret = "/favicon-32.png"
+		default:
+			fail(w, http.StatusBadRequest, "站标只收 svg 或 png（建议方形，png 边长 ≥180）")
+			return
+		}
+
 	case "music":
 		if !musicExts[ext] {
 			fail(w, http.StatusBadRequest, "音乐只收 mp3 / m4a / ogg / flac / lrc")
@@ -697,7 +761,7 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		ret = "/music/" + base + ext
 
 	default:
-		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / project / site / music")
+		fail(w, http.StatusBadRequest, "kind 只能是 cover / image / avatar / project / site / favicon / music")
 		return
 	}
 

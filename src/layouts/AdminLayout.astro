@@ -10,13 +10,14 @@
  *  - 主题跟随博客本体（同一份 localStorage 'theme'）。
  */
 import { site } from '~/config'
+import { themeCss } from '~/utils/theme'
 import '~/styles/global.css'
 import '~/styles/admin.css'
 
 interface Props {
   title: string
   /** 顶部导航高亮项 */
-  active?: 'dashboard' | 'posts' | 'data' | 'stats' | undefined
+  active?: 'dashboard' | 'posts' | 'data' | 'theme' | 'stats' | undefined
   /** 登录页不做前置跳转检查 */
   guard?: boolean
 }
@@ -26,8 +27,11 @@ const tabs = [
   { key: 'dashboard', label: '概览', href: '/admin' },
   { key: 'posts', label: '文章', href: '/admin/posts' },
   { key: 'data', label: '站点数据', href: '/admin/data' },
+  { key: 'theme', label: '主题', href: '/admin/theme' },
   { key: 'stats', label: '统计', href: '/admin/stats' },
 ] as const
+
+const customTheme = themeCss()
 ---
 
 <!doctype html>
@@ -37,6 +41,11 @@ const tabs = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <title>{title} · 管理台 · {site.title}</title>
+    <!-- 站标与前台同一套（此前漏了这三行，标签页只能显示默认地球图标） -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {customTheme && <style set:html={customTheme} />}
 
     <!-- 首屏渲染前同步主题，防暗色闪白（同 BaseLayout） -->
     <script is:inline>
@@ -92,6 +101,18 @@ const tabs = [
         </main>
       </div>
     </div>
+
+    <!-- 卡片错峰浮现（照搬前台 YYsuni 手感）：按屏上顺序给统计瓦片和卡片编号。
+         admin 无客户端路由，整页加载时跑一次即可；动态插入的行不参与（秒出更顺手）。 -->
+    <script is:inline>
+      ;(() => {
+        let i = 0
+        for (const el of document.querySelectorAll('.ad-stat, .ad-card')) {
+          el.style.setProperty('--ad-i', String(Math.min(i++, 8)))
+          el.classList.add('ad-enter')
+        }
+      })()
+    </script>
 
     <script>
       import { clearToken } from '~/scripts/admin'
