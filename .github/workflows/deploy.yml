@@ -52,13 +52,17 @@ jobs:
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
-      - name: 上传 + 原子替换 + 重启（SSH 偶发瞬断，重试三次）
+      - name: 上传 + 原子替换 + 重启（SSH 易被云风控黑洞，短超时 + 多重试）
         env:
           HOST: root@106.12.72.232
           ROOT: /opt/afterglow
         run: |
-          for i in 1 2 3; do
-            if scp -q /tmp/dist.tgz /tmp/blog.tgz "$HOST:/tmp/" && ssh "$HOST" "set -e
+          # 云风控会随机丢弃 runner IP 的 SYN（连接黑洞）—— 没有超时的 scp
+          # 会挂十几分钟才等来 TCP 自生自灭。掐紧：连不上 10s 判死，传一半
+          # 停走 15s 判死，立刻换下一次尝试。
+          SSH_OPTS="-o ConnectTimeout=10 -o ServerAliveInterval=5 -o ServerAliveCountMax=3"
+          for i in 1 2 3 4 5; do
+            if scp -q $SSH_OPTS /tmp/dist.tgz /tmp/blog.tgz "$HOST:/tmp/" && ssh $SSH_OPTS "$HOST" "set -e
               mkdir -p $ROOT/blog && tar -xzf /tmp/blog.tgz -C $ROOT/blog
               rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
               tar -xzf /tmp/dist.tgz -C $ROOT/dist.new
@@ -69,10 +73,10 @@ jobs:
               rm -f /tmp/dist.tgz /tmp/blog.tgz"; then
               exit 0
             fi
-            echo "第 $i 次上传/部署失败，10s 后重试（云风控对陌生 runner IP 偶发瞬断）"
-            sleep 10
+            echo "第 $i 次上传/部署失败，8s 后重试（云风控对陌生 runner IP 的黑洞/瞬断）"
+            sleep 8
           done
-          echo '❌ 三次都失败：查服务器 sshd 日志 / 百度云主机安全拦截记录'
+          echo '❌ 五次都失败：查服务器 sshd 日志 / 百度云主机安全拦截记录'
           exit 1
 
       - name: 公网体检
