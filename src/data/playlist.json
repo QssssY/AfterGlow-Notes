@@ -82,5 +82,64 @@
     "artist": "Reynard Silva",
     "src": "/music/The Way I Still Love You.mp3",
     "lrc": "/music/ReynardSilva - The Way I Still Love You.lrc"
+  },
+  {
+    "title": "同花顺",
+    "artist": "林倛玉",
+    "src": "/music/同花顺.mp3",
+    "lrc": "/music/林倛玉 - 同花顺.lrc"
+  },
+  {
+    "title": "特别的人",
+    "artist": "方大同",
+    "src": "/music/特别的人.mp3",
+    "lrc": "/music/方大同 - 特别的人.lrc"
+  },
+  {
+    "title": "一直很安静",
+    "artist": "阿桑",
+    "src": "/music/一直很安静.mp3",
+    "lrc": "/music/阿桑 - 一直很安静.lrc"
+  },
+  {
+    "title": "紧急联络人",
+    "artist": "Gareth.T",
+    "src": "/music/紧急联络人.mp3",
+    "lrc": "/music/Gareth.T - 紧急联络人.lrc"
+  },
+  {
+    "title": "开往春天的地铁",
+    "artist": "纯音乐",
+    "src": "/music/开往春天的地铁.mp3"
+  },
+  {
+    "title": "一点一滴",
+    "artist": "林倛玉",
+    "src": "/music/一点一滴.mp3",
+    "lrc": "/music/林倛玉 - 一点一滴 (青蛙王子 主题曲).lrc"
+  },
+  {
+    "title": "孤独患者",
+    "artist": "陈奕迅",
+    "src": "/music/孤独患者.mp3",
+    "lrc": "/music/陈奕迅 - 孤独患者.lrc"
+  },
+  {
+    "title": "So Sick",
+    "artist": "Ne-Yo",
+    "src": "/music/So Sick.mp3",
+    "lrc": "/music/Ne-Yo - So Sick.lrc"
+  },
+  {
+    "title": "Fatal Love",
+    "artist": "JoriKing",
+    "src": "/music/Fatal Love.mp3",
+    "lrc": "/music/JoriKing - Fatal Love.lrc"
+  },
+  {
+    "title": "Boyfriend",
+    "artist": "Justin Bieber",
+    "src": "/music/Boyfriend.mp3",
+    "lrc": "/music/JustinBieber - Boyfriend.lrc"
   }
 ]

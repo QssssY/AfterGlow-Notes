@@ -45,8 +45,12 @@ echo "==> 重启服务（启动时重载内存缓存）"
 ssh "$HOST" "systemctl restart afterglow"
 
 echo "==> 公网体检"
-sleep 2
-code=$(curl -fsS -o /dev/null -w '%{http_code}' "$SITE_URL/" || echo FAIL)
+sleep 8   # 服务重启要预载全部静态进内存（5~7s），等不及会误报「首页不通」
+for i in 1 2 3 4 5; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 8 "$SITE_URL/" || true)
+  [ "$code" = 200 ] && break
+  sleep 5
+done
 echo "GET $SITE_URL/ → $code"
 if [ "$code" = 200 ]; then
   echo "✅ 部署完成：$SITE_URL"

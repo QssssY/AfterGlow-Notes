@@ -511,7 +511,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       b.card.setAttribute('aria-label', `播放 ${trackLabel(track)}`)
     }
     markCurrent()
-    swapLine(trackLabel(track))
+    // 有词的曲先亮曲名等第一句；纯音乐整曲就这一行 —— 直接说清楚，别挂一整首歌的标题
+    swapLine(track.lrc ? trackLabel(track) : '纯音乐，请欣赏')
     loadLrc(track)
     if (autoplay) player.play().catch(() => setLive(false))
   }
