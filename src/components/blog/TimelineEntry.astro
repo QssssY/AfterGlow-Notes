@@ -29,11 +29,14 @@ const {
 } = Astro.props
 ---
 
+{/* 预取降为 hover：归档一页 10 行，全局的 viewport 策略会把 10 篇整页 HTML
+    一口气全预取；悬停/聚焦（键盘 Tab）再取，点开依旧秒进 */}
 <a
   href={href}
   data-entry
   data-date={dateIso}
   data-cat={category}
+  data-astro-prefetch="hover"
   class="group/entry flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[12px]"
 >
   <span class="w-[44px] shrink-0 text-[13px] font-medium text-ink-soft">{date}</span>

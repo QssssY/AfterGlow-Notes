@@ -122,6 +122,8 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
               class="img-sheen skeleton relative block h-[300px] w-full shrink-0 overflow-hidden rounded-[22px]"
             >
               {/* 文章页的 LCP：eager + 高优先级；外层骨架屏在图渐显前撑住位置。
+                  srcset：944 = 内容列显示宽（1016 - 卡内边距 72），1900 ≈ 其 2x，
+                  800 给手机（100vw-88 的 2x 封顶）。
                   不再与列表缩略图共享 transition:name：宽高比差异让变形飞行
                   变成盖在标题上的半透明残板（用户截到过），封面随内容层整体浮现 */}
               <Image
@@ -129,6 +131,8 @@ const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}
                 alt=""
                 loading="eager"
                 fetchpriority="high"
+                widths={[800, 1200, 1900]}
+                sizes="(min-width: 1280px) 944px, calc(100vw - 88px)"
                 class="h-full w-full object-cover"
               />
             </span>

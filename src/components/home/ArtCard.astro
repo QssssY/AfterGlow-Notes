@@ -42,12 +42,16 @@ const { src, alt = '', compact = false, grow = false } = Astro.props
           compact ? 'rounded-[22px]' : 'rounded-[29px]',
         ]}
       >
-        {/* 首页最大的一张图（LCP）：eager + 高优先级，默认的 lazy 会把它排到最后 */}
+        {/* 首页最大的一张图（LCP）：eager + 高优先级，默认的 lazy 会把它排到最后。
+            srcset 三档：560 = 桌面中栏显示宽（1344-280-392-96），1120 = 其 2x；
+            手机按视口挑小档，不再全员下载原宽大图 */}
         <Image
           src={src}
           alt={alt}
           loading="eager"
           fetchpriority="high"
+          widths={[560, 1120, 1600]}
+          sizes="(min-width: 1280px) 560px, calc(100vw - 60px)"
           class:list={[
             'absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.03]',
             compact ? 'rounded-[22px]' : 'rounded-[29px]',

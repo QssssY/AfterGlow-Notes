@@ -92,7 +92,15 @@ const indexLabel = typeof index === 'number' ? pad(index) : index
     -->
     {
       cover ? (
-        <Image src={cover} alt="" width={472} height={324} class="size-full object-cover" />
+        <Image
+          src={cover}
+          alt=""
+          width={472}
+          height={324}
+          widths={[236, 472]}
+          sizes="236px"
+          class="size-full object-cover"
+        />
       ) : (
         <Icon
           name={`lucide:${coverIcon}`}

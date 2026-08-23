@@ -31,9 +31,11 @@ const { images = [] } = Astro.props
       // 图包一层 overflow-hidden：hover 缓慢推近时不越出格子的圆角
       return src ? (
         <span class="img-sheen skeleton relative h-full min-w-0 flex-1 overflow-hidden rounded-[22px]">
+          {/* 显示宽只有 ~120px（三等分），360 已是 3x；不定宽的话会按原图全宽输出 */}
           <Image
             src={src}
             alt={shot.alt}
+            width={360}
             class="h-full w-full object-cover transition-transform duration-700 ease-out hover:scale-[1.06]"
           />
         </span>
