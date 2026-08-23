@@ -201,7 +201,8 @@ export const snapshots = [{ alt: '' }, { alt: '' }, { alt: '' }] as const
 /**
  * 构成 STACK（项目页左栏）—— 语言占比，管理端「构成」页可改（src/data/stack.json）。
  *
- * 初始值是 repos 里三个真仓库的 GitHub 语言字节数聚合（共 5.93 MB，2026-08-21 取）。
+ * 初始值是 repos 里四个真仓库的 GitHub 语言字节数聚合（共 6.43 MB，2026-08-23 取；
+ * Astro 占 4.9% 归入「其他」，面板保持四行）。
  * 要刷新就重新跑 api.github.com/repos/<repo>/languages 把字节数加起来重算。
  * accent：占比最高的一条走 fire，中间的走 leaf，「其他」走 dot-idle。
  */
