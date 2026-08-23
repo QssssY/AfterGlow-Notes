@@ -5,6 +5,19 @@
 博客本体是 Astro 静态站；点赞 / 阅读 / 在线人数 / 网页管理台由一个 Go 单二进制承担 ——
 它还能顺手把整个静态站托管了（内存 + brotli 预压缩），2 核 2G、1M 带宽的小机子就够跑全站。
 
+## 界面预览
+
+<p align="center">
+  <a href="http://106.12.72.232/"><img src="docs/screenshots/home.webp" alt="首页 · 三栏布局" width="880"></a>
+</p>
+<p align="center">
+  <a href="http://106.12.72.232/posts/rewrite-blog-with-astro/"><img src="docs/screenshots/post.webp" alt="文章页 · 侧栏目录与正在播放" width="286"></a>
+  <a href="http://106.12.72.232/projects/"><img src="docs/screenshots/projects.webp" alt="我的项目" width="286"></a>
+  <a href="http://106.12.72.232/about/"><img src="docs/screenshots/about.webp" alt="关于网站" width="286"></a>
+</p>
+
+> 线上实时效果：**http://106.12.72.232** · 截图更新：`node scripts/screenshot.mjs`（对着线上截，转 webp 入库）
+
 ## 特性
 
 **读者看到的**：像素级还原设计稿的界面 · 明暗主题（圆形揭示切换）· 瞬时换页 + 卡片错峰入场 ·
