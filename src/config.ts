@@ -129,7 +129,8 @@ export const themeChoices = [
  * 设计稿写的「自 2023 年 10 月」是虚构人设，别改回去。
  */
 export const uptime = {
-  since: new Date(2026, 7, 21),
+  // Date.UTC 钉死起点，不随构建机时区漂移（CI 在 UTC，本地在东八区）
+  since: new Date(Date.UTC(2026, 7, 21)),
   sinceLabel: '自 2026 年 8 月 21 日 首次提交',
 } as const
 
