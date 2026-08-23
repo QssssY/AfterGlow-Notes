@@ -1,0 +1,69 @@
+# 给 fork 的人用：零服务器，把博客发到 GitHub Pages（免费）。
+#
+# 三步走：
+#   1. fork 本仓库，并把仓库改名为 <你的用户名>.github.io
+#      （站内链接都是根路径写法，挂在子路径 /仓库名/ 下会全断 ——
+#        要么用这个根域仓库名，要么在 Pages 里绑自定义域名）
+#   2. 仓库 Settings → Pages → Source 选「GitHub Actions」
+#   3. Actions 页启用工作流，手动 Run 一次本工作流；之后每次 push 自动重发
+#
+# 站点地址默认按 https://<你的用户名>.github.io 生成（RSS / Sitemap / OG 链接用）；
+# 绑了自定义域名就在仓库 Settings → Secrets and variables → Actions → Variables
+# 里加 SITE_URL=https://你的域名。
+# 不配任何 API 环境变量 = 纯静态形态：点赞只存访客本机浏览器，阅读数 /
+# 「大家在看」/ 在线人数整块不渲染，其余功能（搜索/明暗/动效/RSS/OG）全部照常。
+name: pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+# 本仓库（QssssY）不走 Pages：站点部署在自己的服务器上（deploy.yml）
+# —— fork 后这个条件自然放行，无需改动
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    if: github.repository_owner != 'QssssY'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6 # 版本读 package.json 的 packageManager
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建（纯静态形态）
+        env:
+          PUBLIC_SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io', github.repository_owner) }}
+        run: pnpm run build
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

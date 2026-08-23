@@ -35,6 +35,9 @@ permissions:
 
 jobs:
   publish:
+    # 只在本仓库跑：fork 的人没有我的服务器，这条 Release 链路对他们只是噪音 ——
+    # 无服务器托管走 pages.yml 或 README「方式 C」的一键按钮
+    if: github.repository_owner == 'QssssY'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

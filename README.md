@@ -99,6 +99,28 @@ bash scripts/deploy-setup.sh   # 首次 / 更新服务端：交叉编译上传�
 bash scripts/deploy.sh         # 日常发布：构建 → 增量同步歌曲与仓库快照 → 原子换 dist → 重启 → 体检
 ```
 
+### 方式 C：完全不要服务器（一键免费托管）
+
+只想要博客本体、不想碰服务器：**什么环境变量都不用配**，构建出来就是纯静态形态 ——
+点赞退化为只存访客本机浏览器；阅读数 / 「大家在看」/ 在线人数整块不渲染（不编数字）；
+音乐没有歌源自动闲置。页面、搜索、明暗主题、双布局、动效、RSS / Sitemap / OG 图、
+字体子集化全部照常。以后想要真计数了，随时按方式 A 补一台小机子 —— 前端只需加一个
+环境变量重新构建。
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FQssssY%2FAfterGlow-Notes)
+
+- **Vercel**：点上面的按钮 → 登录 → Create，一分钟出站。建议在项目 Settings →
+  Environment Variables 加 `PUBLIC_SITE_URL=https://你的地址`，RSS / Sitemap / OG 的
+  绝对链接才正确
+- **Cloudflare Pages**：fork 后到 Dashboard → Workers & Pages → 连接仓库，构建命令
+  `pnpm run build`、输出目录 `dist`，环境变量 `NODE_VERSION=22`（可选 `PUBLIC_SITE_URL`）
+- **GitHub Pages**：fork 并把仓库改名为 `<你的用户名>.github.io` → Settings → Pages →
+  Source 选「GitHub Actions」→ 启用并运行 `pages` 工作流，之后每次 push 自动重发
+  （细节见 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) 顶部注释；站内
+  链接是根路径写法，必须用根域仓库名或绑自定义域名）
+
+fork 之后把内容换成你自己的：见下方「变成你自己的博客」。
+
 ### 上线前检查单
 
 - [ ] `astro.config.mjs` 的 `site` 换成你的正式域名（RSS / Sitemap / OG 图的绝对链接靠它）

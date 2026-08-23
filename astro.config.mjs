@@ -15,7 +15,9 @@ import { afterglowCode } from './src/styles/code-theme.ts'
 // 该域在本机网络不可达（挂代理后仍然不通）。改用 @fontsource 的 npm 包，
 // 在 src/styles/global.css 里 @import —— 构建时零联网，换机器和接 CI 都不会挂。
 export default defineConfig({
-  site: 'http://106.12.72.232',
+  // fork 一键托管（Vercel / CF Pages / GH Pages）时在构建环境变量里设
+  // PUBLIC_SITE_URL=https://你的地址 即可，不用改代码；不设回落到本站生产地址
+  site: process.env.PUBLIC_SITE_URL ?? 'http://106.12.72.232',
 
   // 开发工具栏会浮在页面底部中央，挡住截图核对；需要时改回 true
   devToolbar: { enabled: false },
