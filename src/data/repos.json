@@ -14,9 +14,9 @@
     "name": "AfterGlow-Notes",
     "desc": "这个博客本身：Astro 静态站 + Go 单二进制后端，像素级还原 Pencil 设计稿，自带网页管理台。",
     "stack": "Astro",
-    "stars": 0,
+    "stars": 3,
     "icon": "sunset",
-    "pushed": "2026-08-23T06:45:22Z"
+    "pushed": "2026-08-23T16:58:46Z"
   },
   {
     "repo": "QssssY/ai-psychological-assistant",

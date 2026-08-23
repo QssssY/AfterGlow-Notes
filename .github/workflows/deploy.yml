@@ -19,6 +19,11 @@ name: deploy
 on:
   push:
     branches: [main]
+  schedule:
+    # 每天北京时间 03:17 空跑一轮构建：把「更新于 X 天前」「在推进/偶尔动」这类
+    # 构建期烤进 HTML 的相对时间刷到当天口径，并顺路刷新仓库动态数据（见下）。
+    # 注意：GitHub 会在仓库 60 天无活动后自动停掉定时触发，push 一次即恢复
+    - cron: '17 19 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -44,6 +49,11 @@ jobs:
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 刷新仓库动态数据（stars / 最近推送 → repos.json，失败沿用旧值）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/sync-repos.mjs
 
       - name: 构建（同源自托管形态）
         run: PUBLIC_API_BASE=same-origin pnpm run build
