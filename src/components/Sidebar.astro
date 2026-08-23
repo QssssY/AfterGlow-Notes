@@ -142,6 +142,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
 
   <script>
   import { email } from '~/config'
+  import { copyText } from '~/scripts/clipboard'
 
   // 激活胶囊的上一页位置 —— 模块级跨页存活，换页滑动全靠它记路
   let lastNavActive: { top: number; height: number } | null = null
@@ -154,9 +155,9 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
         const okIcon = btn.querySelector<HTMLElement>('[data-mail-ok]')
         let timer = 0
         btn.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(email)
-          } catch {
+          // 纯 HTTP 下 navigator.clipboard 不存在，copyText 里有 execCommand 兜底；
+          // 两条路都失败才退回 mailto
+          if (!(await copyText(email))) {
             location.href = `mailto:${email}`
             return
           }

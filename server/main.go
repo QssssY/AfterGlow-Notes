@@ -37,7 +37,8 @@ import (
 )
 
 // ---- 输入校验 ----
-// slug 是文章文件名或 "site"（全站点赞）；visitor 是 crypto.randomUUID() 或退化值 "anon"
+// slug 是文章文件名或 "site"（全站点赞）；visitor 是浏览器生成的 UUID v4
+// （纯 HTTP 下客户端手写兜底）或隐私模式的退化值 "anon"
 var (
 	slugRe    = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
 	visitorRe = regexp.MustCompile(`^[A-Za-z0-9-]{4,64}$`)

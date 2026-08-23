@@ -39,6 +39,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
 <script>
   import { $, API, api, esc, getToken, report, toast, today } from '~/scripts/admin'
+  import { copyText } from '~/scripts/clipboard'
 
   // ---- 字段规格：新增一种可编辑内容 = 这里加一段 + server/admin.go 白名单加一行 ----
 
@@ -762,7 +763,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     }
   })
   upCopy.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(upPath.textContent ?? '')
-    toast('已复制')
+    // 纯 HTTP 直连时 navigator.clipboard 不存在，copyText 有 execCommand 兜底
+    toast((await copyText(upPath.textContent ?? '')) ? '已复制' : '复制失败，请手动选择复制')
   })
 </script>

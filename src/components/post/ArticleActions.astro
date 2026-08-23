@@ -69,6 +69,7 @@ const { slug, updated } = Astro.props
 
 <script>
   import { postLike, swr, swrPatch, touch } from '~/scripts/api'
+  import { copyText } from '~/scripts/clipboard'
   import { likeBurst } from '~/scripts/like-burst'
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
@@ -124,7 +125,14 @@ const { slug, updated } = Astro.props
         if (liked) likeBurst(button)
 
         postLike(slug, liked ? 'like' : 'unlike').then((state) => {
-          if (!state) return
+          if (!state) {
+            // 服务端没应答（断网/限流）：回滚乐观更新，别让点的人以为成功了
+            if (total !== null) total += liked ? -1 : 1
+            liked = !liked
+            write(liked)
+            render()
+            return
+          }
           liked = state.liked
           total = state.count
           write(liked)
@@ -143,17 +151,14 @@ const { slug, updated } = Astro.props
     for (const button of document.querySelectorAll<HTMLElement>('[data-copy-link]')) {
       const label = button.querySelector<HTMLElement>('[data-copy-label]')
       button.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(location.href)
-          if (label) {
-            const original = label.textContent
-            label.textContent = '已复制'
-            setTimeout(() => {
-              label.textContent = original
-            }, 1600)
-          }
-        } catch {
-          // 剪贴板不可用（非 HTTPS 或用户拒绝）时静默失败，不打断阅读
+        // 纯 HTTP 下 navigator.clipboard 不存在，copyText 里有 execCommand 兜底
+        const ok = await copyText(location.href)
+        if (label) {
+          const original = label.textContent
+          label.textContent = ok ? '已复制' : '复制失败，请手动复制地址'
+          setTimeout(() => {
+            label.textContent = original
+          }, 1600)
         }
       })
     }

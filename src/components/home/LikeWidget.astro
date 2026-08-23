@@ -107,7 +107,14 @@ import { Icon } from 'astro-icon/components'
         if (liked) likeBurst(button)
 
         postLike('site', liked ? 'like' : 'unlike').then((state) => {
-          if (!state) return
+          if (!state) {
+            // 服务端没应答（断网/限流）：回滚乐观更新，别让点的人以为成功了
+            if (total !== null) total += liked ? -1 : 1
+            liked = !liked
+            write(liked)
+            render()
+            return
+          }
           liked = state.liked
           total = state.count
           write(liked)
