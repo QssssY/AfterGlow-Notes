@@ -22,13 +22,14 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 全量安装 + 构建实测过 14 分钟，15 会误杀慢 run
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4 # 版本读 package.json 的 packageManager
+      - uses: pnpm/action-setup@v6 # 版本读 package.json 的 packageManager
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -51,21 +52,28 @@ jobs:
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
-      - name: 上传 + 原子替换 + 重启
+      - name: 上传 + 原子替换 + 重启（SSH 偶发瞬断，重试三次）
         env:
           HOST: root@106.12.72.232
           ROOT: /opt/afterglow
         run: |
-          scp -q /tmp/dist.tgz /tmp/blog.tgz "$HOST:/tmp/"
-          ssh "$HOST" "set -e
-            mkdir -p $ROOT/blog && tar -xzf /tmp/blog.tgz -C $ROOT/blog
-            rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
-            tar -xzf /tmp/dist.tgz -C $ROOT/dist.new
-            rm -rf $ROOT/dist.prev
-            if [ -d $ROOT/dist ]; then mv $ROOT/dist $ROOT/dist.prev; fi
-            mv $ROOT/dist.new $ROOT/dist
-            systemctl restart afterglow
-            rm -f /tmp/dist.tgz /tmp/blog.tgz"
+          for i in 1 2 3; do
+            if scp -q /tmp/dist.tgz /tmp/blog.tgz "$HOST:/tmp/" && ssh "$HOST" "set -e
+              mkdir -p $ROOT/blog && tar -xzf /tmp/blog.tgz -C $ROOT/blog
+              rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
+              tar -xzf /tmp/dist.tgz -C $ROOT/dist.new
+              rm -rf $ROOT/dist.prev
+              if [ -d $ROOT/dist ]; then mv $ROOT/dist $ROOT/dist.prev; fi
+              mv $ROOT/dist.new $ROOT/dist
+              systemctl restart afterglow
+              rm -f /tmp/dist.tgz /tmp/blog.tgz"; then
+              exit 0
+            fi
+            echo "第 $i 次上传/部署失败，10s 后重试（云风控对陌生 runner IP 偶发瞬断）"
+            sleep 10
+          done
+          echo '❌ 三次都失败：查服务器 sshd 日志 / 百度云主机安全拦截记录'
+          exit 1
 
       - name: 公网体检
         run: |
