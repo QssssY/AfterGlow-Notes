@@ -79,6 +79,16 @@ Caddy 只剩一行 `你的域名 { reverse_proxy 127.0.0.1:8787 }`。
 静态文本已在服务端预压 brotli（约 1/7）+ 带哈希资源缓存一年，1M 带宽跑页面绰绰有余；
 细节与运维备忘同见 [`server/README.md`](server/README.md)。
 
+没有域名也能上：服务直接 `-addr :80` 监听，浏览器用 `http://服务器IP` 访问（云厂商的
+备案拦截认域名，纯 IP 不受影响）；管理台登录建议走 SSH 隧道，口令不过明文公网。
+两个脚本把整套流程包好了（目标机器用环境变量 `AFTERGLOW_HOST` / `AFTERGLOW_URL`
+覆盖，或直接改脚本顶部默认值）：
+
+```bash
+bash scripts/deploy-setup.sh   # 首次 / 更新服务端：交叉编译上传二进制 + 管理口令 + systemd
+bash scripts/deploy.sh         # 日常发布：构建 → 增量同步歌曲与仓库快照 → 原子换 dist → 重启 → 体检
+```
+
 ### 上线前检查单
 
 - [ ] `astro.config.mjs` 的 `site` 换成你的正式域名（RSS / Sitemap / OG 图的绝对链接靠它）

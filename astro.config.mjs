@@ -15,7 +15,7 @@ import { afterglowCode } from './src/styles/code-theme.ts'
 // 该域在本机网络不可达（挂代理后仍然不通）。改用 @fontsource 的 npm 包，
 // 在 src/styles/global.css 里 @import —— 构建时零联网，换机器和接 CI 都不会挂。
 export default defineConfig({
-  site: 'http://localhost:4321',
+  site: 'http://106.12.72.232',
 
   // 开发工具栏会浮在页面底部中央，挡住截图核对；需要时改回 true
   devToolbar: { enabled: false },

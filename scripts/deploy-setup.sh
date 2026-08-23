@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# 余晖录 · 首次部署 / 服务端二进制更新（日常发布用 scripts/deploy.sh）
+#
+#   bash scripts/deploy-setup.sh                 # 首次：编译上传二进制 + 生成口令 + systemd + 全量内容
+#   FORCE_NEW_PASS=1 bash scripts/deploy-setup.sh  # 强制换新管理口令（默认沿用服务器上现有的）
+#
+# 前提：本机有 go / node(≥22) / git / ssh，且能免密登录 $HOST。
+# 服务端是纯 Go（modernc SQLite），Windows/macOS 上都能直接交叉编译 linux/amd64。
+# 重复执行安全：二进制会更新，口令与数据库(afterglow.db)保持不动。
+set -euo pipefail
+HOST="${AFTERGLOW_HOST:-root@106.12.72.232}"
+SITE_URL="${AFTERGLOW_URL:-http://106.12.72.232}"
+ROOT=/opt/afterglow
+
+cd "$(dirname "$0")/.."
+command -v go >/dev/null || { echo "缺 go（用于交叉编译 server/）"; exit 1; }
+command -v openssl >/dev/null || { echo "缺 openssl（用于生成管理口令）"; exit 1; }
+
+echo "==> 交叉编译 linux/amd64"
+(cd server && GOOS=linux GOARCH=amd64 go build -o afterglow-server-linux .)
+
+echo "==> 上传二进制到 $ROOT/afterglow-server"
+ssh "$HOST" "mkdir -p $ROOT $ROOT/music $ROOT/blog && systemctl stop afterglow 2>/dev/null || true"
+scp -q server/afterglow-server-linux "$HOST:$ROOT/afterglow-server"
+ssh "$HOST" "chmod +x $ROOT/afterglow-server"
+
+echo "==> 管理口令（沿用已有；没有才新生成）"
+PASS=$(ssh "$HOST" "sed -n 's/^Environment=ADMIN_PASSWORD=//p' /etc/systemd/system/afterglow.service 2>/dev/null" || true)
+NEW_PASS=0
+if [ -z "$PASS" ] || [ "${FORCE_NEW_PASS:-0}" = 1 ]; then
+  PASS=$(openssl rand -base64 18)
+  NEW_PASS=1
+fi
+
+echo "==> 写 systemd 单元（含口令，权限 600）并设为开机自启"
+ssh "$HOST" "cat > /etc/systemd/system/afterglow.service && chmod 600 /etc/systemd/system/afterglow.service && systemctl daemon-reload && systemctl enable afterglow" <<UNIT
+[Unit]
+Description=AfterGlow Notes (static site + API, same-origin)
+After=network-online.target
+
+[Service]
+WorkingDirectory=$ROOT
+Environment=ADMIN_PASSWORD=$PASS
+# Environment=GITHUB_TOKEN=可选：把 GitHub 代理配额从 60 提到 5000 次/时
+ExecStart=$ROOT/afterglow-server -addr :80 -site $ROOT/dist -music $ROOT/music -blog-dir $ROOT/blog -db $ROOT/afterglow.db -origin $SITE_URL
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+echo "==> 首次内容部署（构建 + 传站 + 起服务 + 体检）"
+bash scripts/deploy.sh
+
+echo
+echo "================ 收尾信息 ================"
+if [ "$NEW_PASS" = 1 ]; then
+  echo "管理台口令（只显示这一次，请转交站长妥善保存）："
+  echo "    $PASS"
+else
+  echo "管理台口令沿用服务器现有配置（查看：ssh 后 grep ADMIN_PASSWORD /etc/systemd/system/afterglow.service）"
+fi
+echo "站点：$SITE_URL    管理台：$SITE_URL/admin"
+echo "提醒：管理台登录走明文 HTTP，建议通过 SSH 隧道使用 ——"
+echo "    ssh -L 8080:127.0.0.1:80 $HOST 之后浏览器开 http://localhost:8080/admin"
+echo "首页不通先查：云控制台安全组是否放行 TCP 80"

@@ -44,7 +44,13 @@ public/music/
 design-export/
 .design/
 
+# 外部参考代码（如 YYsuni 的开源博客），只研读不入库
+.ref/
+
 # AI 生图与自动化验证的临时产物（脚本随用随建，最终图片会转 webp 入库）
 .genimg/
 .verify-shots/
 .verify-*.mjs
+
+# 部署脚本产的交叉编译二进制
+server/afterglow-server-linux
