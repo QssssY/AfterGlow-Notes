@@ -47,6 +47,11 @@ const since = `${uptime.since.getFullYear()} 年 ${uptime.since.getMonth() + 1} 
 
   <span class="w-full text-[11.5px]/[1.55] font-normal text-ink-muted">
     {/* 还没部署上线，说「动工」才是真话；uptime.since = 仓库首次提交 */}
-    自 {since}动工，第 {daysSince(uptime.since)} 天。
+    自 {since}动工，第 <span data-uptime-days={uptime.since.getTime()}>{daysSince(uptime.since)}</span> 天。
   </span>
 </Panel>
+
+<script>
+  // 天数实时化：见 ~/scripts/uptime（Astro 会去重，两个组件只打包一份）
+  import '~/scripts/uptime'
+</script>

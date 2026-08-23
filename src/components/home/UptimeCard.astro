@@ -21,7 +21,7 @@ const days = daysSince(uptime.since)
   <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">本站已运行</span>
 
   <span class="flex h-fit w-fit shrink-0 flex-row items-end gap-[6px]">
-    <span data-countup class="font-display text-[26px]/[26px] font-normal whitespace-nowrap text-ink"
+    <span data-countup data-uptime-days={uptime.since.getTime()} class="font-display text-[26px]/[26px] font-normal whitespace-nowrap text-ink"
       >{days}</span
     >
     <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">天</span>
@@ -29,3 +29,8 @@ const days = daysSince(uptime.since)
 
   <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{uptime.sinceLabel}</span>
 </div>
+
+<script>
+  // 天数实时化：见 ~/scripts/uptime（Astro 会去重，两个组件只打包一份）
+  import '~/scripts/uptime'
+</script>
