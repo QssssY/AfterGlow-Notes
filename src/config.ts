@@ -1,8 +1,8 @@
 /** 站点级文案与导航 —— 取自 blog.pen 的 Sidebar / Footer / Banner */
 
 /*
- * 会改的内容真身全在 src/data/*.json —— 网页管理后台（/admin，写接口在
- * server/ 的 /api/admin）改的就是这些文件。dev 下保存即热更新；部署后改完要重新构建。
+ * 会改的内容真身全在 src/data/*.json —— 网页管理后台（/overview，写接口在
+ * server/ 的 /api/overview）改的就是这些文件。dev 下保存即热更新；部署后改完要重新构建。
  * 这里只负责 import 进来、补上 TS 类型，再原样导出给组件 —— 组件不感知来源。
  * 留在本文件里的只剩结构性常量（导航、主题档位、uptime 起点这类）。
  */

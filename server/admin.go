@@ -1,4 +1,4 @@
-// 管理后台的写接口 —— 网页端 /admin 的后端。
+// 管理后台的写接口 —— 网页端 /overview 的后端。
 //
 // 设计取向：博客本体是纯静态 + git 是唯一事实源，所以这里不建内容数据库，
 // 所有「改内容」都落成仓库里的文件：
@@ -9,7 +9,7 @@
 //     音乐进 public/music/
 //
 // dev 模式下 astro dev 监听这些文件，保存即热更新；部署后改完要重新构建
-// （/api/admin/build 可配一条构建命令，没配就提示手动构建）。
+// （/api/overview/build 可配一条构建命令，没配就提示手动构建）。
 //
 // 鉴权：-admin-pass 不设则整组接口不注册（对外零暴露）。登录换随机会话
 // token（内存态，重启作废），之后每个请求带 Authorization: Bearer。
@@ -130,16 +130,16 @@ var (
 func registerAdminRoutes(mux *http.ServeMux, s *server) {
 	// 路由只写路径不写方法：方法在处理器里 switch —— 这样 OPTIONS 预检
 	// 也能进到 cors 包装层拿到放行头（带方法的 pattern 会把预检打成 405）
-	mux.HandleFunc("/api/admin/login", s.cors(s.adminLogin))
-	mux.HandleFunc("/api/admin/summary", s.cors(s.adminAuth(s.adminSummary)))
-	mux.HandleFunc("/api/admin/posts", s.cors(s.adminAuth(s.adminPostList)))
-	mux.HandleFunc("/api/admin/posts/{slug}", s.cors(s.adminAuth(s.adminPost)))
-	mux.HandleFunc("/api/admin/data/{name}", s.cors(s.adminAuth(s.adminData)))
-	mux.HandleFunc("/api/admin/upload", s.cors(s.adminAuth(s.adminUpload)))
-	mux.HandleFunc("/api/admin/build", s.cors(s.adminAuth(s.adminBuild)))
-	mux.HandleFunc("/api/admin/stats", s.cors(s.adminAuth(s.adminStats)))
-	mux.HandleFunc("/api/admin/linkcheck", s.cors(s.adminAuth(s.handleLinkCheck)))
-	mux.HandleFunc("/api/admin/asset/site/{name}", s.cors(s.adminAuth(s.adminSiteAsset)))
+	mux.HandleFunc("/api/overview/login", s.cors(s.adminLogin))
+	mux.HandleFunc("/api/overview/summary", s.cors(s.adminAuth(s.adminSummary)))
+	mux.HandleFunc("/api/overview/posts", s.cors(s.adminAuth(s.adminPostList)))
+	mux.HandleFunc("/api/overview/posts/{slug}", s.cors(s.adminAuth(s.adminPost)))
+	mux.HandleFunc("/api/overview/data/{name}", s.cors(s.adminAuth(s.adminData)))
+	mux.HandleFunc("/api/overview/upload", s.cors(s.adminAuth(s.adminUpload)))
+	mux.HandleFunc("/api/overview/build", s.cors(s.adminAuth(s.adminBuild)))
+	mux.HandleFunc("/api/overview/stats", s.cors(s.adminAuth(s.adminStats)))
+	mux.HandleFunc("/api/overview/linkcheck", s.cors(s.adminAuth(s.handleLinkCheck)))
+	mux.HandleFunc("/api/overview/asset/site/{name}", s.cors(s.adminAuth(s.adminSiteAsset)))
 }
 
 // adminSiteAsset：站点图片的预览供给 —— 它们存在 Astro 资产目录（不是 public/），

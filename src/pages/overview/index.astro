@@ -28,9 +28,9 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   <section class="ad-card flex flex-col gap-[14px] p-[24px]">
     <span class="text-[14px] font-medium text-ink">动手</span>
     <div class="flex flex-wrap gap-[10px]">
-      <a href="/admin/editor" class="ad-btn-primary">写新文章</a>
-      <a href="/admin/posts" class="ad-btn-ghost">管理文章</a>
-      <a href="/admin/data" class="ad-btn-ghost">编辑站点数据</a>
+      <a href="/overview/editor" class="ad-btn-primary">写新文章</a>
+      <a href="/overview/posts" class="ad-btn-ghost">管理文章</a>
+      <a href="/overview/data" class="ad-btn-ghost">编辑站点数据</a>
       <button type="button" data-build class="ad-btn-ghost">重新构建站点</button>
     </div>
     <p class="ad-hint">
@@ -80,8 +80,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     'overview',
     async () => {
       const [sum, posts] = await Promise.all([
-        api<Summary>('/api/admin/summary'),
-        api<PostListItem[]>('/api/admin/posts'),
+        api<Summary>('/api/overview/summary'),
+        api<PostListItem[]>('/api/overview/posts'),
       ])
       return { sum, posts }
     },
@@ -98,7 +98,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   }
 
   async function poll() {
-    const st = await api<BuildState>('/api/admin/build')
+    const st = await api<BuildState>('/api/overview/build')
     if (st.running) {
       status.hidden = false
       status.textContent = '构建中…'
@@ -118,7 +118,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   btn.addEventListener('click', async () => {
     try {
       btn.disabled = true
-      await api('/api/admin/build', { method: 'POST' })
+      await api('/api/overview/build', { method: 'POST' })
       toast('构建已开始')
       await poll()
     } catch (err) {

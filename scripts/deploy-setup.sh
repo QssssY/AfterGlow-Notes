@@ -61,7 +61,7 @@ if [ "$NEW_PASS" = 1 ]; then
 else
   echo "管理台口令沿用服务器现有配置（查看：ssh 后 grep ADMIN_PASSWORD /etc/systemd/system/afterglow.service）"
 fi
-echo "站点：$SITE_URL    管理台：$SITE_URL/admin"
+echo "站点：$SITE_URL    管理台：$SITE_URL/overview"
 echo "提醒：管理台登录走明文 HTTP，建议通过 SSH 隧道使用 ——"
-echo "    ssh -L 8080:127.0.0.1:80 $HOST 之后浏览器开 http://localhost:8080/admin"
+echo "    ssh -L 8080:127.0.0.1:80 $HOST 之后浏览器开 http://localhost:8080/overview"
 echo "首页不通先查：云控制台安全组是否放行 TCP 80"

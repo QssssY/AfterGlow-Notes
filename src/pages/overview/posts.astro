@@ -16,7 +16,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       <input type="checkbox" class="ad-check" data-drafts-only />
       只看草稿
     </label>
-    <a href="/admin/editor" class="ad-btn-primary">写新文章</a>
+    <a href="/overview/editor" class="ad-btn-primary">写新文章</a>
   </div>
 
   <div data-list class="flex flex-col gap-[12px]">
@@ -55,7 +55,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       </div>
       <div class="flex shrink-0 items-center gap-[8px]">
         <a class="ad-btn-ghost" href="/posts/${esc(p.slug)}" target="_blank" rel="noopener">看</a>
-        <a class="ad-btn-ghost" href="/admin/editor?slug=${encodeURIComponent(p.slug)}">编辑</a>
+        <a class="ad-btn-ghost" href="/overview/editor?slug=${encodeURIComponent(p.slug)}">编辑</a>
         <button type="button" class="ad-btn-danger" data-del>删除</button>
       </div>
     </div>`
@@ -120,7 +120,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   })
 
   // 缓存回放秒出列表，网络应答再校正（swrAdmin 见 scripts/admin.ts）
-  swrAdmin('posts', () => api<PostListItem[]>('/api/admin/posts'), (p) => {
+  swrAdmin('posts', () => api<PostListItem[]>('/api/overview/posts'), (p) => {
     posts = p
     show()
   }).catch((err) => {
@@ -135,7 +135,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     const slug = card.dataset.slug!
     if (!confirm(`确定删除「${slug}」？文件会从仓库里移除（git 里还能找回来）。`)) return
     try {
-      await api(`/api/admin/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' })
+      await api(`/api/overview/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' })
       posts = posts.filter((p) => p.slug !== slug)
       cachePut('posts', posts) // 同步缓存，别让删掉的行在下次回放里诈尸
       show() // 整页重排：删掉末页最后一条时页码自动回夹

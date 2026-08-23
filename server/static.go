@@ -87,7 +87,7 @@ type staticFile struct {
 	etag      string // 形如 `"a1b2…"`，内容哈希；磁盘文件为空（靠 Last-Modified）
 	cache     string // Cache-Control 值
 	html      bool   // HTML 页面：附加 Referrer-Policy
-	adminPage bool   // /admin 下的页面：附加 X-Frame-Options 拒绝内嵌
+	adminPage bool   // /overview 下的页面：附加 X-Frame-Options 拒绝内嵌
 }
 
 type staticSite struct {
@@ -189,7 +189,7 @@ func (st *staticSite) Reload() error {
 				modTime:   j.info.ModTime(),
 				cache:     cacheFor(j.rel, ext),
 				html:      ext == ".html",
-				adminPage: strings.HasPrefix(j.rel, "admin/"),
+				adminPage: strings.HasPrefix(j.rel, "overview/"),
 			}
 
 			if j.info.Size() <= staticMemLimit {

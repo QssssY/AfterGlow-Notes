@@ -5,7 +5,7 @@
  * 三段错峰入场）+ 顶部悬浮操作组；预览是「就地整屏切换」而不是原来的
  * 卡内切换。编辑手感三件：Ctrl+B/I/K 与 Tab 缩进（execCommand 保撤销栈）、
  * 粘贴或拖拽图片直接上传插入、标签是胶囊式输入。
- * 数据流不变：读写走 /api/admin/posts/{slug}，图片走 /api/admin/upload。
+ * 数据流不变：读写走 /api/overview/posts/{slug}，图片走 /api/overview/upload。
  */
 import AdminLayout from '~/layouts/AdminLayout.astro'
 ---
@@ -197,7 +197,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       fd.append('kind', 'image')
       fd.append('file', file)
       try {
-        const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+        const res = await api<{ path: string }>('/api/overview/upload', { method: 'POST', body: fd })
         insertText(`\n![](${res.path})\n`)
       } catch (err) {
         report(err)
@@ -306,7 +306,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     fd.append('slug', slug)
     fd.append('file', file)
     try {
-      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await api<{ path: string }>('/api/overview/upload', { method: 'POST', body: fd })
       cover = res.path
       dirty = true
       showCover()
@@ -437,7 +437,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     field('date').value = today()
     if (!editing) return
     const post = await api<{ slug: string; meta: PostMeta; body: string }>(
-      `/api/admin/posts/${encodeURIComponent(editing)}`,
+      `/api/overview/posts/${encodeURIComponent(editing)}`,
     )
     const m = post.meta
     field('title').value = m.title
@@ -479,7 +479,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       return
     }
     try {
-      await api(`/api/admin/posts/${encodeURIComponent(slug)}`, {
+      await api(`/api/overview/posts/${encodeURIComponent(slug)}`, {
         method: 'PUT',
         body: { meta, body: body.value },
       })

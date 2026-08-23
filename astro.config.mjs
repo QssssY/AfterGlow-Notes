@@ -49,7 +49,7 @@ export default defineConfig({
     }),
     mdx(),
     // 管理台不进站点地图（页面本身无密可泄 —— 数据要 token 才拿得到，但也没必要被收录）
-    sitemap({ filter: (page) => !page.includes('/admin') }),
+    sitemap({ filter: (page) => !page.includes('/overview') }),
     // 设计稿的图标全部来自 lucide（@iconify-json/lucide）
     icon(),
   ],

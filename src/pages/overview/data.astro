@@ -475,7 +475,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         continue
       }
       try {
-        const res = await fetch(`${API}/api/admin/asset/site/${pic.dataset.pic}`, {
+        const res = await fetch(`${API}/api/overview/asset/site/${pic.dataset.pic}`, {
           headers: { Authorization: `Bearer ${getToken() ?? ''}` },
         })
         if (res.ok) setTileImg(pic, URL.createObjectURL(await res.blob()))
@@ -656,7 +656,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     fd.append('name', avName)
     fd.append('file', file)
     try {
-      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await api<{ path: string }>('/api/overview/upload', { method: 'POST', body: fd })
       // 对应的预览瓦片立即换上新图（直接用本地文件，不再回源）
       const pic = editor.querySelector<HTMLElement>(`[data-pic="${avName}"]`)
       if (pic) setTileImg(pic, URL.createObjectURL(file))
@@ -692,14 +692,14 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   async function load(name: string) {
     current = name
-    value = await api(`/api/admin/data/${name}`)
+    value = await api(`/api/overview/data/${name}`)
     dirty = false
     render()
   }
 
   $('[data-save]').addEventListener('click', async () => {
     try {
-      await api(`/api/admin/data/${current}`, { method: 'PUT', body: cleaned() })
+      await api(`/api/overview/data/${current}`, { method: 'PUT', body: cleaned() })
       dirty = false
       toast('已保存 —— dev 站会热更新，正式站要重新构建')
     } catch (err) {
@@ -734,7 +734,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     fd.append('kind', 'music')
     fd.append('file', file)
     try {
-      const res = await api<{ path: string }>('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await api<{ path: string }>('/api/overview/upload', { method: 'POST', body: fd })
       upPath.textContent = res.path
       upCopy.hidden = false
       // 顺手填进歌单：.lrc 进第一个缺歌词的条目，音频进第一个缺地址的条目（没有就新增一条）

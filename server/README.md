@@ -23,7 +23,7 @@
   文件躺在服务器的一个目录里由这里供给：Range（拖进度条）、一周缓存、按写进度
   续期的超时（慢网传整首歌不断线）、CORS（跨域场景下频谱采样和歌词 fetch 要它）
 
-**管理接口** `/api/admin/*`（要口令，见下）—— 网页管理台 `/admin` 的后端：
+**管理接口** `/api/overview/*`（要口令，见下）—— 网页管理台 `/overview` 的后端：
 写文章、改站点数据（最近在读 / 此刻 / 歌单 / 友链 / 项目 / 分享 / 在用）、传图传音乐、
 触发构建（全站模式下构建完自动热替换静态缓存）、**统计**（近 30 天逐日阅读/访客/点赞 +
 在线人数）、**友链巡检**（每 12 小时自动探一遍 blogroll 和 friends 的链接，死链无处躲）。
@@ -64,7 +64,7 @@ PUBLIC_API_BASE=same-origin pnpm build
 - **口令强度是硬门槛**：不足 12 位、或含 afterglow / admin / password 这类看一眼
   仓库就能猜到的字样，服务直接拒绝启动。生成一个合格的（Git Bash 自带 openssl）：
   `openssl rand -base64 18`。仓库是公开的，口令是管理台唯一的门。
-- **入口**：站点的 `/admin`（noindex、不进 sitemap）。登录换 30 天会话 token（内存态，服务重启要重登）。
+- **入口**：站点的 `/overview`（noindex、不进 sitemap）。登录换 30 天会话 token（内存态，服务重启要重登）。
 - **仓库位置**：`-blog-dir` 指博客仓库根目录，默认 `..`（服务就住在仓库的 server/ 里）。
 - **生效方式**：本地 `pnpm dev` 下保存即热更新；部署后要重新构建 ——
   `-build-cmd "pnpm build"` 配上后，管理台概览页的「重新构建站点」按钮就能远程触发；
@@ -129,7 +129,7 @@ api.你的域名 {
 `-origin` 必须写成站点的完整来源（协议 + 域名），否则浏览器会拦下跨域应答。
 
 **5. 管理台安全头在平台侧补齐**：全站模式下这俩头由 static.go 下发 ——
-HTML 一律 `Referrer-Policy: strict-origin-when-cross-origin`，`/admin` 页
+HTML 一律 `Referrer-Policy: strict-origin-when-cross-origin`，`/overview` 页
 另加 `X-Frame-Options: DENY`（防点击劫持）。分体部署时前端字节不经过本服务，
 得在托管平台配置同样两条：Vercel 用 `vercel.json` 的 `headers` 字段，
 Cloudflare Pages 在 `public/_headers` 写：
@@ -137,7 +137,7 @@ Cloudflare Pages 在 `public/_headers` 写：
 ```
 /*
   Referrer-Policy: strict-origin-when-cross-origin
-/admin/*
+/overview/*
   X-Frame-Options: DENY
 ```
 

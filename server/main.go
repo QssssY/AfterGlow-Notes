@@ -79,7 +79,7 @@ func main() {
 	maxWrites := flag.Int("max-writes", 200, "每个 IP 每天允许的写操作次数")
 	adminPass := flag.String("admin-pass", os.Getenv("ADMIN_PASSWORD"), "管理后台口令；不设则管理接口整组关闭")
 	blogDir := flag.String("blog-dir", "..", "博客仓库根目录（管理接口读写文章与数据文件）")
-	buildCmd := flag.String("build-cmd", os.Getenv("BLOG_BUILD_CMD"), "可选：重新构建站点的命令（如 pnpm build），/api/admin/build 用")
+	buildCmd := flag.String("build-cmd", os.Getenv("BLOG_BUILD_CMD"), "可选：重新构建站点的命令（如 pnpm build），/api/overview/build 用")
 	siteDir := flag.String("site", "", "静态站点目录（Astro 构建产物 dist）；设了就由本服务直接托管整个站点")
 	musicDir := flag.String("music", "", "音乐目录；设了就在 /music/* 供给（音乐是版权物不进仓库，分体部署的歌从这里走）")
 	flag.Parse()

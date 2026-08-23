@@ -93,7 +93,7 @@ export async function api<T>(
   }
   if (res.status === 401) {
     clearToken()
-    location.replace('/admin/login')
+    location.replace('/overview/login')
     throw new Error('未登录')
   }
   const data = (await res.json().catch(() => null)) as { error?: string } | null

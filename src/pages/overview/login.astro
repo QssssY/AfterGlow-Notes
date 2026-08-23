@@ -31,14 +31,14 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   import { API, getToken, report, setToken } from '~/scripts/admin'
 
   // 已登录就直接进去（token 若已过期，里面的第一个请求会把人送回来）
-  if (getToken()) location.replace('/admin')
+  if (getToken()) location.replace('/overview')
 
   const form = document.querySelector<HTMLFormElement>('[data-login]')!
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
     const password = new FormData(form).get('password')
     try {
-      const res = await fetch(`${API}/api/admin/login`, {
+      const res = await fetch(`${API}/api/overview/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -48,7 +48,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       const data = (await res.json().catch(() => null)) as { token?: string; error?: string } | null
       if (!res.ok || !data?.token) throw new Error(data?.error ?? `登录失败（HTTP ${res.status}）`)
       setToken(data.token)
-      location.replace('/admin')
+      location.replace('/overview')
     } catch (err) {
       report(err)
     }

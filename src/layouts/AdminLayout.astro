@@ -1,6 +1,6 @@
 ---
 /**
- * 管理台布局 —— 站内 /admin 一组页面共用。
+ * 管理台布局 —— 站内 /overview 一组页面共用。
  *
  * 和 BaseLayout 的区别：
  *  - 不挂 ClientRouter：后台页面全是重客户端状态的表单，整页跳转最省心，
@@ -24,11 +24,11 @@ interface Props {
 const { title, active, guard = true } = Astro.props
 
 const tabs = [
-  { key: 'dashboard', label: '概览', href: '/admin' },
-  { key: 'posts', label: '文章', href: '/admin/posts' },
-  { key: 'data', label: '站点数据', href: '/admin/data' },
-  { key: 'theme', label: '主题', href: '/admin/theme' },
-  { key: 'stats', label: '统计', href: '/admin/stats' },
+  { key: 'dashboard', label: '概览', href: '/overview' },
+  { key: 'posts', label: '文章', href: '/overview/posts' },
+  { key: 'data', label: '站点数据', href: '/overview/data' },
+  { key: 'theme', label: '主题', href: '/overview/theme' },
+  { key: 'stats', label: '统计', href: '/overview/stats' },
 ] as const
 
 const customTheme = themeCss()
@@ -63,7 +63,7 @@ const customTheme = themeCss()
       guard && (
         <script is:inline>
           if (!localStorage.getItem('afterglow:admin:token'))
-            location.replace('/admin/login')
+            location.replace('/overview/login')
         </script>
       )
     }
@@ -75,7 +75,7 @@ const customTheme = themeCss()
 
       <div class="relative z-10 mx-auto flex min-h-screen w-full max-w-[1080px] flex-col px-[20px] pb-[72px] xl:px-[32px]">
         <header class="flex flex-wrap items-center gap-x-[18px] gap-y-[10px] py-[22px]">
-          <a href="/admin" class="flex items-baseline gap-[8px]">
+          <a href="/overview" class="flex items-baseline gap-[8px]">
             <span class="font-display text-[20px] text-ink">{site.title}</span>
             <span class="text-[12px] text-ink-muted">管理台</span>
           </a>
@@ -118,7 +118,7 @@ const customTheme = themeCss()
       import { clearToken } from '~/scripts/admin'
       document.querySelector('[data-admin-logout]')?.addEventListener('click', () => {
         clearToken()
-        location.href = '/admin/login'
+        location.href = '/overview/login'
       })
     </script>
   </body>

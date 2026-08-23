@@ -174,7 +174,7 @@ const MODES = [
   }
 
   // ---- 读取现状 ----
-  api<{ light?: Palette; dark?: Palette }>('/api/admin/data/theme')
+  api<{ light?: Palette; dark?: Palette }>('/api/overview/data/theme')
     .then((t) => fill({ ...DEFAULTS.light, ...t.light }, { ...DEFAULTS.dark, ...t.dark }))
     .catch(report)
 
@@ -249,7 +249,7 @@ const MODES = [
       }
     }
     try {
-      await api('/api/admin/data/theme', { method: 'PUT', body: out })
+      await api('/api/overview/data/theme', { method: 'PUT', body: out })
       const n = Object.keys(out.light).length + Object.keys(out.dark).length
       toast(n > 0 ? '已保存 —— dev 即时生效，正式站重新构建后生效' : '已保存（当前就是默认配色）')
     } catch (err) {
@@ -262,7 +262,7 @@ const MODES = [
     fill(DEFAULTS.light, DEFAULTS.dark)
     clearLive()
     try {
-      await api('/api/admin/data/theme', { method: 'PUT', body: { light: {}, dark: {} } })
+      await api('/api/overview/data/theme', { method: 'PUT', body: { light: {}, dark: {} } })
       toast('已恢复默认配色')
     } catch (err) {
       report(err)

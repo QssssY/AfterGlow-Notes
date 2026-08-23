@@ -1,7 +1,7 @@
 ---
 /**
  * 统计页 —— 服务端一直在收的 views/likes 数据，终于聚成能看的曲线。
- * 数据源是 /api/admin/stats（近 30 天逐日）与 /api/admin/linkcheck（友链巡检）。
+ * 数据源是 /api/overview/stats（近 30 天逐日）与 /api/overview/linkcheck（友链巡检）。
  * 图表是纯 HTML 柱状（每天一列：宽柱 = 阅读，窄柱 = 访客），不引第三方图表库 ——
  * 管理台的临时皮肤没必要为 30 根柱子多拉一个依赖。
  */
@@ -114,7 +114,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     lastDays = st.days
     renderChart()
   }
-  swrAdmin('stats', () => api<Stats>('/api/admin/stats'), renderStats).catch(report)
+  swrAdmin('stats', () => api<Stats>('/api/overview/stats'), renderStats).catch(report)
 
   // ---- 友链巡检 ----
   // 有轮询语义，不走 swrAdmin：只把「已完成」的结果入缓存（检测中的瞬态不存），
@@ -158,7 +158,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   }
 
   async function loadLinks() {
-    const lc = await api<LinkCheck>('/api/admin/linkcheck')
+    const lc = await api<LinkCheck>('/api/overview/linkcheck')
     if (!lc.running) cachePut('linkcheck', lc)
     renderLinks(lc)
     if (lc.running) setTimeout(() => loadLinks().catch(report), 3000)
@@ -171,7 +171,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   runBtn.addEventListener('click', async () => {
     try {
       runBtn.disabled = true
-      await api('/api/admin/linkcheck', { method: 'POST' })
+      await api('/api/overview/linkcheck', { method: 'POST' })
       toast('检测已开始')
       await loadLinks()
     } catch (err) {
