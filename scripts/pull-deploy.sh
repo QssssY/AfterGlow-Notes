@@ -19,6 +19,12 @@ print(r.get("updated_at", ""), urls.get("dist.tgz", ""), urls.get("blog.tgz", ""
 if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$updated" ]; then exit 0; fi
 
 echo "[$(date '+%F %T')] 发现新产物（$updated），开始下载"
+# 断点续传只对同一 Release 有效：换了 Release 先清半成品 ——
+# 不同版本的 tgz 字节不同，旧半成品续上新字节会拼出校验必死的坏包
+if [ ! -f /tmp/pull-release ] || [ "$(cat /tmp/pull-release)" != "$updated" ]; then
+  rm -f /tmp/pull-blog.tgz /tmp/pull-dist.tgz
+  echo "$updated" > /tmp/pull-release
+fi
 # 资产下载走 objects.githubusercontent.com —— 跨境拥塞重灾区，
 # 掐硬超时，失败不挣扎：下一轮 timer 自然重试
 dl() { curl -fsSL -C - --max-time 240 --retry 5 --retry-all-errors -o "$2" "$1"; }
