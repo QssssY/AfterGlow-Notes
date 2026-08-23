@@ -1,0 +1,78 @@
+# 余晖录 · push 即上线
+#
+# 触发：push 到 main（或手动 workflow_dispatch）。
+# 做什么：与 scripts/deploy.sh 同一套流程的 CI 版 —— pnpm 构建 → 上传 dist 与
+#         仓库快照 → 服务器原子换目录 → 重启 afterglow → 公网体检。
+# 差别：歌曲不随 CI 走（版权物不进仓库），新增/替换音乐仍在本机跑
+#         bash scripts/deploy.sh，它只增量补服务器缺的文件。
+# 前提：仓库 Secrets 里有 DEPLOY_SSH_KEY（专用部署私钥，公钥在服务器
+#         authorized_keys，注释 afterglow-ci-deploy）与 DEPLOY_KNOWN_HOSTS。
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 连续 push 时只保最后一笔，避免排队重部署
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # 版本读 package.json 的 packageManager
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建（同源自托管形态）
+        run: PUBLIC_API_BASE=same-origin pnpm run build
+
+      - name: 打包 dist 与仓库快照
+        run: |
+          tar -C dist --exclude='./music' -czf /tmp/dist.tgz .
+          git ls-files -z | tar --null -T - -czf /tmp/blog.tgz
+
+      - name: 配置 SSH
+        run: |
+          install -m 600 /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: 上传 + 原子替换 + 重启
+        env:
+          HOST: root@106.12.72.232
+          ROOT: /opt/afterglow
+        run: |
+          scp -q /tmp/dist.tgz /tmp/blog.tgz "$HOST:/tmp/"
+          ssh "$HOST" "set -e
+            mkdir -p $ROOT/blog && tar -xzf /tmp/blog.tgz -C $ROOT/blog
+            rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
+            tar -xzf /tmp/dist.tgz -C $ROOT/dist.new
+            rm -rf $ROOT/dist.prev
+            if [ -d $ROOT/dist ]; then mv $ROOT/dist $ROOT/dist.prev; fi
+            mv $ROOT/dist.new $ROOT/dist
+            systemctl restart afterglow
+            rm -f /tmp/dist.tgz /tmp/blog.tgz"
+
+      - name: 公网体检
+        run: |
+          sleep 8   # 服务启动要预载静态文件，给足窗口
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 8 http://106.12.72.232/ || true)
+            [ "$code" = 200 ] && break
+            sleep 5
+          done
+          echo "GET / → $code"
+          [ "$code" = 200 ] || { echo '❌ 首页不通：查服务器 journalctl -u afterglow -n 50'; exit 1; }
