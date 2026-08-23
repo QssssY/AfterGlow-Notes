@@ -52,16 +52,21 @@ jobs:
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
-      - name: 上传 + 原子替换 + 重启（SSH 跨境黑洞，硬超时 + 多重试）
+      - name: 上传 + 原子替换 + 重启（单连接 + 硬超时 + 高重试）
         env:
           HOST: root@106.12.72.232
           ROOT: /opt/afterglow
         run: |
-          # runner 在海外、服务器在北京：22 端口握手会被随机黑洞。scp 只有
-          # 3.7MB，正常 ≤60s —— ConnectTimeout/ServerAlive 管不到握手期挂死，
-          # 用 timeout 硬掐整条命令，掐死就换下一次尝试。
-          for i in 1 2 3 4 5; do
-            if timeout 90 scp -q /tmp/dist.tgz /tmp/blog.tgz "$HOST:/tmp/" && timeout 60 ssh "$HOST" "set -e
+          # 服务器 22 端口被全网爆破扫描，百度云安全代理对外国机房 IP 随机
+          # 丢包 —— runner 单条连接成功率只有两三成。对策：① 全部走一条
+          # ssh 连接（两个 tar 拼流从 stdin 过去，远端按字节切开后自己换
+          # 目录重启），不搞 scp+ssh 两连击；② timeout 硬掐单次挂死；
+          # ③ 8 次重试兜概率。
+          BLOG_SIZE=$(stat -c%s /tmp/blog.tgz)
+          for i in 1 2 3 4 5 6 7 8; do
+            if cat /tmp/blog.tgz /tmp/dist.tgz | timeout 150 ssh "$HOST" "set -e
+              head -c $BLOG_SIZE > /tmp/blog.tgz
+              tail -c +$((BLOG_SIZE + 1)) > /tmp/dist.tgz
               mkdir -p $ROOT/blog && tar -xzf /tmp/blog.tgz -C $ROOT/blog
               rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
               tar -xzf /tmp/dist.tgz -C $ROOT/dist.new
@@ -70,12 +75,13 @@ jobs:
               mv $ROOT/dist.new $ROOT/dist
               systemctl restart afterglow
               rm -f /tmp/dist.tgz /tmp/blog.tgz"; then
+              echo "第 $i 次尝试成功"
               exit 0
             fi
-            echo "第 $i 次上传/部署被黑洞/瞬断掐断，8s 后重试"
-            sleep 8
+            echo "第 $i 次被云安全丢包掐断，6s 后重试"
+            sleep 6
           done
-          echo '❌ 五次都失败：查服务器 sshd 日志 / 百度云主机安全拦截记录'
+          echo '❌ 八次都失败：大概率百度云安全在拦截，去控制台「云安全→主机安全」看一眼'
           exit 1
 
       - name: 公网体检
