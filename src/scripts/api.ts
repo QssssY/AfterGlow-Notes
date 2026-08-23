@@ -14,11 +14,27 @@ import { apiBase } from '~/config'
 
 const VISITOR_KEY = 'afterglow:visitor'
 
+/*
+ * uuid：优先用原生 randomUUID，不行就手写 v4。
+ * 纯 HTTP 站点没有「安全上下文」，crypto.randomUUID 直接不存在 —— 若无兜底，
+ * 所有访客会退化成共享身份（见 visitorId 的 catch），后果是同一 slug 的赞
+ * 被 ON CONFLICT 静默吞掉、阅读去重全站塌成一人。getRandomValues 非安全
+ * 上下文也有，是可靠的兜底。
+ */
+function uuid(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  const b = crypto.getRandomValues(new Uint8Array(16))
+  b[6] = (b[6] & 0x0f) | 0x40 // version 4
+  b[8] = (b[8] & 0x3f) | 0x80 // variant 10xx
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+}
+
 function visitorId(): string {
   try {
     let v = localStorage.getItem(VISITOR_KEY)
     if (!v) {
-      v = crypto.randomUUID()
+      v = uuid()
       localStorage.setItem(VISITOR_KEY, v)
     }
     return v
