@@ -31,6 +31,10 @@ server/afterglow-api
 server/*.db
 server/*.db-*
 
+# 音乐与歌词是版权物，不进公开仓库（历史已用 git-filter-repo 清过）。
+# 本地把 mp3/lrc 丢进这里照常预览；部署时传到服务器的 -music 目录（见 server/README.md）
+public/music/
+
 # Pencil 备份
 *.pen.bak
 
