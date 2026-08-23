@@ -13,9 +13,9 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 
   视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 等化条。
   能力（都不改布局）：
-  - 点卡播放 / 暂停；多于一首时出现 上一首 / 下一首 / 播放列表 钮，音量钮常驻；
-    放完自动接下一首、到底循环；列表和音量是卡下方的玻璃弹层（互斥），
-    点歌即切即播、面板自动收起
+  - 点卡播放 / 暂停；多于一首时出现 上一首 / 下一首 / 播放模式 / 播放列表 钮，
+    音量钮常驻；播放模式 顺序（列表循环）→ 随机 → 单曲循环 点击轮换、跨页记忆；
+    放完按模式接歌；列表和音量是卡下方的玻璃弹层（互斥），点歌即切即播、面板自动收起
   - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计稿的定格假谱
   - 曲名行播放时逐句显示 LRC 歌词，卡拉OK式从左往右点亮（唱到哪亮到哪）；
     渐变挂在贴文本宽的内层 span 上 —— 挂整行容器会按容器宽算，分界线跑得比人声快；
@@ -75,6 +75,17 @@ const trackLabel = (t: { title: string; artist?: string }) =>
             class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
           >
             <Icon name="lucide:skip-forward" class="size-[13px] shrink-0" />
+          </button>
+          <button
+            type="button"
+            data-np-mode
+            aria-label="播放模式"
+            title="播放模式"
+            class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
+          >
+            <Icon name="lucide:repeat" data-np-mode-order class="size-[13px] shrink-0" />
+            <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[13px] shrink-0" />
+            <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[13px] shrink-0" />
           </button>
           <button
             type="button"
@@ -240,6 +251,28 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     if (Number.isFinite(v)) player.volume = Math.min(1, Math.max(0, v))
   }
 
+  // 播放模式：顺序（列表循环）→ 随机 → 单曲循环，点击轮换，跨页跨会话记忆。
+  // 单曲循环走原生 loop —— 无缝重播且不触发 ended；随机抽签保证不与当前曲重复
+  const MODE_KEY = 'afterglow:playmode'
+  const MODES = ['order', 'shuffle', 'one'] as const
+  type PlayMode = (typeof MODES)[number]
+  const MODE_LABEL: Record<PlayMode, string> = {
+    order: '顺序播放',
+    shuffle: '随机播放',
+    one: '单曲循环',
+  }
+  let mode: PlayMode = 'order'
+  const savedMode = localStorage.getItem(MODE_KEY)
+  if ((MODES as readonly string[]).includes(savedMode ?? '')) mode = savedMode as PlayMode
+  player.loop = mode === 'one'
+
+  const randIndex = () => {
+    if (tracks.length < 2) return cur
+    let j = cur
+    while (j === cur) j = Math.floor(Math.random() * tracks.length)
+    return j
+  }
+
   let audioCtx: AudioContext | undefined
   let analyser: AnalyserNode | undefined
   let freq: Uint8Array<ArrayBuffer> | undefined
@@ -254,6 +287,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     progress: HTMLElement | null
     list: HTMLElement | null
     items: HTMLElement[]
+    modeBtn: HTMLElement | null
     vol: HTMLElement | null
     volRange: HTMLInputElement | null
     volPct: HTMLElement | null
@@ -499,6 +533,21 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     }
   }
 
+  /** 播放模式 UI 广播：图标三选一 + 无障碍文案 */
+  const updateModeUI = () => {
+    for (const b of binds) {
+      if (!b.modeBtn) continue
+      const label = `播放模式：${MODE_LABEL[mode]}（点击切换）`
+      b.modeBtn.title = label
+      b.modeBtn.setAttribute('aria-label', label)
+      b.modeBtn.querySelector('[data-np-mode-order]')?.classList.toggle('hidden', mode !== 'order')
+      b.modeBtn
+        .querySelector('[data-np-mode-shuffle]')
+        ?.classList.toggle('hidden', mode !== 'shuffle')
+      b.modeBtn.querySelector('[data-np-mode-one]')?.classList.toggle('hidden', mode !== 'one')
+    }
+  }
+
   /** 切到第 i 首（取模循环）。autoplay 用于自动接歌与「上/下一首」「列表点歌」 */
   const setTrack = (i: number, autoplay: boolean) => {
     cur = ((i % tracks.length) + tracks.length) % tracks.length
@@ -536,6 +585,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       progress: card.querySelector<HTMLElement>('[data-np-progress]'),
       list: card.querySelector<HTMLElement>('[data-np-list]'),
       items: [...card.querySelectorAll<HTMLElement>('[data-np-item]')],
+      modeBtn: card.querySelector<HTMLElement>('[data-np-mode]'),
       vol: card.querySelector<HTMLElement>('[data-np-vol]'),
       volRange: card.querySelector<HTMLInputElement>('[data-np-vol-range]'),
       volPct: card.querySelector<HTMLElement>('[data-np-vol-pct]'),
@@ -549,10 +599,11 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 
     if (binds.length === 0) return
 
-    // 回到首页时同步一次正在播放的状态、当前曲名、列表高亮与音量 UI
+    // 回到首页时同步一次正在播放的状态、当前曲名、列表高亮与音量/模式 UI
     setLive(!player.paused)
     markCurrent()
     updateVolUI()
+    updateModeUI()
     if (!player.paused) {
       swapLine(trackLabel(tracks[cur]!))
       loadLrc(tracks[cur]!)
@@ -573,13 +624,22 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       card.querySelector<HTMLElement>('[data-np-prev]')?.addEventListener('click', (e) => {
         e.stopPropagation()
         ensureGraph(player)
+        // 上一首固定走列表序 —— 随机模式下也能确定地「回头」，不再抽签
         setTrack(cur - 1, true)
       })
 
       card.querySelector<HTMLElement>('[data-np-next]')?.addEventListener('click', (e) => {
         e.stopPropagation()
         ensureGraph(player)
-        setTrack(cur + 1, true)
+        setTrack(mode === 'shuffle' ? randIndex() : cur + 1, true)
+      })
+
+      b.modeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation()
+        mode = MODES[(MODES.indexOf(mode) + 1) % MODES.length]!
+        localStorage.setItem(MODE_KEY, mode)
+        player.loop = mode === 'one'
+        updateModeUI()
       })
 
       // 播放列表：开在卡下方；打开时给卡提 z-index（backdrop-filter 让每张卡
@@ -661,7 +721,9 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     loadLrc(tracks[cur]!)
   })
   player.addEventListener('pause', () => setLive(false))
-  player.addEventListener('ended', () => setTrack(cur + 1, true))
+  // 放完接歌按模式分流：随机抽签 / 顺序接下一首（到底回头）；
+  // 单曲循环由原生 loop 兜住，根本不触发 ended
+  player.addEventListener('ended', () => setTrack(mode === 'shuffle' ? randIndex() : cur + 1, true))
   // 歌词句切换和渐变推进都在 tick（rAF）里做；timeupdate 只管进度条 ——
   // 它在暂停状态下拖进度时也会触发，宽度不会失同步
   player.addEventListener('timeupdate', () => {
