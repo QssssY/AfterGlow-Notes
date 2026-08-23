@@ -3,7 +3,8 @@ import { Icon } from 'astro-icon/components'
 import { nowPlaying } from '~/config'
 
 const tracks = nowPlaying.playlist
-const first = tracks[0]!
+// fork 没有歌源时 playlist.json 清成 [] —— 整张卡不渲染，别让空歌单炸构建
+const first = tracks[0]
 const trackLabel = (t: { title: string; artist?: string }) =>
   t.artist ? `${t.title} — ${t.artist}` : t.title
 ---
@@ -23,6 +24,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     同步学 APlayer 双入口：播放中 rAF 每帧对时 + seeked 事件兜底（暂停拖条也跟）
   - 底部细进度线，点击 / 拖动调进度；音量记 localStorage
 -->
+{first && (
 <div
   data-np
   role="button"
@@ -208,6 +210,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     </div>
   </div>
 </div>
+)}
 
 <script>
   import { musicBase, nowPlaying } from '~/config'
@@ -224,7 +227,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
    * 谁可见谁就是播放器，切设备宽度也不丢状态。
    */
   /** end 是这句「唱完」的时刻（见 loadLrc 里的估算），亮字渐变只跑 t→end 这段 */
-  type LrcLine = { t: number; text: string; end: number }
+  type LrcLine = { t: number; text: string; end: number; est: number }
   /** offset：这首歌词整体快/慢时的微调（秒），正值=歌词推迟出现（管理端可改） */
   type Track = { title: string; artist?: string; src: string; lrc?: string; offset?: number }
 
@@ -240,7 +243,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   // 不满足同源策略时 analyser 只会输出一排零（等化条永远躺平）。
   // 同源时不挂 —— 避免给本地/单机模式引入任何行为变化。必须在赋 src 之前设。
   if (musicBase) player.crossOrigin = 'anonymous'
-  player.src = musicUrl(tracks[0]!.src)
+  // 空歌单（fork 无歌源）时卡片整个不渲染，这里也别去摸 tracks[0]
+  if (tracks.length > 0) player.src = musicUrl(tracks[0]!.src)
   player.preload = 'none'
 
   // 音量跨页跨曲记忆；没存过保持默认 1（Number(null)=0 会静音，必须判 null）
@@ -337,7 +341,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
             for (const row of text.split('\n')) {
               const m = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/.exec(row.trim())
               if (m && m[3]!.trim())
-                raw.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim(), end: 0 })
+                raw.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim(), end: 0, est: 0 })
             }
             raw.sort((a, b) => a.t - b.t)
             // QQ/网易导出的 lrc 尾部常挂人员表滚屏（Engineered by…/乐手名单），
@@ -372,6 +376,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
               const est = Math.max(2, line.text.length * perChar)
               const gap = i + 1 < lines.length ? lines[i + 1]!.t - line.t : Infinity
               line.end = line.t + (gap <= est * 1.8 ? gap : est)
+              line.est = est
             }
             return lines
           })
@@ -383,7 +388,9 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       // 缓存里存原始时间轴，per-track 的歌词偏移在这里现算（管理端可调）
       if (tracks[cur]!.lrc === track.lrc) {
         const off = Number(track.offset) || 0
-        lrcLines = off ? lines.map((l) => ({ t: l.t + off, text: l.text, end: l.end + off })) : lines
+        lrcLines = off
+          ? lines.map((l) => ({ t: l.t + off, text: l.text, end: l.end + off, est: l.est }))
+          : lines
       }
       return lines
     })
@@ -447,8 +454,23 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     swapLine(curLine.text, true)
     // 只有正在展示这句时才推进度（淡切的 150ms 里 shownText 已是新句）
     if (shownText !== curLine.text) return
-    // 亮字与跑马只跑 t→end 的演唱段；间奏/尾奏里句子保持亮满，不再慢速爬
-    const pct = Math.min(1, Math.max(0, (now - curLine.t) / Math.max(0.5, curLine.end - curLine.t)))
+    // 亮字与跑马只跑 t→end 的演唱段；间奏/尾奏里句子保持亮满，不再慢速爬。
+    // 普通 LRC 没有逐字时间，句内推进不能整句均摊 —— 结尾拖长音会把每个字
+    // 都拉慢，亮字落后人声半句。拖音几乎都在句尾：超出正常语速（est）的
+    // 时长全记给最后一个字，前 n-1 字按本曲字速亮，尾字慢慢填满拖音段
+    const dur = Math.max(0.5, curLine.end - curLine.t)
+    const n = Math.max(1, curLine.text.length)
+    const elapsed = now - curLine.t
+    let pct
+    if (n === 1 || dur <= curLine.est) pct = elapsed / dur
+    else {
+      const bodyT = curLine.est * ((n - 1) / n)
+      pct =
+        elapsed <= bodyT
+          ? elapsed / curLine.est
+          : (n - 1) / n + ((elapsed - bodyT) / (dur - bodyT)) * (1 / n)
+    }
+    pct = Math.min(1, Math.max(0, pct))
     const sung = `${(pct * 100).toFixed(1)}%`
     for (const b of binds) {
       if (!b.lineText) continue

@@ -109,6 +109,10 @@ bash scripts/deploy.sh         # 日常发布：构建 → 增量同步歌曲与
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FQssssY%2FAfterGlow-Notes)
 
+📖 **零基础保姆级教程（一键部署 → 改成你的博客 → 网页上写文章，附四段复制即用的
+AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)** —— 没有服务器就没有管理台，
+但 **GitHub 网页就是你的管理台**：改文件提交，平台自动重建上线，教程手把手教。
+
 - **Vercel**：点上面的按钮 → 登录 → Create，一分钟出站。建议在项目 Settings →
   Environment Variables 加 `PUBLIC_SITE_URL=https://你的地址`，RSS / Sitemap / OG 的
   绝对链接才正确

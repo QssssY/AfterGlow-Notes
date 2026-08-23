@@ -1,9 +1,26 @@
 ---
+import { apiBase } from '~/config'
 import AdminLayout from '~/layouts/AdminLayout.astro'
+
+// 纯静态形态（没配 PUBLIC_API_BASE）没有数据服务，管理台整个不存在 ——
+// 给 fork 后一键托管的人一个明白话，别让他们对着登录框猜口令
+const staticOnly = apiBase === null
 ---
 
 <AdminLayout title="登录" guard={false}>
   <div class="flex flex-1 items-center justify-center">
+    {staticOnly && (
+      <div class="ad-card flex w-full max-w-[460px] flex-col gap-[10px] p-[32px]">
+        <span class="font-display text-[22px] text-ink">这个部署没有管理台</span>
+        <span class="ad-hint">
+          当前是纯静态托管（未配置 PUBLIC_API_BASE），管理台需要配套的 Go 数据服务。
+          改内容的方式：直接在 GitHub 网页上编辑仓库文件（src/data/*.json 与
+          src/content/posts/），提交后托管平台会自动重新构建上线 ——
+          详见仓库 docs/easy-deploy.md。
+        </span>
+      </div>
+    )}
+    {!staticOnly && (
     <form data-login class="ad-card flex w-full max-w-[380px] flex-col gap-[16px] p-[32px]">
       <div class="flex flex-col gap-[6px]">
         <span class="font-display text-[22px] text-ink">管理台</span>
@@ -24,6 +41,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
       <button type="submit" class="ad-btn-primary justify-center">进入</button>
     </form>
+    )}
   </div>
 </AdminLayout>
 
