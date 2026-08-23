@@ -19,6 +19,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
      带 backdrop-filter 的玻璃卡被拍成过渡快照会渲染成一块模糊空板（「神秘小方块」）。
      换页动效照搬 YYsuni：瞬时切换，本卡随 panel-enter 弹入。 -->
 <aside
+  data-sidebar
   class="glass box-border flex w-[280px] flex-col items-start gap-[26px] rounded-[36px] p-[24px]"
 >
   <!-- Brand -->
@@ -76,6 +77,12 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
       data-nav-glow
       aria-hidden="true"
       class="pointer-events-none absolute left-0 w-full rounded-[26px] bg-card opacity-0 outline-1 -outline-offset-[0.5px] outline-card-border"></span>
+    <!-- 激活胶囊（换页果冻滑动）：脚本接管后条目自己的 glass-solid 摘掉，
+         高亮由这颗从上一页的位置弹簧滑过来；无 JS 时条目类名兜底 -->
+    <span
+      data-nav-active
+      aria-hidden="true"
+      class="glass-solid pointer-events-none absolute left-0 w-full rounded-[26px] opacity-0"></span>
     {
       nav.map((item) => (
         <NavItem
@@ -136,6 +143,9 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
   <script>
   import { email } from '~/config'
 
+  // 激活胶囊的上一页位置 —— 模块级跨页存活，换页滑动全靠它记路
+  let lastNavActive: { top: number; height: number } | null = null
+
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
       // 邮件钮 = 复制邮箱：成功换对勾 1.6s；剪贴板不可用退回 mailto
@@ -165,6 +175,35 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
         const glow = navEl.querySelector<HTMLElement>('[data-nav-glow]')
         const items = [...navEl.querySelectorAll<HTMLElement>('a')]
         if (!glow || items.length === 0) continue
+
+        // 激活胶囊的果冻滑动：底盘跨页连续（data-enter-static）且记着上一页的
+        // 位置时，先无过渡落在旧位置、下一帧弹簧滑到新激活项 —— YYsuni 的
+        // layoutId 手感；首载或底盘刚现身就直接落位
+        const activePill = navEl.querySelector<HTMLElement>('[data-nav-active]')
+        const activeItem = navEl.querySelector<HTMLElement>('a[aria-current="page"]')
+        if (activePill && activeItem && navEl.offsetWidth > 0) {
+          activeItem.classList.remove('glass-solid') // 高亮交给胶囊，别双份
+          const place = (p: { top: number; height: number }) => {
+            activePill.style.top = `${p.top}px`
+            activePill.style.height = `${p.height}px`
+            activePill.style.opacity = '1'
+          }
+          const target = { top: activeItem.offsetTop, height: activeItem.offsetHeight }
+          const continuous = navEl.closest('[data-sidebar]')?.hasAttribute('data-enter-static')
+          if (continuous && lastNavActive && lastNavActive.top !== target.top) {
+            activePill.style.transition = 'none'
+            place(lastNavActive)
+            void activePill.offsetWidth // 先在旧位置落定，再恢复过渡滑过去
+            activePill.style.transition = ''
+            requestAnimationFrame(() => place(target))
+          } else {
+            activePill.style.transition = 'none'
+            place(target)
+            void activePill.offsetWidth
+            activePill.style.transition = ''
+          }
+          lastNavActive = target
+        }
 
         const moveTo = (item: HTMLElement) => {
           glow.style.top = `${item.offsetTop}px`

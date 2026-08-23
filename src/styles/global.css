@@ -448,6 +448,16 @@
     animation-delay: calc(var(--enter-i, 0) * 100ms);
   }
 
+  /* 导航底盘（侧栏 / 紧凑图标条）的跨页静止：上一页已可见的底盘这一页不重播
+     入场 —— YYsuni 的导航是常驻组件，重播会闪一下。标记由 BaseLayout 在换页
+     swap 后按「上一页是否可见」打上；上一页没有的（如首页→内页的图标条）
+     不打标，照常弹入 —— 这正是他首页切内页时导航条的现身动效。
+     选择器用 :is 顶到 (0,2,0) 和上面的 .glass:not(.fixed) 同级，靠书写在后取胜。 */
+  [data-enter-static]:is(.glass, .glass-row, .glass-panel),
+  [data-enter-static] :is(.glass, .glass-row, .glass-panel) {
+    animation: none;
+  }
+
   /* 可点击的玻璃卡：hover 上浮 + 阴影加深，按下回弹（whileTap scale 0.95 的收敛版）。
      transition 是整条覆盖不是合并，所以这里要把入场用的 opacity 一并带上。 */
   :is(a, button, [role='button']):is(.glass, .glass-row, .glass-panel) {
@@ -627,6 +637,15 @@
       opacity 0.2s ease;
   }
 
+  /* 侧栏导航的激活胶囊：换页时从上一页的位置弹簧滑到新激活项（果冻感）。
+     位置由 Sidebar 脚本摆；无 JS 时条目自带的 glass-solid 兜底 */
+  [data-nav-active] {
+    transition:
+      top 0.4s var(--spring),
+      height 0.4s var(--spring),
+      opacity 0.25s ease;
+  }
+
   /* 紧凑图标条的跟手胶囊（照搬 YYsuni nav-card：spring 跟随 hover 的那颗，
      位置由 NavBar 脚本写；离手 1.5s 后弹回当前激活项） */
   [data-nav-pill] {
@@ -800,8 +819,12 @@ html.theme-vt .skeleton::after {
 
 /* 歌词卡拉OK —— 已唱部分品牌色、未唱部分浅墨，分界由 --sung 从左向右推。
    渐变挂在贴文本宽的内层（data-np-text）：挂 w-full 的整行容器时
-   背景按容器宽映射，文字没占满一行的话分界线会跑得比人声快。 */
+   背景按容器宽映射，文字没占满一行的话分界线会跑得比人声快。
+   字族前插歌词专用子集（subset-cjk 产出的惰性 face）：歌词用字杂，主 500
+   子集覆盖不了；family 只在这条唱歌态规则里出现 → 唱起来浏览器才下载它，
+   首访零成本。构建机上没有歌词（CI）时这个 family 不存在，落到 --font-body */
 [data-np-text][data-karaoke] {
+  font-family: 'Noto Sans SC Lyrics', var(--font-body);
   background-image: linear-gradient(
     90deg,
     var(--brand-ink) var(--sung, 0%),

@@ -96,6 +96,11 @@ const pathname = Astro.url.pathname
   // 跟手胶囊（照搬 YYsuni nav-card）：mouseenter 就位，1.5s 后弹回激活项 ——
   // 连「悬停不动 1.5s 也会先弹回去」的小脾气都和他一致（他的 effect 就这么写的）。
   // 弹簧在 CSS（global.css 的 [data-nav-pill] transition + --spring）。
+
+  // 激活项的上一页位置 —— 模块级跨页存活：底盘连续时（data-enter-static，
+  // 上一页也可见），新页的胶囊从旧位置弹簧滑到新激活项（YYsuni layoutId 手感）
+  let lastActive: { left: number; top: number; width: number; height: number } | null = null
+
   document.addEventListener('astro:page-load', () => {
     for (const bar of document.querySelectorAll<HTMLElement>('[data-navbar]')) {
       const pill = bar.querySelector<HTMLElement>('[data-nav-pill]')
@@ -120,7 +125,29 @@ const pathname = Astro.url.pathname
 
       // classic 模式下条是 display:none（量不到尺寸），跳过初始落位，
       // 切到紧凑后第一次 hover 会以 instant 落位补上
-      if (bar.offsetWidth > 0 && activeEl) moveTo(activeEl, true)
+      if (bar.offsetWidth > 0 && activeEl) {
+        const target = {
+          left: activeEl.offsetLeft,
+          top: activeEl.offsetTop,
+          width: activeEl.offsetWidth,
+          height: activeEl.offsetHeight,
+        }
+        if (lastActive && bar.hasAttribute('data-enter-static') && lastActive.left !== target.left) {
+          // 换页果冻：先无过渡落在上一页的激活位，下一帧弹簧滑到新激活项
+          pill.style.transition = 'none'
+          pill.style.left = `${lastActive.left}px`
+          pill.style.top = `${lastActive.top}px`
+          pill.style.width = `${lastActive.width}px`
+          pill.style.height = `${lastActive.height}px`
+          pill.style.opacity = '1'
+          void pill.offsetWidth
+          pill.style.transition = ''
+          requestAnimationFrame(() => moveTo(activeEl))
+        } else {
+          moveTo(activeEl, true)
+        }
+        lastActive = target
+      }
 
       for (const t of targets) {
         t.addEventListener('mouseenter', () => {

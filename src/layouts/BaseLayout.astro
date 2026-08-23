@@ -3,13 +3,17 @@ import { ClientRouter } from 'astro:transitions'
 import ScrollTopButton from '~/components/ScrollTopButton.astro'
 import TabBar from '~/components/mobile/TabBar.astro'
 import { site } from '~/config'
+import { themeCss } from '~/utils/theme'
 import '~/styles/global.css'
-// 首屏关键字体 preload：正文中文 400 子集 + 正文拉丁 400 + 标题 Averia。
-// 不预载就要等 CSS 解析后才发现字体 → 文字先按后备字体闪一下再换（FOUT）。
+// 首屏关键字体 preload：正文中文 400 子集 + 标题/界面中文 500 瘦身子集
+// + 正文拉丁 400 + 标题 Averia。不预载就要等 CSS 解析后才发现字体 →
+// 文字先按后备字体闪一下再换（FOUT）。500 被 subset-cjk 裁到只剩界面与
+// 标题字符，预载的代价很小。
 // ?url 让 Vite 给出带哈希的产物地址，和 fonts.css 里引用的是同一份文件。
 import averiaWoff2 from '@fontsource/averia-gruesa-libre/files/averia-gruesa-libre-latin-400-normal.woff2?url'
 import notoLatinWoff2 from '@fontsource/noto-sans-sc/files/noto-sans-sc-latin-400-normal.woff2?url'
 import notoCjkWoff2 from '../generated/fonts/noto-sans-sc-cjk-400.woff2?url'
+import notoCjk500Woff2 from '../generated/fonts/noto-sans-sc-cjk-500.woff2?url'
 
 interface Props {
   title: string
@@ -40,6 +44,9 @@ const {
 } = Astro.props
 const fullTitle = title === site.title ? title : `${title} · ${site.title}`
 
+// 管理台「主题」页配的颜色覆盖（src/data/theme.json）；没配就一个字节不输出
+const customTheme = themeCss()
+
 const base = Astro.site ?? Astro.url
 const canonical = new URL(Astro.url.pathname, base).href
 const ogImage = new URL(`/og/${ogSlug}.png`, base).href
@@ -52,6 +59,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="preload" href={notoCjkWoff2} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={notoCjk500Woff2} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={notoLatinWoff2} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={averiaWoff2} as="font" type="font/woff2" crossorigin />
     <title>{fullTitle}</title>
@@ -63,6 +71,7 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <link rel="canonical" href={canonical} />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+    {customTheme && <style set:html={customTheme} />}
 
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={fullTitle} />
@@ -145,12 +154,186 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
          封顶 8 —— 再靠后的卡在首屏外，等滚到时早轮到了，不让它干等一秒多。 -->
     <script is:inline>
       ;(() => {
+        // 导航底盘（侧栏 / 紧凑图标条）的跨页三态（照搬 YYsuni）：
+        //  1) 同款上一页已可见 → data-enter-static 静止，不重播入场（重播就是那下闪）
+        //  2) 形态互换（紧凑模式 首页侧栏 ↔ 内页图标条）→ 变形飞行（下面 morph）
+        //  3) 上一页没有且无从变形 → 照常错峰弹入
+        const SIDEBAR = '[data-sidebar]'
+        const NAVBAR = '[data-navbar]'
+        const visible = (el) => (el.checkVisibility ? el.checkVisibility() : true)
+        const find = (sel) => [...document.querySelectorAll(sel)].find(visible)
+        // 变形时唯一单独飞的零件：头像（两形态共有、几乎同尺寸的圆，当「同一张卡」
+        // 的身份锚点）。图标不飞 —— 八颗图标各自弹簧散飞被用户评为「搞笑」；
+        // Material 容器变换的定式就是容器变形 + 内容整层交叉淡化，零件越少越体面
+        const parts = (root) => {
+          const img = root.querySelector('img')
+          return img ? { '@avatar': img.getBoundingClientRect() } : {}
+        }
+        let had = {}
+        document.addEventListener('astro:before-swap', () => {
+          had = {}
+          for (const sel of [SIDEBAR, NAVBAR]) {
+            const el = find(sel)
+            if (!el) continue
+            const clone = el.cloneNode(true)
+            for (const s of clone.querySelectorAll('script')) s.remove()
+            had[sel] = {
+              rect: el.getBoundingClientRect(),
+              radius: getComputedStyle(el).borderRadius,
+              parts: parts(el),
+              clone,
+            }
+          }
+        })
+
+        // 形态互换的变形（Material「容器变换」定式的收敛版）：代理玻璃卡真实过渡
+        // left/top/width/height/圆角 —— 两形态左上角几乎重合，观感就是卡片原地
+        // 折叠/展开 —— 新旧内容整层交叉淡化，只有头像单独滑到新位。
+        // 两轮教训：transform scale 非等比 = 哈哈镜；八颗图标弹簧散飞 = 搞笑。
+        // 全程一条无回弹缓出曲线（回弹在 700→52 的高度上会穿负塌线，也显闹）。
+        const morph = (el, from) => {
+          el.toggleAttribute('data-enter-static', true) // 变形代替默认弹入（先打标再测量，backwards 填充的入场缩放会污染 rect）
+          const to = el.getBoundingClientRect()
+          if (!to.width || !from.rect.width) return
+          const toRadius = getComputedStyle(el).borderRadius
+          const toParts = parts(el)
+          const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
+
+          const proxy = document.createElement('div')
+          proxy.className = 'glass'
+          proxy.toggleAttribute('data-enter-static', true) // 代理卡自己别播 panel-enter
+          Object.assign(proxy.style, {
+            position: 'fixed',
+            zIndex: '60',
+            margin: '0',
+            pointerEvents: 'none',
+            overflow: 'clip',
+            boxSizing: 'border-box',
+            left: `${from.rect.left}px`,
+            top: `${from.rect.top}px`,
+            width: `${from.rect.width}px`,
+            height: `${from.rect.height}px`,
+            borderRadius: from.radius,
+            transition: 'none',
+          })
+
+          // 新旧内容各铺一层：尺寸钉死在各自形态的原始大小，只被盒子裁切，
+          // 不跟着挤压重排（他的内容靠 motion 重排归位，我们用飞行零件补这口感）
+          const layer = (clone, rect) => {
+            clone.classList.remove('glass') // 卡皮由代理画，内容层只留排版
+            for (const s of clone.querySelectorAll('script')) s.remove()
+            // 剥掉全部 data-*：站内脚本全按 data 属性找元素（astro:page-load 在变形
+            // 中途才跑），不剥的话 NavBar/Sidebar 脚本会把克隆当真身初始化 ——
+            // 实测胶囊被提前点亮在终点。视觉全靠 class + 内联样式，剥了不掉妆
+            for (const n of [clone, ...clone.querySelectorAll('*')])
+              for (const a of [...n.attributes])
+                if (a.name.startsWith('data-')) n.removeAttribute(a.name)
+            Object.assign(clone.style, {
+              position: 'absolute',
+              left: '0',
+              top: '0',
+              margin: '0',
+              width: `${rect.width}px`,
+              height: `${rect.height}px`,
+              animation: 'none',
+              transition: 'none',
+            })
+            return clone
+          }
+          const shared = Object.keys(from.parts).filter((k) => k in toParts)
+          const pick = (root, k) =>
+            k === '@avatar' ? root.querySelector('img') : root.querySelector(`a[href="${k}"] svg`)
+          const hideShared = (root) => {
+            for (const k of shared) {
+              const n = pick(root, k)
+              if (n) n.style.visibility = 'hidden' // 正体藏起来，位置由飞行替身占
+            }
+          }
+          const oldLayer = layer(from.clone, from.rect)
+          const newLayer = layer(el.cloneNode(true), to)
+          newLayer.style.opacity = '0'
+          hideShared(oldLayer)
+          hideShared(newLayer)
+          proxy.append(oldLayer, newLayer)
+
+          // 飞行零件：用终点形态的节点当替身（落地即无缝接上正身），起终点都换算成
+          // 代理盒内坐标 —— 盒子和零件同曲线，叠加后的视觉轨迹仍是同一条弹簧
+          const flyers = shared.map((k) => {
+            const src = pick(el, k)
+            const start = from.parts[k]
+            const end = toParts[k]
+            const holder = document.createElement('span')
+            const node = src.cloneNode(true)
+            Object.assign(node.style, { width: '100%', height: '100%', display: 'block' })
+            if (k !== '@avatar') holder.style.color = getComputedStyle(src.closest('a')).color
+            Object.assign(holder.style, {
+              position: 'absolute',
+              left: `${start.left - from.rect.left}px`,
+              top: `${start.top - from.rect.top}px`,
+              width: `${start.width}px`,
+              height: `${start.height}px`,
+              transition: 'none',
+            })
+            holder.append(node)
+            proxy.append(holder)
+            return { holder, end }
+          })
+
+          document.body.append(proxy)
+          el.style.visibility = 'hidden' // 正身让位但保住布局，变形完再现身
+          void proxy.offsetWidth // 起点落定，再放开过渡
+          proxy.style.transition = `left 0.45s ${EASE}, top 0.45s ${EASE}, width 0.45s ${EASE}, height 0.45s ${EASE}, border-radius 0.45s ${EASE}`
+          Object.assign(proxy.style, {
+            left: `${to.left}px`,
+            top: `${to.top}px`,
+            width: `${to.width}px`,
+            height: `${to.height}px`,
+            borderRadius: toRadius,
+          })
+          // 交叉淡化收紧：旧层速退、新层小重叠跟进，中途不出现空玻璃也不双重曝光
+          oldLayer.style.transition = 'opacity 0.14s ease'
+          oldLayer.style.opacity = '0'
+          newLayer.style.transition = 'opacity 0.22s ease 0.06s'
+          newLayer.style.opacity = '1'
+          for (const { holder, end } of flyers) {
+            holder.style.transition = `left 0.45s ${EASE}, top 0.45s ${EASE}, width 0.45s ${EASE}, height 0.45s ${EASE}`
+            Object.assign(holder.style, {
+              left: `${end.left - to.left}px`,
+              top: `${end.top - to.top}px`,
+              width: `${end.width}px`,
+              height: `${end.height}px`,
+            })
+          }
+          setTimeout(() => {
+            el.style.visibility = ''
+            proxy.remove()
+          }, 470)
+        }
+
         const stagger = () => {
+          // 先把布局模式补回来再量可见性：这个监听比主题脚本注册得早，换页后
+          // 先跑到 —— 那一刻新文档还是初始 classic，紧凑用户的图标条 display:none，
+          // 变形和编号都会量错对象
+          try {
+            document.documentElement.dataset.layout = localStorage.getItem('layout') ?? 'classic'
+          } catch {}
+          for (const sel of [SIDEBAR, NAVBAR]) {
+            if (!had[sel]) continue
+            for (const el of document.querySelectorAll(sel)) el.toggleAttribute('data-enter-static', true)
+          }
+          if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            const nowSidebar = find(SIDEBAR)
+            const nowNavbar = find(NAVBAR)
+            if (nowNavbar && !had[NAVBAR] && had[SIDEBAR] && !nowSidebar) morph(nowNavbar, had[SIDEBAR])
+            else if (nowSidebar && !had[SIDEBAR] && had[NAVBAR] && !nowNavbar) morph(nowSidebar, had[NAVBAR])
+          }
           // 只给「当前可见」的卡编号 —— 双布局模式下另一形态的条/栏都在 DOM 里
           // （display:none），不滤掉的话可见卡的序号被白白推高，页面要空等几百毫秒。
+          // 静止/变形中的底盘不占序号 —— 内容卡的错峰从 0 起跳。
           // 序号按屏上位置（上→下、左→右）排 —— YYsuni 手工 order 的自动版
           const cards = []
           for (const el of document.querySelectorAll('.glass, .glass-row, .glass-panel')) {
+            if (el.closest('[data-enter-static]')) continue
             if (el.checkVisibility ? el.checkVisibility() : true) {
               const r = el.getBoundingClientRect()
               cards.push({ el, top: r.top, left: r.left })
