@@ -50,6 +50,14 @@ RestartSec=3
 WantedBy=multi-user.target
 UNIT
 
+echo "==> SSH 加固 + 防火墙（幂等；前提是本机密钥已能免密登录，否则会把自己锁外面）"
+ssh "$HOST" 'set -e
+  printf "PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin prohibit-password\n" > /etc/ssh/sshd_config.d/99-hardening.conf
+  sshd -t && systemctl restart ssh
+  ufw allow 22/tcp >/dev/null 2>&1 || true
+  ufw allow 80/tcp >/dev/null 2>&1 || true
+  ufw --force enable >/dev/null'
+
 echo "==> 首次内容部署（构建 + 传站 + 起服务 + 体检）"
 bash scripts/deploy.sh
 
