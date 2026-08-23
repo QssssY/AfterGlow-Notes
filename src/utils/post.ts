@@ -26,9 +26,24 @@ export function postStats(body: string) {
 }
 
 /** 设计稿 Uptime Card 的写法：1,024 */
+/**
+ * 日历天数差：跨过几个午夜就是几天（8/21 → 8/24 = 3），按运行环境本地时区起算。
+ * 旧口径 floor((now-since)/24h) 是「满 24 小时才算一天」—— 起点钉在 UTC 零点时，
+ * 北京用户每天要等到早上 8 点数字才 +1，被用户点名「都第三天了还显示 2」。
+ * 服务端渲染的数字只是无 JS 兜底，客户端 uptime.ts 会按访客时区实时重算覆盖。
+ */
+export function calendarDaysSince(since: Date) {
+  const mid = (t: Date | number) => {
+    const d = new Date(t)
+    d.setHours(0, 0, 0, 0)
+    return d.getTime()
+  }
+  // round 不用 floor：夏令时会让个别「一天」差一小时，四舍五入抹平
+  return Math.round((mid(new Date()) - mid(since)) / 86_400_000)
+}
+
 export function daysSince(since: Date) {
-  const days = Math.floor((Date.now() - since.getTime()) / 86_400_000)
-  return days.toLocaleString('en-US')
+  return calendarDaysSince(since).toLocaleString('en-US')
 }
 
 /**

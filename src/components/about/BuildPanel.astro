@@ -2,7 +2,7 @@
 import Panel from '~/components/Panel.astro'
 import { build, uptime } from '~/config'
 import { buildInfo } from '~/utils/build'
-import { daysSince } from '~/utils/post'
+import { calendarDaysSince } from '~/utils/post'
 
 /**
  * 构建 BUILD · blog.pen About 关于网站 / Left Column（x7QTJQ）
@@ -46,8 +46,8 @@ const since = `${uptime.since.getFullYear()} 年 ${uptime.since.getMonth() + 1} 
   <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
 
   <span class="w-full text-[11.5px]/[1.55] font-normal text-ink-muted">
-    {/* 还没部署上线，说「动工」才是真话；uptime.since = 仓库首次提交 */}
-    自 {since}动工，第 <span data-uptime-days={uptime.since.getTime()}>{daysSince(uptime.since)}</span> 天。
+    {/* 「第 N 天」是序数口径：动工当天就是第 1 天，所以日历差 +1（data-uptime-ordinal） */}
+    自 {since}动工，第 <span data-uptime-days={uptime.since.getTime()} data-uptime-ordinal>{calendarDaysSince(uptime.since) + 1}</span> 天。
   </span>
 </Panel>
 
