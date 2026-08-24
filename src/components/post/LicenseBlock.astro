@@ -31,22 +31,27 @@ const shares = [
 ]
 ---
 
-<!-- License Block · blog.pen Post 文章详情 -->
-<div class="glass-panel box-border flex h-fit w-full shrink-0 flex-row items-center gap-[16px] rounded-[22px] px-[18px] py-[16px]">
-  <span class="flex size-[40px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
-    <Icon name="lucide:creative-commons" class="size-[19px] shrink-0 text-brand-ink" />
-  </span>
+<!-- License Block · blog.pen Post 文章详情
+     响应式：窄屏（<sm）分享钮换到第二行右对齐 —— 三颗钮加图标占掉 200px 后，
+     留给 URL 的只剩 80px，break-all 会把它折成五行；让 URL 吃满整行才体面。
+     ≥sm 与设计稿完全一致（徽标 + 文字 + 钮 一行 gap16） -->
+<div class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-stretch gap-[12px] rounded-[22px] px-[18px] py-[16px] sm:flex-row sm:items-center sm:gap-[16px]">
+  <span class="flex h-fit min-w-0 flex-1 flex-row items-center gap-[16px]">
+    <span class="flex size-[40px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
+      <Icon name="lucide:creative-commons" class="size-[19px] shrink-0 text-brand-ink" />
+    </span>
 
-  {/* min-w-0：没有它这列拒绝收窄到 URL 的固有宽度以下，窄屏会把右侧按钮顶穿卡片；
-      URL 里没有可断点，配 break-all 让它能在任意字符处换行 */}
-  <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[4px]">
-    <span class="text-[13.5px] font-bold whitespace-nowrap text-ink">本文采用 CC BY-NC 4.0 授权</span>
-    <span class="w-full text-[12.5px] font-normal break-all text-ink-soft">
-      转载请注明出处 · {permalink}{stamp}
+    {/* min-w-0：没有它这列拒绝收窄到 URL 的固有宽度以下，窄屏会把右侧按钮顶穿卡片；
+        URL 里没有可断点，配 break-all 让它能在任意字符处换行 */}
+    <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[4px]">
+      <span class="text-[13.5px] font-bold whitespace-nowrap text-ink">本文采用 CC BY-NC 4.0 授权</span>
+      <span class="w-full text-[12.5px] font-normal break-all text-ink-soft">
+        转载请注明出处 · {permalink}{stamp}
+      </span>
     </span>
   </span>
 
-  <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px]">
+  <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] self-end sm:self-auto">
     {
       shares.map((share) => (
         <a
