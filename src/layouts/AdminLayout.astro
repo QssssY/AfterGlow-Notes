@@ -62,7 +62,12 @@ const customTheme = themeCss()
     {
       guard && (
         <script is:inline>
-          if (!localStorage.getItem('afterglow:admin:token'))
+          /* 两种后端的凭证任一即放行：Go 服务的 token（localStorage）
+             或 GitHub 直连模式的 PAT（sessionStorage，关浏览器即忘） */
+          if (
+            !localStorage.getItem('afterglow:admin:token') &&
+            !sessionStorage.getItem('afterglow:gh:token')
+          )
             location.replace('/overview/login')
         </script>
       )

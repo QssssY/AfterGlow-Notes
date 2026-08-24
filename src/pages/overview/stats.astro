@@ -56,8 +56,24 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, api, cacheGet, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
+  import { $, api, cacheGet, cachePut, esc, ghMode, report, swrAdmin, toast } from '~/scripts/admin'
   import type { LinkCheck, Stats } from '~/scripts/admin'
+
+  // GitHub 直连模式没有数据服务：统计/在线/巡检无从谈起，整页换成说明。
+  // 用 if/else 包住原逻辑（缩进保持原样），别让加载代码跑起来报错刷 toast
+  if (ghMode) {
+    const sections = [...document.querySelectorAll<HTMLElement>('main section, [data-ad-main] section')]
+    const host = (sections[0] ?? document.querySelector('section'))?.parentElement
+    for (const s of sections) s.remove()
+    const notice = document.createElement('section')
+    notice.className = 'ad-card flex flex-col gap-[10px] p-[24px]'
+    notice.innerHTML =
+      '<span class="text-[15px] font-medium text-ink">统计需要服务器形态</span>' +
+      '<p class="ad-hint">阅读曲线、此刻在线、友链巡检的数据都由 Go 数据服务收集 —— ' +
+      'GitHub 直连模式（纯静态托管）没有它。想要这些能力：README 方式 A / B 上一台小机子，' +
+      '内容零迁移；这个页面之外的管理功能（写文章、改数据、传图、配色）全部可用。</p>'
+    host?.append(notice)
+  } else {
 
   // ---- 曲线与总量（缓存回放秒出，网络校正）----
 
@@ -179,4 +195,5 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       report(err)
     }
   })
+  } // 服务器形态分支到此为止（GitHub 直连模式在文件开头整页换成了说明）
 </script>

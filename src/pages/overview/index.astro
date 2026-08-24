@@ -43,7 +43,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, api, esc, report, swrAdmin, toast } from '~/scripts/admin'
+  import { $, api, esc, ghMode, report, swrAdmin, toast } from '~/scripts/admin'
   import type { PostListItem, Summary } from '~/scripts/admin'
 
   // 渲染是幂等的整块重写：缓存回放一次、网络校正一次
@@ -72,7 +72,10 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
     if (!sum.buildCmd) {
       const btn = $<HTMLButtonElement>('[data-build]')
-      btn.title = '服务端没配 -build-cmd；本地 dev 不需要构建'
+      btn.title = ghMode
+        ? 'GitHub 直连模式不用手动构建：保存即提交，托管平台自动重建（1~3 分钟）'
+        : '服务端没配 -build-cmd；本地 dev 不需要构建'
+      if (ghMode) btn.disabled = true
     }
   }
 

@@ -11,8 +11,9 @@
 双布局模式（原版 / 紧凑）· Pagefind 全文搜索 · 跨页不断的音乐播放器（歌词跟随 · 顺序 / 随机 / 单曲循环）·
 RSS / Sitemap / 每页自动生成 OG 图 · 中文字体子集化（每字重 1.1MB → 约 170KB）
 
-**站长用到的**：网页管理台（写文章、改站点数据、传图传歌、看统计曲线、友链巡检、远程触发构建）·
-点赞 / 阅读 / 在线人数（匿名聚合，不存 IP / UA，细节见 `server/main.go` 顶部注释）·
+**站长用到的**：网页管理台（写文章、改站点数据、传图传歌、看统计曲线、友链巡检、远程触发构建）——
+**双后端**：有服务器走 Go 服务，纯静态托管走 **GitHub 直连模式**（细粒度令牌登录，保存即提交、
+平台自动重建）· 点赞 / 阅读 / 在线人数（匿名聚合，不存 IP / UA，细节见 `server/main.go` 顶部注释）·
 GitHub 星数代理（全站共享缓存）· 所有内容改动落成仓库文件，**git 是唯一事实源**
 
 ## 界面预览
@@ -111,8 +112,10 @@ AFTERGLOW_HOST=root@你的服务器IP bash scripts/deploy.sh         # 日常发
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FQssssY%2FAfterGlow-Notes)
 
 📖 **零基础保姆级教程（一键部署 → 改成你的博客 → 网页上写文章，附四段复制即用的
-AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)** —— 没有服务器就没有管理台，
-但 **GitHub 网页就是你的管理台**：改文件提交，平台自动重建上线，教程手把手教。
+AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)** —— 没有服务器**也有管理台**：
+`/overview` 走 GitHub 直连模式（粘贴细粒度令牌登录，保存 = 提交 = 平台自动重建，
+思路致敬 [YYsuni 的 /write](https://github.com/YYsuni/2025-blog-public)）；
+不想用管理台，GitHub 网页改文件提交同样生效，教程手把手教。
 
 - **Vercel**：点上面的按钮 → 登录 → Create，一分钟出站。建议在项目 Settings →
   Environment Variables 加 `PUBLIC_SITE_URL=https://你的地址`，RSS / Sitemap / OG 的

@@ -5,16 +5,24 @@
  * 「在自己电脑上对着本地服务用」的工具，这个默认值让 pnpm dev 免配置可用。
  */
 import { apiBase } from '~/config'
+import { ghClearAuth, ghRepo, ghRoute, ghSiteAssetUrl, ghToken } from './gh-cms'
 
-// null = 没配 → 本机默认端口；'' = 同源部署（PUBLIC_API_BASE=/）→ 相对路径
-export const API = apiBase ?? 'http://127.0.0.1:8787'
+/**
+ * 双后端：配了 PUBLIC_API_BASE 走 Go 数据服务（'' = 同源）；
+ * 没配 = GitHub 直连模式 —— 管理台读写全走 GitHub contents API，
+ * 保存即提交、托管平台自动重建（无服务器的 fork 也有完整管理台）。
+ * 本地想连 Go 就在 .env 里设 PUBLIC_API_BASE=http://127.0.0.1:8787（.env.example 有）。
+ */
+export const ghMode = apiBase === null
+export const API = apiBase ?? ''
 
 const TOKEN_KEY = 'afterglow:admin:token'
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY)
+export const getToken = () => (ghMode ? ghToken() : localStorage.getItem(TOKEN_KEY))
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t)
 export const clearToken = () => {
-  localStorage.removeItem(TOKEN_KEY)
+  if (ghMode) ghClearAuth()
+  else localStorage.removeItem(TOKEN_KEY)
   // 登出（含 401 被踢）连缓存的后台数据一起清 —— 别把管理数据留给下一个用这台浏览器的人
   try {
     for (const k of Object.keys(sessionStorage)) {
@@ -71,11 +79,13 @@ export async function swrAdmin<T>(
   apply(fresh)
 }
 
-/** 带 token 的请求；401 一律送回登录页。body 传对象自动 JSON 化，传 FormData 原样发 */
+/** 带 token 的请求；401 一律送回登录页。body 传对象自动 JSON 化，传 FormData 原样发。
+ *  GitHub 直连模式下不发 HTTP 给自己人，整个转给 gh-cms 的合同复刻层 */
 export async function api<T>(
   path: string,
   init: { method?: string; body?: unknown } = {},
 ): Promise<T> {
+  if (ghMode) return ghRoute<T>(path, init)
   const headers: Record<string, string> = { Authorization: `Bearer ${getToken() ?? ''}` }
   let body: BodyInit | undefined
   if (init.body instanceof FormData) {
@@ -100,6 +110,23 @@ export async function api<T>(
   if (!res.ok) throw new Error(data?.error ?? `请求失败（HTTP ${res.status}）`)
   return data as T
 }
+
+/** 站点图预览地址（blob URL）：服务器模式走资产端点，GitHub 模式直读仓库 */
+export async function siteAssetUrl(name: string): Promise<string | null> {
+  if (ghMode) return ghSiteAssetUrl(name)
+  try {
+    const res = await fetch(`${API}/api/overview/asset/site/${name}`, {
+      headers: { Authorization: `Bearer ${getToken() ?? ''}` },
+    })
+    if (!res.ok) return null
+    return URL.createObjectURL(await res.blob())
+  } catch {
+    return null
+  }
+}
+
+/** GitHub 模式登录后显示身份用（登录页存的 owner/repo） */
+export const ghRepoName = ghRepo
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 export function toast(msg: string, ok = true) {

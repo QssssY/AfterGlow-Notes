@@ -38,7 +38,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, API, api, esc, getToken, report, toast, today } from '~/scripts/admin'
+  import { $, api, esc, ghMode, report, siteAssetUrl, toast, today } from '~/scripts/admin'
   import { copyText } from '~/scripts/clipboard'
 
   // ---- 字段规格：新增一种可编辑内容 = 这里加一段 + server/admin.go 白名单加一行 ----
@@ -475,14 +475,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         setTileImg(pic, `/favicon.svg?t=${Date.now()}`)
         continue
       }
-      try {
-        const res = await fetch(`${API}/api/overview/asset/site/${pic.dataset.pic}`, {
-          headers: { Authorization: `Bearer ${getToken() ?? ''}` },
-        })
-        if (res.ok) setTileImg(pic, URL.createObjectURL(await res.blob()))
-      } catch {
-        // 拉不到就保持加号占位
-      }
+      const url = await siteAssetUrl(pic.dataset.pic!).catch(() => null)
+      if (url) setTileImg(pic, url)
     }
   }
 
@@ -723,6 +717,13 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   load('site').catch(report)
 
   // ---- 音乐上传 ----
+
+  if (ghMode) {
+    // GitHub 直连模式不收音乐：版权物不该进公开仓库，上传按钮换成说明
+    $('[data-upload-box]').querySelector('p')!.textContent =
+      'GitHub 直连模式不提供音乐上传：版权物不该进公开仓库。歌单清空后播放卡会自动隐藏；想托管音乐需要服务器形态（README 方式 A/B）。'
+    $('[data-upload-pick]').hidden = true
+  }
 
   const upFile = $<HTMLInputElement>('[data-upload-file]')
   const upPath = $('[data-upload-path]')
