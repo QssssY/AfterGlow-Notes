@@ -42,20 +42,11 @@ RSS / Sitemap / 每页自动生成 OG 图 · 中文字体子集化（每字重 1
 
 | | 需要什么 | 得到什么 |
 |---|---|---|
-| **方式 C · 零服务器** | 一个 GitHub 账号 | 完整博客 + 管理台（GitHub 直连）；点赞仅存访客本机，阅读数 / 在线不渲染 |
 | **方式 A · 前端平台 + API 小机子** | 低配 VPS + 域名 | 全部功能；页面走平台 CDN，服务器只出 JSON 和音乐 |
 | **方式 B · 单机整站** | 低配 VPS（可无域名） | 全部功能；一个进程托管一切，纯 IP 也能跑 |
+| **方式 C · 零服务器** | 一个 GitHub 账号 | 完整博客 + 管理台（GitHub 直连）；点赞仅存访客本机，阅读数 / 在线不渲染 |
 
-### 方式 C：零服务器，一键免费托管
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FQssssY%2FAfterGlow-Notes)
-
-什么环境变量都不用配，构建出来就是纯静态形态。管理台照样有：`/overview` 走
-GitHub 直连模式 —— 粘贴一个细粒度令牌，写文章 / 改数据 / 传图 / 调配色都在网页里，
-保存 = git 提交 = 平台自动重建（思路致敬 [YYsuni 的 /write](https://github.com/YYsuni/2025-blog-public)）。
-
-📖 **从注册到发出第一篇文章的保姆级教程（Vercel / CF Pages / GitHub Pages 三选一，
-附复制即用的 AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)**
+> 只想白嫖、不碰服务器 → 直接看**方式 C**（附保姆级教程）；手上有小机子再看 A / B。
 
 ### 方式 A：前端交给平台，API 放小机子
 
@@ -77,6 +68,17 @@ AFTERGLOW_HOST=root@服务器IP bash scripts/deploy.sh         # 日常：构建
 
 本仓库自己的发布走 CI：push → GitHub Actions 构建发 Release → 服务器定时自取
 （[.github/workflows/deploy.yml](.github/workflows/deploy.yml) 顶部有这么设计的原因）。
+
+### 方式 C：零服务器，一键免费托管
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FQssssY%2FAfterGlow-Notes)
+
+什么环境变量都不用配，构建出来就是纯静态形态。管理台照样有：`/overview` 走
+GitHub 直连模式 —— 粘贴一个细粒度令牌，写文章 / 改数据 / 传图 / 调配色都在网页里，
+保存 = git 提交 = 平台自动重建（思路致敬 [YYsuni 的 /write](https://github.com/YYsuni/2025-blog-public)）。
+
+📖 **从注册到发出第一篇文章的保姆级教程（Vercel / CF Pages / GitHub Pages 三选一，
+附复制即用的 AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)**
 
 ## 本地跑起来
 
