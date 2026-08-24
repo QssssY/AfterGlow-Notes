@@ -31,7 +31,11 @@
 | :-------------------------------------------------: | :---------------------------------------------: |
 | ![紧凑布局](docs/screenshots/compact-archive.webp) | ![文章页 · 深色](docs/screenshots/post-dark.webp) |
 
-<img src="docs/screenshots/mobile-home.webp" alt="移动端首页" width="300">
+移动端（底部 TabBar · 单列流 · 文章页目录）：
+
+|                    首页                    |                     文章列表                     |                    文章页                    |
+| :----------------------------------------: | :----------------------------------------------: | :------------------------------------------: |
+| ![移动端首页](docs/screenshots/mobile-home.webp) | ![移动端文章列表](docs/screenshots/mobile-archive.webp) | ![移动端文章页](docs/screenshots/mobile-post.webp) |
 
 > 桌面统一 1600 × 900 视口、移动端 420 × 880 截取。明暗主题与双布局都能在侧栏一键切换，换页零白屏。
 
