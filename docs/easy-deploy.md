@@ -6,7 +6,7 @@
 
 ## 第 1 步 · 一键部署（三选一）
 
-### 方案一：Vercel（最傻瓜，约 2 分钟）
+### 方案一：Vercel（最简单，约 2 分钟）
 
 1. 点仓库 README 里的 **Deploy with Vercel** 按钮（或直接打开
    <https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FQssssY%2FAfterGlow-Notes>）
