@@ -71,8 +71,10 @@ const hotPool = posts.map((post) => ({
     </div>
 
     {/* 三栏底边一条线：行高由左栏（Sidebar+Uptime ≈ 788）定，
-        中、右两栏 self-stretch 拉到同高，差值分别由画卡和问候卡吸收 */}
-    <div class="flex flex-1 flex-col items-start gap-[24px] self-stretch">
+        中、右两栏 self-stretch 拉到同高，差值分别由画卡和问候卡吸收。
+        min-w-0 必须有：中栏卡片（在用/大家在看）的 min-content 不然会顶住 flex-1，
+        1280 宽下把右栏整个推出视口 */}
+    <div class="flex min-w-0 flex-1 flex-col items-start gap-[24px] self-stretch">
       <ArtCard src={artBg} alt="三国演义 —— 大笑名场面" grow />
       <NowCard />
       {/* 原「常写的标签」换成阅读榜（用户点名标签计数没意义），数据是 Go 后端真实聚合 */}

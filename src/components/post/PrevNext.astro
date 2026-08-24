@@ -14,38 +14,40 @@ interface Props {
 const { prev, next } = Astro.props
 ---
 
-<!-- Prev Next · blog.pen Post 文章详情 -->
+<!-- Prev Next · blog.pen Post 文章详情
+     响应式：标题 nowrap 会把卡撑到视口外（360 宽下第二张卡几乎整张在屏外），
+     窄屏（<sm）上下堆叠、≥sm 并排，标题一律超宽省略号 —— 设计宽度下不变样 -->
 {
   (prev || next) && (
-    <div class="flex h-fit w-full shrink-0 flex-row items-start gap-[20px]">
+    <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[20px] sm:flex-row sm:items-start">
       {prev ? (
         <a
           href={prev.href}
-          class="glass box-border flex h-fit flex-1 flex-row items-center justify-start gap-[10px] rounded-[24px] px-[20px] py-[16px]"
+          class="glass box-border flex h-fit min-w-0 flex-1 flex-row items-center justify-start gap-[10px] rounded-[24px] px-[20px] py-[16px]"
         >
           <Icon name="lucide:chevron-left" class="size-[18px] shrink-0 text-ink-muted" />
-          <span class="flex h-fit w-fit shrink-0 flex-col items-start gap-[3px]">
+          <span class="flex h-fit min-w-0 flex-col items-start gap-[3px]">
             <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">上一篇</span>
-            <span class="text-[14px] font-medium whitespace-nowrap text-ink">{prev.title}</span>
+            <span class="max-w-full truncate text-[14px] font-medium text-ink">{prev.title}</span>
           </span>
         </a>
       ) : (
-        <span class="flex-1" />
+        <span class="hidden flex-1 sm:block" />
       )}
 
       {next ? (
         <a
           href={next.href}
-          class="glass box-border flex h-fit flex-1 flex-row items-center justify-end gap-[10px] rounded-[24px] px-[20px] py-[16px]"
+          class="glass box-border flex h-fit min-w-0 flex-1 flex-row items-center justify-end gap-[10px] rounded-[24px] px-[20px] py-[16px]"
         >
-          <span class="flex h-fit w-fit shrink-0 flex-col items-end gap-[3px]">
+          <span class="flex h-fit min-w-0 flex-col items-end gap-[3px]">
             <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">下一篇</span>
-            <span class="text-[14px] font-medium whitespace-nowrap text-ink">{next.title}</span>
+            <span class="max-w-full truncate text-[14px] font-medium text-ink">{next.title}</span>
           </span>
           <Icon name="lucide:chevron-right" class="size-[18px] shrink-0 text-ink-muted" />
         </a>
       ) : (
-        <span class="flex-1" />
+        <span class="hidden flex-1 sm:block" />
       )}
     </div>
   )

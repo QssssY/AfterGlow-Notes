@@ -48,8 +48,10 @@ const PAGE_SIZE = 8
           data-share-top
           class="flex h-[38px] w-full shrink-0 scroll-mt-[24px] flex-row items-center justify-between gap-[12px]"
         >
+          {/* min-w-0 才轮得到 overflow-x-auto：原先 w-fit shrink-0 盒子跟着内容长，
+              窄屏 pill 直接戳出视口而不是横滚 */}
           <div
-            class="flex h-fit w-fit shrink-0 flex-row items-center gap-[7px] overflow-x-auto xl:overflow-visible"
+            class="scrollbar-none flex h-fit min-w-0 flex-row items-center gap-[7px] overflow-x-auto xl:overflow-visible"
           >
             {shareFilters.map((label, i) => <StackPill label={label} active={i === 0} />)}
           </div>

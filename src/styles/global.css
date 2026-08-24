@@ -208,6 +208,14 @@
 }
 
 /* 细描边容器：RSS 按钮 / 分段控件外框 */
+/* 横滚容器不画滚动条（移动端 pill 筛选条这类：能滚，但不占高度不描轨道） */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @utility hairline-box {
   background-color: var(--chip);
   outline: 1px solid var(--hairline);
@@ -385,6 +393,14 @@
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--brand-ink);
+}
+
+/* 代码块标题（长文件路径）：窄屏下 expressive-code 是硬裁掉尾巴，改成省略号收尾 */
+.expressive-code figcaption .title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .article-body img {

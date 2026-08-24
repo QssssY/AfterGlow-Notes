@@ -27,8 +27,8 @@ export const site = {
   /** Banner Eyebrow 里的英文名 */
   titleEn: siteData.titleEn,
   author: siteData.author,
-  /** 作者名后的橙色小标 */
-  authorBadge: siteData.authorBadge,
+  /** 作者名后的橙色小标（管理台可空 —— 删掉键即隐藏，别让 TS 强求它存在） */
+  authorBadge: (siteData as { authorBadge?: string }).authorBadge ?? '',
   description: siteData.description,
   /** Footer 版权行的起始年份 */
   since: siteData.since,

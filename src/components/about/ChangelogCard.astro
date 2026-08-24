@@ -38,7 +38,8 @@ const { entries } = Astro.props
         />
 
         <span class="relative z-[1] flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
-          <span class="text-[15px] font-medium whitespace-nowrap text-ink">{entry.title}</span>
+          {/* 标题超宽省略号：320 宽下 nowrap 标题会把右侧日期顶出视口 */}
+          <span class="min-w-0 truncate text-[15px] font-medium text-ink">{entry.title}</span>
           {entry.badge && (
             <span class="flex h-fit w-fit shrink-0 flex-row rounded-[10px] bg-fire-tint px-[8px] py-[3px]">
               <span class="text-[10px] font-medium whitespace-nowrap text-brand-ink">
