@@ -10,8 +10,8 @@
 #   2. 服务器：systemd timer 每 5 分钟跑 /opt/afterglow/pull-deploy.sh，
 #      发现 Release 变了就下载换装 —— 链路空闲时几分钟内落地，拥塞时
 #      挂着下一轮重试，永不报错刷存在感；
-#   3. 本机：bash scripts/deploy.sh（国内线路直连，30 秒）—— 着急上线
-#      或加歌（音乐不进仓库，只有这条路能送）时用。
+#   3. 本机：AFTERGLOW_HOST=root@服务器IP bash scripts/deploy.sh（国内线路直连，
+#      30 秒）—— 着急上线或加歌（音乐不进仓库，只有这条路能送）时用。
 # 前提：仓库 Secrets 的 DEPLOY_SSH_KEY / DEPLOY_KNOWN_HOSTS 已不需要，
 #      本流程零 SSH。
 name: deploy
@@ -74,11 +74,11 @@ jobs:
           gh release delete deploy --yes --cleanup-tag 2>/dev/null || true
           gh release create deploy /tmp/dist.tgz /tmp/blog.tgz \
             --title "自动部署产物 ${SHA}" \
-            --notes "服务器 pull-deploy 定时器自取；本机秒发用 bash scripts/deploy.sh" \
+            --notes "服务器 pull-deploy 定时器自取；本机秒发用 AFTERGLOW_HOST=root@服务器IP bash scripts/deploy.sh" \
             --prerelease
           echo "✓ 产物已发布，服务器将在下一个 5 分钟窗口自取"
 
       - name: 提示部署链路
         run: |
           echo "==> 部署状态看服务器：journalctl -u afterglow-pull -n 20"
-          echo "==> 着急上线：本机 bash scripts/deploy.sh（国内线路 30 秒）"
+          echo "==> 着急上线：本机 AFTERGLOW_HOST=root@服务器IP bash scripts/deploy.sh（国内线路 30 秒）"

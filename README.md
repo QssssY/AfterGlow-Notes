@@ -91,12 +91,13 @@ Caddy 只剩一行 `你的域名 { reverse_proxy 127.0.0.1:8787 }`。
 
 没有域名也能上：服务直接 `-addr :80` 监听，浏览器用 `http://服务器IP` 访问（云厂商的
 备案拦截认域名，纯 IP 不受影响）；管理台登录建议走 SSH 隧道，口令不过明文公网。
-两个脚本把整套流程包好了（目标机器用环境变量 `AFTERGLOW_HOST` / `AFTERGLOW_URL`
-覆盖，或直接改脚本顶部默认值）：
+两个脚本把整套流程包好了。服务器连接信息不进仓库（公开仓库不写死 `root@IP`），
+跑的时候用环境变量给：`AFTERGLOW_HOST` 必填；`AFTERGLOW_URL` 可选，缺省按 HOST
+里的 IP 拼 `http://`，绑了域名再显式给：
 
 ```bash
-bash scripts/deploy-setup.sh   # 首次 / 更新服务端：交叉编译上传二进制 + 管理口令 + systemd
-bash scripts/deploy.sh         # 日常发布：构建 → 增量同步歌曲与仓库快照 → 原子换 dist → 重启 → 体检
+AFTERGLOW_HOST=root@你的服务器IP bash scripts/deploy-setup.sh   # 首次 / 更新服务端：交叉编译上传二进制 + 管理口令 + systemd
+AFTERGLOW_HOST=root@你的服务器IP bash scripts/deploy.sh         # 日常发布：构建 → 增量同步歌曲与仓库快照 → 原子换 dist → 重启 → 体检
 ```
 
 ### 方式 C：完全不要服务器（一键免费托管）

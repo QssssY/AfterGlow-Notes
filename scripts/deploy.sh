@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # 余晖录 · 日常部署（方式 B：小机子整站自托管，纯 IP 无域名）
 #
-#   bash scripts/deploy.sh
+#   AFTERGLOW_HOST=root@服务器IP bash scripts/deploy.sh
 #
 # 做什么：本地构建 → 同步仓库快照与新增歌曲 → 原子替换 dist → 重启服务 → 公网体检。
 # 前提：本机有 node(≥22)/git/ssh，且能免密登录 $HOST（把你的公钥加进服务器
 #       ~/.ssh/authorized_keys，或先 ssh-copy-id）。首次部署请先跑 scripts/deploy-setup.sh。
-# 换机器：环境变量 AFTERGLOW_HOST / AFTERGLOW_URL 覆盖，或直接改下面两行。
+# 连接信息不进仓库：公开仓库写死 root@IP 等于把 SSH 用户与目录布局印在明面上 ——
+# AFTERGLOW_HOST 必填；AFTERGLOW_URL 可选，缺省按 HOST 里的 IP 拼 http://（绑了域名再给）。
 set -euo pipefail
-HOST="${AFTERGLOW_HOST:-root@106.12.72.232}"
-SITE_URL="${AFTERGLOW_URL:-http://106.12.72.232}"
+HOST="${AFTERGLOW_HOST:?缺 AFTERGLOW_HOST（例：AFTERGLOW_HOST=root@服务器IP bash scripts/deploy.sh）}"
+SITE_URL="${AFTERGLOW_URL:-http://${HOST#*@}}"
 ROOT=/opt/afterglow
 
 cd "$(dirname "$0")/.."

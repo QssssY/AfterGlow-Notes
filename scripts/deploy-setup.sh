@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # 余晖录 · 首次部署 / 服务端二进制更新（日常发布用 scripts/deploy.sh）
 #
-#   bash scripts/deploy-setup.sh                 # 首次：编译上传二进制 + 生成口令 + systemd + 全量内容
-#   FORCE_NEW_PASS=1 bash scripts/deploy-setup.sh  # 强制换新管理口令（默认沿用服务器上现有的）
+#   AFTERGLOW_HOST=root@服务器IP bash scripts/deploy-setup.sh   # 首次：编译上传二进制 + 生成口令 + systemd + 全量内容
+#   FORCE_NEW_PASS=1 AFTERGLOW_HOST=root@服务器IP bash scripts/deploy-setup.sh
+#                                                # 强制换新管理口令（默认沿用服务器上现有的）
 #
 # 前提：本机有 go / node(≥22) / git / ssh，且能免密登录 $HOST。
 # 服务端是纯 Go（modernc SQLite），Windows/macOS 上都能直接交叉编译 linux/amd64。
 # 重复执行安全：二进制会更新，口令与数据库(afterglow.db)保持不动。
+# 连接信息不进仓库（见 deploy.sh 顶部说明）：AFTERGLOW_HOST 必填，URL 缺省由 HOST 推导。
 set -euo pipefail
-HOST="${AFTERGLOW_HOST:-root@106.12.72.232}"
-SITE_URL="${AFTERGLOW_URL:-http://106.12.72.232}"
+HOST="${AFTERGLOW_HOST:?缺 AFTERGLOW_HOST（例：AFTERGLOW_HOST=root@服务器IP bash scripts/deploy-setup.sh）}"
+SITE_URL="${AFTERGLOW_URL:-http://${HOST#*@}}"
 ROOT=/opt/afterglow
 
 cd "$(dirname "$0")/.."
