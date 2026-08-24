@@ -55,7 +55,7 @@ GitHub 直连模式 —— 粘贴一个细粒度令牌，写文章 / 改数据 /
 保存 = git 提交 = 平台自动重建（思路致敬 [YYsuni 的 /write](https://github.com/YYsuni/2025-blog-public)）。
 
 📖 **从注册到发出第一篇文章的保姆级教程（Vercel / CF Pages / GitHub Pages 三选一，
-附四段复制即用的 AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)**
+附复制即用的 AI 指令）：[docs/easy-deploy.md](docs/easy-deploy.md)**
 
 ### 方式 A：前端交给平台，API 放小机子
 
