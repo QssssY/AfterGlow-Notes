@@ -1,5 +1,8 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 ---
 
 <!--
@@ -13,8 +16,8 @@ import { Icon } from 'astro-icon/components'
   type="button"
   data-top-btn
   data-show="false"
-  aria-label="回到顶部"
-  title="回到顶部"
+  aria-label={t('common.backToTop')}
+  title={t('common.backToTop')}
   class="glass group fixed right-[16px] bottom-[118px] z-30 flex size-[44px] cursor-pointer flex-row items-center justify-center rounded-[14px] xl:right-[28px] xl:bottom-[28px]"
 >
   <Icon

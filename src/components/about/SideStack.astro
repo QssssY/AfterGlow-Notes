@@ -1,5 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   /** live 的那条（次喜欢）由浏览器端向 Go 后端现查，查不到保持占位 — 不编数字 */
@@ -8,13 +9,14 @@ interface Props {
 }
 
 const { stats, contacts } = Astro.props
+const { t } = useI18n(Astro)
 ---
 
 <!-- Side Stack -->
 <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px] xl:w-[320px]">
   <!-- Stats Card -->
   <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[16px] rounded-[30px] p-[26px]">
-    <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">站点数据</span>
+    <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">{t('about.siteData')}</span>
     {
       stats.map((stat, i) => (
         <>
@@ -36,7 +38,7 @@ const { stats, contacts } = Astro.props
 
   <!-- Contact Card -->
   <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[30px] p-[26px]">
-    <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">写信给我</span>
+    <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">{t('about.writeMe')}</span>
     {
       contacts.map((contact) => (
         <a

@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets'
 import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Friend {
   name: string
@@ -21,6 +22,7 @@ interface Props {
 }
 
 const { note, friends } = Astro.props
+const { t } = useI18n(Astro)
 
 // 设计是两行各两位；移动端收成单列
 const rows = [friends.slice(0, 2), friends.slice(2)]
@@ -30,7 +32,7 @@ const rows = [friends.slice(0, 2), friends.slice(2)]
 <div class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[28px] p-[20px]">
   <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px] xl:h-[22px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-      友 链 FRIENDS
+      {t('about.friendsCaption')}
     </span>
     <span class="text-[12px] font-normal text-ink-muted">{note}</span>
   </div>
@@ -45,7 +47,7 @@ const rows = [friends.slice(0, 2), friends.slice(2)]
                 href={friend.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="box-border flex h-fit w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[14px] py-[12px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
+                class="box-border flex w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[14px] py-[12px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
               >
                 {friend.avatar ? (
                   <Image

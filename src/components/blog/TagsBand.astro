@@ -1,9 +1,13 @@
 ---
+import { useI18n } from '~/i18n'
+
 interface Props {
-  tags: { name: string; count: number }[]
+  /** name 是原始标签（网址用），label 是当前语种的显示名 */
+  tags: { name: string; label: string; count: number }[]
 }
 
 const { tags } = Astro.props
+const { t, path } = useI18n(Astro)
 ---
 
 <!--
@@ -20,7 +24,7 @@ const { tags } = Astro.props
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[16px] rounded-[28px] px-[18px] py-[14px] xl:flex-row xl:items-center"
 >
   <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-    标 签 TAGS
+    {t('blog.tagsCaption')}
   </span>
 
   <div
@@ -29,10 +33,10 @@ const { tags } = Astro.props
     {
       tags.map((tag) => (
         <a
-          href={`/tags/${tag.name}`}
+          href={path(`/tags/${tag.name}`)}
           class="hairline-box box-border flex h-fit w-fit shrink-0 flex-row rounded-[12px] px-[10px] py-[6px]"
         >
-          <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-soft">{tag.name}</span>
+          <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-soft">{tag.label}</span>
         </a>
       ))
     }

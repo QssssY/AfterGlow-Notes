@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets'
+import { useI18n } from '~/i18n'
 import { siteAvatar as avatar } from '~/utils/site-images'
-import { site } from '~/config'
 
 interface Props {
   role: string
@@ -12,6 +12,8 @@ interface Props {
 }
 
 const { role, paragraphs, chips, lists = [] } = Astro.props
+const { c } = useI18n(Astro)
+const { site } = c
 ---
 
 <!-- About Me -->

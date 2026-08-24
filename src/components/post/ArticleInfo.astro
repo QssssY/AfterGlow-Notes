@@ -1,5 +1,5 @@
 ---
-import { relativeDay } from '~/utils/post'
+import { useI18n } from '~/i18n'
 
 /**
  * 本文 ARTICLE
@@ -19,24 +19,25 @@ interface Props {
 }
 
 const { words, minutes, date, updated } = Astro.props
+const { t, fmt } = useI18n(Astro)
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-/** 设计的写法：2026 / 08 / 19 */
+/** 设计的写法：2026 / 08 / 19（式样与语言无关，三语共用） */
 const published = `${date.getFullYear()} / ${pad(date.getMonth() + 1)} / ${pad(date.getDate())}`
 
 const rows = [
   // 设计写的是 6,240，带千分位、不带「字」——「字数」已经在左边说了
-  { key: '字数', value: words.toLocaleString('en-US') },
-  { key: '阅读', value: `约 ${minutes} 分钟` },
-  { key: '发布', value: published },
-  ...(updated ? [{ key: '更新', value: relativeDay(updated) }] : []),
+  { key: t('post.infoWords'), value: fmt.number(words) },
+  { key: t('post.infoRead'), value: t('post.infoReadValue', { n: minutes }) },
+  { key: t('post.infoPublished'), value: published },
+  ...(updated ? [{ key: t('post.infoUpdated'), value: fmt.relativeDay(updated) }] : []),
 ]
 ---
 
 <dl class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[26px] p-[22px]">
   <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-    本 文 ARTICLE
+    {t('post.articleCaption')}
   </span>
 
   {

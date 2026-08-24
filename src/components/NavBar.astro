@@ -1,10 +1,12 @@
 ---
 import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
-import { isNavActive, nav, site } from '~/config'
+import { useI18n } from '~/i18n'
 import { siteAvatar as avatarSrc } from '~/utils/site-images'
+import LangSwitch from './LangSwitch.astro'
 
-const pathname = Astro.url.pathname
+const { t, c, nav, path } = useI18n(Astro)
+const { site } = c
 ---
 
 <!--
@@ -17,7 +19,7 @@ const pathname = Astro.url.pathname
 -->
 <nav
   data-navbar
-  aria-label="站内导航"
+  aria-label={t('nav.aria')}
   class="glass relative box-border flex h-fit w-fit flex-row items-center gap-[4px] rounded-[18px] p-[8px]"
 >
   <span
@@ -26,8 +28,8 @@ const pathname = Astro.url.pathname
     class="pointer-events-none absolute rounded-[12px] bg-fire-tint opacity-0"></span>
 
   <a
-    href="/"
-    title={`回首页 · ${site.title}`}
+    href={path('/')}
+    title={t('nav.backHome', { title: site.title })}
     class="relative mr-[4px] flex size-[36px] shrink-0 flex-row items-center justify-center"
   >
     <span class="flex size-[30px] shrink-0">
@@ -42,23 +44,20 @@ const pathname = Astro.url.pathname
   </a>
 
   {
-    nav.map((item) => {
-      const active = isNavActive(item.match, pathname)
-      return (
-        <a
-          href={item.href}
-          title={item.label}
-          aria-current={active ? 'page' : undefined}
-          data-pill-target
-          class:list={[
-            'relative flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] transition-colors',
-            active ? 'text-brand-ink' : 'text-ink-soft',
-          ]}
-        >
-          <Icon name={`lucide:${item.icon}`} class="size-[19px] shrink-0" />
-        </a>
-      )
-    })
+    nav.map((item) => (
+      <a
+        href={item.href}
+        title={item.label}
+        aria-current={item.active ? 'page' : undefined}
+        data-pill-target
+        class:list={[
+          'relative flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] transition-colors',
+          item.active ? 'text-brand-ink' : 'text-ink-soft',
+        ]}
+      >
+        <Icon name={`lucide:${item.icon}`} class="size-[19px] shrink-0" />
+      </a>
+    ))
   }
 
   <span class="mx-[4px] h-[22px] w-[1px] shrink-0 bg-hairline"></span>
@@ -67,17 +66,20 @@ const pathname = Astro.url.pathname
     type="button"
     data-theme-cycle
     data-pill-target
-    title="切换深浅色"
-    aria-label="切换深浅色"
+    title={t('common.toggleTheme')}
+    aria-label={t('common.toggleTheme')}
     class="relative flex size-[36px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors"
   >
     <Icon name="lucide:sun-moon" class="size-[19px] shrink-0" />
   </button>
 
+  {/* 语言钮也进跟手胶囊的目标组，和相邻两颗手感一致 */}
+  <LangSwitch variant="menu" align="right" />
+
   <a
-    href="/rss.xml"
-    title="RSS 订阅"
-    aria-label="RSS 订阅"
+    href={path('/rss.xml')}
+    title={t('common.rss')}
+    aria-label={t('common.rss')}
     data-pill-target
     class="relative flex size-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] text-ink-soft transition-colors"
   >

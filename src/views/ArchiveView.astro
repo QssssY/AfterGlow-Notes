@@ -1,0 +1,156 @@
+---
+/*
+ * 文章列表（归档）主体。分页数据由路由壳的 getStaticPaths 用 paginate() 算好传进来 ——
+ * 分页必须在路由层做（每一页是一个静态文件），view 只管画。
+ */
+import type { Page } from 'astro'
+import { Icon } from 'astro-icon/components'
+import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
+import PostRow from '~/components/PostRow.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import StatsPageHead from '~/components/StatsPageHead.astro'
+import ArchivePanel from '~/components/blog/ArchivePanel.astro'
+import ListHeader from '~/components/blog/ListHeader.astro'
+import Pagination from '~/components/blog/Pagination.astro'
+import SearchOverlay from '~/components/blog/SearchOverlay.astro'
+import SubscribePanel from '~/components/blog/SubscribePanel.astro'
+import TagsBand from '~/components/blog/TagsBand.astro'
+import TimelineCard from '~/components/blog/TimelineCard.astro'
+import FeaturedCard from '~/components/mobile/FeaturedCard.astro'
+import { useI18n } from '~/i18n'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import { groupByYear, loadPosts, tagCounts, yearBars, type ArchivePost } from '~/utils/posts'
+
+interface Props {
+  page: Page<ArchivePost>
+}
+
+const { page } = Astro.props
+const { t, fmt, path, locale } = useI18n(Astro)
+
+// 左栏面板要的是全站聚合，不是当前页切片
+const all = await loadPosts(locale)
+const total = all.length
+const totalWords = all.reduce((sum, post) => sum + post.words, 0)
+const newest = all[0]
+
+const groups = groupByYear(page.data)
+const hrefFor = (n: number) => (n === 1 ? path('/archive') : path(`/archive/${n}`))
+
+/*
+ * 列表里混着原作语言的文章时，在页头说一句。按「这一页有没有」判而不是按语种判：
+ * 中文站全是中文原文就不出现，某天全部译完也会自动消失 —— 不会留一句说错的话。
+ */
+const hasOriginLang = all.some((post) => post.fallback)
+---
+
+<BaseLayout title={t('blog.title')} description={t('blog.description', { n: total })}>
+  {/*
+    设计这轮删掉了满宽的萤火虫 Banner：文章列表改成内容栏顶部的 Page Head，
+    篇数与字数从副标题挪进右侧那两格统计（原来左栏那块 Stats 面板说的是同一件事，
+    重复了，一并删掉）。左栏只剩 年表 + 订阅，间距也从 24 收到 16。
+  */}
+  {/* 紧凑模式的图标条：sticky 钉住不消失（用户点名）；原版模式不渲染。
+      外层撑满行宽方便 sticky，pointer-events 穿透，只有条本身可点 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
+
+  <div class="flex w-full flex-row items-start gap-[48px]">
+    {/* 左栏双模式：原版 = 完整 Sidebar + 面板全静态（原样）；
+        紧凑 = 只剩 年表+订阅 短栏，钉在图标条下方（84 = 16 + 条高 52 + 16） */}
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex">
+      <div class="hidden w-full classic:block"><Sidebar /></div>
+      <div
+        data-pin-group
+        class="flex w-full flex-col items-start gap-[16px] compact:xl:sticky compact:xl:top-[84px]"
+      >
+        <ArchivePanel years={yearBars(all)} />
+        <SubscribePanel />
+      </div>
+    </div>
+
+    <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px]">
+      <StatsPageHead
+        title={t('blog.title')}
+        subtitle={t('blog.subtitle')}
+        note={hasOriginLang ? t('blog.originLangNote') : undefined}
+        stats={[
+          { value: String(total), label: t('blog.statPosts') },
+          { value: fmt.compact(totalWords), label: t('blog.statWords') },
+        ]}
+      />
+
+      <ListHeader total={total} />
+
+      <TagsBand tags={tagCounts(all, locale)} />
+
+      {
+        page.currentPage === 1 && newest && (
+          <>
+            {/* 桌面：设计的 Caption Row + Post Row */}
+            <section class="hidden h-fit w-full shrink-0 flex-col items-start gap-[14px] xl:flex">
+              <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between">
+                <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+                  {t('blog.featured')}
+                </span>
+                <a
+                  href={path('/archive')}
+                  class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]"
+                >
+                  <span class="text-[12.5px] font-medium whitespace-nowrap text-brand-ink">
+                    {t('blog.allCount', { n: total })}
+                  </span>
+                  <Icon name="lucide:arrow-right" class="size-[13px] shrink-0 text-brand-ink" />
+                </a>
+              </div>
+              <PostRow
+                index={total}
+                date={newest.date}
+                category={newest.category}
+                title={newest.title}
+                titleLang={newest.titleLang}
+                excerpt={newest.excerpt}
+                href={newest.href}
+                readMinutes={newest.minutes}
+                words={newest.words}
+                cover={newest.cover}
+              />
+            </section>
+
+            {/*
+              移动端：Post Row 的封面是固定 236px 且 shrink-0，在 390 下会横向溢出。
+              改用移动端首页那张 Featured Card —— 它本来就是为 390 设计的。
+            */}
+            <div class="w-full xl:hidden">
+              <FeaturedCard
+                date={newest.date}
+                category={newest.category}
+                title={newest.title}
+                titleLang={newest.titleLang}
+                href={newest.href}
+                minutes={newest.minutes}
+                words={newest.words}
+              />
+            </div>
+          </>
+        )
+      }
+
+      <TimelineCard groups={groups} highlightId={page.currentPage === 1 ? newest?.id : undefined} />
+
+      <Pagination
+        current={page.currentPage}
+        totalPages={page.lastPage}
+        total={total}
+        hrefFor={hrefFor}
+      />
+    </div>
+  </div>
+
+  <!-- 移动端不显示 Footer：设计里由底部 Tab Bar 取代 -->
+  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+
+  <SearchOverlay />
+</BaseLayout>

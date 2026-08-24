@@ -2,6 +2,9 @@
 import { Icon } from 'astro-icon/components'
 import { email } from '~/config'
 import Panel from '~/components/Panel.astro'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
 ---
 
 <!--
@@ -9,12 +12,18 @@ import Panel from '~/components/Panel.astro'
   没有后端：提交时打开访客自己的邮件客户端，收件人、主题、正文都预填好。
   等以后接了订阅服务（Buttondown / Listmonk 之类），把下面的 submit 处理换掉即可。
 -->
-<Panel caption="订 阅 SUBSCRIBE">
-  <p class="w-full text-[12px]/[19px] font-normal text-ink-soft">
-    新文章发布时收到通知，不含广告。
-  </p>
+<Panel caption={t('blog.subscribeCaption')}>
+  <p class="w-full text-[12px]/[19px] font-normal text-ink-soft">{t('blog.subscribeBlurb')}</p>
 
-  <form class="flex w-full shrink-0 flex-col gap-[12px]" data-subscribe data-to={email}>
+  {/* 邮件的主题与正文由服务端按语种备好放进 data-*（正文带 {email} 占位符，
+      脚本填入访客输入的地址）—— 中文站发中文信，英文站发英文信 */}
+  <form
+    class="flex w-full shrink-0 flex-col gap-[12px]"
+    data-subscribe
+    data-to={email}
+    data-subject={t('blog.subscribeSubject', { title: c.site.title })}
+    data-body={t('blog.subscribeBody', { email: '{email}' })}
+  >
     <label
       class="hairline-box box-border flex h-[36px] w-full shrink-0 flex-row items-center gap-[8px] rounded-[12px] px-[12px]"
     >
@@ -23,7 +32,7 @@ import Panel from '~/components/Panel.astro'
         type="email"
         name="email"
         required
-        placeholder="你的邮箱"
+        placeholder={t('blog.subscribePlaceholder')}
         class="w-full min-w-0 bg-transparent text-[12.5px] font-normal text-ink placeholder:text-ink-muted focus:outline-none"
       />
     </label>
@@ -33,13 +42,15 @@ import Panel from '~/components/Panel.astro'
         type="submit"
         class="flex h-[34px] flex-1 flex-row items-center justify-center rounded-[12px] bg-brand text-[12.5px] font-bold text-on-brand outline-1 -outline-offset-[0.5px] outline-brand"
       >
-        订阅
+        {t('blog.subscribeButton')}
       </button>
     </div>
   </form>
 </Panel>
 
 <script>
+  import { fill } from '~/scripts/i18n'
+
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
     for (const form of document.querySelectorAll<HTMLFormElement>('[data-subscribe]')) {
@@ -51,8 +62,9 @@ import Panel from '~/components/Panel.astro'
         const input = form.querySelector<HTMLInputElement>('input[name="email"]')
         if (!to || !input) return
 
-        const subject = encodeURIComponent('订阅余晖录')
-        const body = encodeURIComponent(`请把这个邮箱加入订阅：${input.value}`)
+        // 主题/正文的文案由服务端按语种写在 data-* 上（见上面的 form）
+        const subject = encodeURIComponent(form.dataset.subject ?? '')
+        const body = encodeURIComponent(fill(form.dataset.body, { email: input.value }))
         location.href = `mailto:${to}?subject=${subject}&body=${body}`
       })
     }

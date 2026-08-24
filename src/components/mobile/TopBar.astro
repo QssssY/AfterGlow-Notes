@@ -1,13 +1,17 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { site } from '~/config'
+import LangSwitch from '~/components/LangSwitch.astro'
+import { useI18n } from '~/i18n'
+
+const { t, c, path } = useI18n(Astro)
+const { site } = c
 ---
 
 <!-- Top Bar
      设计里还有一行 小头像 + 站长名，但紧挨着的问候卡就是大头像 + 名字，
      信息完全重复 —— 用户拍板：移动端去掉这一行。 -->
 <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[9px]">
-  <a href="/" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px]">
+  <a href={path('/')} class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px]">
     <span class="flex size-[24px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
       <span class="site-dot size-[8px] shrink-0 rounded-full bg-brand shadow-[0_0_9px_0_var(--glow-fire)]"></span>
     </span>
@@ -16,12 +20,17 @@ import { site } from '~/config'
     </span>
   </a>
 
-  <button
-    type="button"
-    data-theme-cycle
-    aria-label="切换外观"
-    class="glass flex h-fit w-fit shrink-0 flex-row rounded-[12px] p-[7px]"
-  >
-    <Icon name="lucide:sun-moon" class="size-[20px] shrink-0 text-ink" />
-  </button>
+  <!-- 右上角两颗钮：语言 + 明暗。移动端没有侧栏，语言入口只能在这里 -->
+  <div class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px]">
+    <LangSwitch variant="menu" align="right" look="glass" />
+
+    <button
+      type="button"
+      data-theme-cycle
+      aria-label={t('theme.toggleMobile')}
+      class="glass flex h-fit w-fit shrink-0 flex-row rounded-[12px] p-[7px]"
+    >
+      <Icon name="lucide:sun-moon" class="size-[20px] shrink-0 text-ink" />
+    </button>
+  </div>
 </div>

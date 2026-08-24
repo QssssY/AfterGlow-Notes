@@ -1,0 +1,22 @@
+[
+  {
+    "href": "https://www.ruanyifeng.com/blog/",
+    "name": "阮一峰",
+    "desc": "週刊と入門記事"
+  },
+  {
+    "href": "https://www.bilibili.com",
+    "name": "bilibili",
+    "desc": "技術系とドキュメンタリー"
+  },
+  {
+    "href": "https://www.zhangxinxu.com",
+    "name": "張鑫旭",
+    "desc": "CSS とフロントの細部"
+  },
+  {
+    "href": "https://www.zhihu.com",
+    "name": "知乎",
+    "desc": "コラムと長文"
+  }
+]

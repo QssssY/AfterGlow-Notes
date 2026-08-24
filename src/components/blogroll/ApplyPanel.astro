@@ -1,6 +1,9 @@
 ---
 import { Icon } from 'astro-icon/components'
 import { email } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 
 /**
  * 申请友链
@@ -10,9 +13,9 @@ import { email } from '~/config'
  * 以后接了表单服务，改掉下面的 submit 处理即可。
  */
 const fields = [
-  { name: 'name', icon: 'type', placeholder: '站点名称', type: 'text' },
+  { name: 'name', icon: 'type', placeholder: t('blogroll.fieldName'), type: 'text' },
   { name: 'url', icon: 'link', placeholder: 'https://', type: 'url' },
-  { name: 'desc', icon: 'pen-line', placeholder: '一句话简介', type: 'text' },
+  { name: 'desc', icon: 'pen-line', placeholder: t('blogroll.fieldDesc'), type: 'text' },
 ] as const
 ---
 
@@ -21,16 +24,20 @@ const fields = [
 >
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[6px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-      申 请 友 链 EXCHANGE
+      {t('blogroll.applyCaption')}
     </span>
-    <p class="w-full text-[13px]/[21px] font-normal text-ink-soft">
-      个人站点、原创内容、能正常访问就行。填完我会去读几篇再回链，通常一周内答复。
-    </p>
+    <p class="w-full text-[13px]/[21px] font-normal text-ink-soft">{t('blogroll.applyBlurb')}</p>
   </div>
 
+  {/* 邮件主题与正文的字段名按语种备好放进 data-*（正文是三行「标签：{值}」的模板，
+      脚本填入表单内容）—— 英文站发出去的信是英文的字段名 */}
   <form
     data-apply
     data-to={email}
+    data-subject={t('blogroll.mailSubjectWith', { name: '{name}' })}
+    data-f-name={t('blogroll.fieldName')}
+    data-f-url={t('blogroll.fieldUrl')}
+    data-f-desc={t('blogroll.fieldDesc')}
     class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[10px] xl:flex-row xl:items-center"
   >
     {
@@ -54,21 +61,23 @@ const fields = [
       type="submit"
       class="flex h-[38px] w-full shrink-0 flex-row items-center justify-center gap-[7px] rounded-[12px] bg-brand px-[18px] outline-1 -outline-offset-[0.5px] outline-brand xl:w-fit"
     >
-      <span class="text-[12.5px] font-bold whitespace-nowrap text-on-brand">提交申请</span>
+      <span class="text-[12.5px] font-bold whitespace-nowrap text-on-brand">{t('blogroll.submit')}</span>
       <Icon name="lucide:arrow-right" class="size-[14px] shrink-0 text-on-brand" />
     </button>
   </form>
 
   <a
-    href={`mailto:${email}?subject=${encodeURIComponent('申请友链')}`}
+    href={`mailto:${email}?subject=${encodeURIComponent(t('blogroll.mailSubject'))}`}
     class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]"
   >
     <Icon name="lucide:link" class="size-[13px] shrink-0 text-ink-muted" />
-    <span class="text-[11.5px] font-normal text-ink-muted">也可以直接发邮件，附上站点地址即可。</span>
+    <span class="text-[11.5px] font-normal text-ink-muted">{t('blogroll.mailHint')}</span>
   </a>
 </div>
 
 <script>
+  import { fill } from '~/scripts/i18n'
+
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
     for (const form of document.querySelectorAll<HTMLFormElement>('[data-apply]')) {
@@ -82,11 +91,15 @@ const fields = [
         const value = (name: string) =>
           form.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? ''
 
-        const subject = encodeURIComponent(`申请友链：${value('name')}`)
+        // 主题与三个字段名按语种取自 data-*（见上面的 form）
+        const d = form.dataset
+        const subject = encodeURIComponent(fill(d.subject, { name: value('name') }))
         const body = encodeURIComponent(
-          [`站点名称：${value('name')}`, `站点地址：${value('url')}`, `一句话简介：${value('desc')}`].join(
-            '\n',
-          ),
+          [
+            `${d.fName}: ${value('name')}`,
+            `${d.fUrl}: ${value('url')}`,
+            `${d.fDesc}: ${value('desc')}`,
+          ].join('\n'),
         )
         location.href = `mailto:${to}?subject=${subject}&body=${body}`
       })

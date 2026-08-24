@@ -2,7 +2,7 @@
 import { ClientRouter } from 'astro:transitions'
 import ScrollTopButton from '~/components/ScrollTopButton.astro'
 import TabBar from '~/components/mobile/TabBar.astro'
-import { site } from '~/config'
+import { defaultLocale, useI18n } from '~/i18n'
 import { themeCss } from '~/utils/theme'
 import '~/styles/global.css'
 // 首屏关键字体 preload：正文中文 400 子集 + 标题/界面中文 500 瘦身子集
@@ -33,6 +33,9 @@ interface Props {
   topPad?: 48 | 72
 }
 
+const { locale, meta, c, path, alternates } = useI18n(Astro)
+const { site } = c
+
 const {
   title,
   description = site.description,
@@ -49,11 +52,14 @@ const customTheme = themeCss()
 
 const base = Astro.site ?? Astro.url
 const canonical = new URL(Astro.url.pathname, base).href
-const ogImage = new URL(`/og/${ogSlug}.png`, base).href
+// OG 图按语种各出一张：标题、副标题、站名都跟着语言变（见 pages/og）
+const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-layout="classic">
+<!-- data-locale 给客户端脚本用：脚本里的动态文案（分页、搜索提示、复制反馈）
+     要按当前语种取词，读这个属性比再解析一次 URL 稳。 -->
+<html lang={meta.htmlLang} data-locale={locale} data-layout="classic">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -70,7 +76,23 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href={canonical} />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={site.title} href={path('/rss.xml')} />
+
+    <!--
+      语言互链：告诉搜索引擎这三个地址是同一页的不同语言版本，别当重复内容。
+      x-default 指向中文（默认语种），语言偏好不匹配时落在它上面。
+    -->
+    {
+      alternates.map((alt) => (
+        <link rel="alternate" hreflang={alt.htmlLang} href={new URL(alt.href, base).href} />
+      ))
+    }
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={new URL(alternates.find((alt) => alt.code === defaultLocale)!.href, base).href}
+    />
+
     {customTheme && <style set:html={customTheme} />}
 
     <meta property="og:type" content={ogType} />
@@ -78,7 +100,12 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.title} />
-    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:locale" content={meta.ogLocale} />
+    {
+      alternates
+        .filter((alt) => !alt.current)
+        .map((alt) => <meta property="og:locale:alternate" content={alt.ogLocale} />)
+    }
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -529,10 +556,12 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
           const decimals = m[2]?.length ?? 0
           const grouped = m[1]!.includes(',')
           const suffix = m[3] ?? ''
+          // 千分位跟着页面语种走：终值是服务端渲染的 raw（已按语种格式化），
+          // 中途各帧用同一套 locale 才不会在最后一帧「跳一下」
+          const tag = document.documentElement.lang || undefined
           const fmt = (v: number) =>
-            (grouped
-              ? Number(v.toFixed(decimals)).toLocaleString('en-US')
-              : v.toFixed(decimals)) + suffix
+            (grouped ? Number(v.toFixed(decimals)).toLocaleString(tag) : v.toFixed(decimals)) +
+            suffix
 
           const t0 = performance.now()
           const DURATION = 750

@@ -1,6 +1,7 @@
 ---
 import { Icon } from 'astro-icon/components'
 import StackPill from '~/components/StackPill.astro'
+import { useI18n } from '~/i18n'
 
 interface Props {
   stacks: readonly string[]
@@ -9,10 +10,11 @@ interface Props {
 }
 
 const { stacks, active = stacks[0] } = Astro.props
+const { t } = useI18n(Astro)
 
 const VIEWS = [
-  { key: 'grid', icon: 'layout-grid', label: '网格视图' },
-  { key: 'list', icon: 'list', label: '列表视图' },
+  { key: 'grid', icon: 'layout-grid', label: t('projects.gridView') },
+  { key: 'list', icon: 'list', label: t('projects.listView') },
 ] as const
 ---
 

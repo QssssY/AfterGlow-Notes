@@ -1,0 +1,25 @@
+---
+import type { GetStaticPaths } from 'astro'
+import { prefixedLocales } from '~/i18n/locales'
+import { loadPosts } from '~/utils/posts'
+import ArchiveView from '~/views/ArchiveView.astro'
+
+/*
+ * 每个语种各自分页：paginate 的 params 选项把 locale 一起写进路径，
+ * 于是生成 /en/archive、/en/archive/2、/ja/archive… 各一份。
+ * 三个语种的列表都是全量（没配译文的照样在列，按原作语言呈现），篇数页数一致，
+ * 但每篇的标题 / 链接 / 分类显示名随语种变 —— 所以数据要各自 loadPosts，
+ * 不能共用一份分页结果。
+ */
+export const getStaticPaths = (async ({ paginate }) => {
+  const routes = []
+  for (const locale of prefixedLocales) {
+    routes.push(...paginate(await loadPosts(locale), { pageSize: 10, params: { locale } }))
+  }
+  return routes
+}) satisfies GetStaticPaths
+
+const { page } = Astro.props
+---
+
+<ArchiveView page={page} />

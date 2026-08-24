@@ -1,16 +1,26 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 
 /**
  * 搜索覆盖层 —— 设计没有搜索结果的帧，沿用它的卡片语言。
  * 索引由 pagefind 在构建后扫描 dist 生成（见 package.json 的 build 脚本），
  * 所以 dev 模式下搜不到东西是正常的，要 pnpm build && pnpm preview 才有。
+ *
+ * 多语言：pagefind 按每页的 <html lang> 自动分语种建索引，pagefind.js 也按当前
+ * 页面的语种选索引 —— 所以在 /en 下搜到的是英文页，不用我们额外传 filter。
+ * 提示语（空态 / 无结果 / 索引未生成）由服务端写进 data-t-*，脚本读出来用。
  */
 ---
 
 <div
   data-search-overlay
   hidden
+  data-t-hint={t('search.hint')}
+  data-t-empty={t('search.noResults', { query: '{query}' })}
+  data-t-noindex={t('search.noIndex')}
   class="fixed inset-0 z-50 flex items-start justify-center bg-[#5B423F26] px-[24px] pt-[10vh] backdrop-blur-[3px]"
 >
   <div class="glass flex w-full max-w-[640px] flex-col overflow-hidden rounded-[28px]">
@@ -19,14 +29,14 @@ import { Icon } from 'astro-icon/components'
       <input
         data-search-input
         type="search"
-        placeholder="搜索文章…"
+        placeholder={t('search.placeholder')}
         autocomplete="off"
         class="flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-muted"
       />
       <button
         type="button"
         data-search-close
-        aria-label="关闭搜索"
+        aria-label={t('search.close')}
         class="flex size-[26px] shrink-0 items-center justify-center rounded-[8px] text-ink-muted hover:bg-chip"
       >
         <Icon name="lucide:x" class="size-[15px]" />
@@ -34,12 +44,14 @@ import { Icon } from 'astro-icon/components'
     </div>
 
     <div data-search-results class="max-h-[56vh] overflow-y-auto px-[12px] py-[12px]">
-      <p class="px-[8px] py-[10px] text-[13px] text-ink-muted">输入关键词开始搜索</p>
+      <p class="px-[8px] py-[10px] text-[13px] text-ink-muted">{t('search.hint')}</p>
     </div>
   </div>
 </div>
 
 <script>
+  import { fill } from '~/scripts/i18n'
+
   // 客户端路由：overlay/input/results 每次换页都是新的，由 astro:page-load 刷新引用；
   // 全局快捷键和 pagefind 实例留在模块层（只挂/只加载一次，跨页复用）。
   let overlay: HTMLElement | null = null
@@ -79,7 +91,7 @@ import { Icon } from 'astro-icon/components'
         pagefind = await nativeImport('/pagefind/pagefind.js')
         return pagefind
       } catch {
-        note('搜索索引尚未生成 —— 需要 pnpm build 后在 preview 里使用。')
+        note(overlay?.dataset.tNoindex ?? '')
         return undefined
       }
     }
@@ -120,13 +132,14 @@ import { Icon } from 'astro-icon/components'
       clearTimeout(timer)
       timer = window.setTimeout(async () => {
         const query = input!.value.trim()
-        if (!query) return note('输入关键词开始搜索')
+        if (!query) return note(overlay?.dataset.tHint ?? '')
 
         const api = await load()
         if (!api) return
 
         const found = await api.search(query)
-        if (found.results.length === 0) return note(`没有匹配「${query}」的文章`)
+        if (found.results.length === 0)
+          return note(fill(overlay?.dataset.tEmpty, { query }))
 
         const pages = await Promise.all(found.results.slice(0, 8).map((r) => r.data()))
         if (!results) return

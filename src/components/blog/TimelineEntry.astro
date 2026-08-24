@@ -1,9 +1,12 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   date: string
   title: string
+  /** 标题语种与页面语种不一致时传（见 ArchivePost.titleLang） */
+  titleLang?: string | undefined
   href: string
   readMinutes: number
   tags?: readonly string[]
@@ -20,6 +23,7 @@ interface Props {
 const {
   date,
   title,
+  titleLang,
   href,
   readMinutes,
   tags = [],
@@ -27,6 +31,7 @@ const {
   dateIso,
   category,
 } = Astro.props
+const { t } = useI18n(Astro)
 ---
 
 {/* 预取降为 hover：归档一页 10 行，全局的 viewport 策略会把 10 篇整页 HTML
@@ -50,6 +55,7 @@ const {
   </span>
 
   <span
+    lang={titleLang}
     class:list={[
       'flex-1 text-[14px] font-medium transition-colors',
       highlight ? 'text-brand' : 'text-ink group-hover/entry:text-brand-ink',
@@ -59,8 +65,10 @@ const {
 
   <span class="flex h-[19px] w-fit shrink-0 flex-row items-center gap-[5px]">
     <Icon name="lucide:clock-3" class="size-[12px] shrink-0 text-ink-muted" />
-    <span class="w-[44px] shrink-0 text-right text-[12px] font-normal text-ink-muted">
-      {readMinutes} 分钟
+    {/* 宽度从 44 放到 fit-content 下限 44：英文的「12 min」比中文「12 分钟」略宽，
+        写死 44 会把字挤掉一半 */}
+    <span class="min-w-[44px] shrink-0 text-right text-[12px] font-normal whitespace-nowrap text-ink-muted">
+      {t('common.readMinutes', { n: readMinutes })}
     </span>
   </span>
 

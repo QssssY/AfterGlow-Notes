@@ -1,9 +1,12 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Entry {
   title: string
   href: string
+  /** 标题语种与页面语种不一致时传（见 ArchivePost.titleLang） */
+  titleLang?: string | undefined
 }
 
 interface Props {
@@ -12,6 +15,7 @@ interface Props {
 }
 
 const { prev, next } = Astro.props
+const { t } = useI18n(Astro)
 ---
 
 <!-- Prev Next
@@ -27,8 +31,8 @@ const { prev, next } = Astro.props
         >
           <Icon name="lucide:chevron-left" class="size-[18px] shrink-0 text-ink-muted" />
           <span class="flex h-fit min-w-0 flex-col items-start gap-[3px]">
-            <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">上一篇</span>
-            <span class="max-w-full truncate text-[14px] font-medium text-ink">{prev.title}</span>
+            <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{t('post.prev')}</span>
+            <span lang={prev.titleLang} class="max-w-full truncate text-[14px] font-medium text-ink">{prev.title}</span>
           </span>
         </a>
       ) : (
@@ -41,8 +45,8 @@ const { prev, next } = Astro.props
           class="glass box-border flex h-fit min-w-0 flex-1 flex-row items-center justify-end gap-[10px] rounded-[24px] px-[20px] py-[16px]"
         >
           <span class="flex h-fit min-w-0 flex-col items-end gap-[3px]">
-            <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">下一篇</span>
-            <span class="max-w-full truncate text-[14px] font-medium text-ink">{next.title}</span>
+            <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{t('post.next')}</span>
+            <span lang={next.titleLang} class="max-w-full truncate text-[14px] font-medium text-ink">{next.title}</span>
           </span>
           <Icon name="lucide:chevron-right" class="size-[18px] shrink-0 text-ink-muted" />
         </a>

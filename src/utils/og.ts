@@ -3,6 +3,11 @@
  * 配色和字体取自站点设计，所以分享卡片和站点是同一套视觉。
  *
  * 注意 satori 不支持 WOFF2（只认 TTF/OTF/WOFF），所以这里取 fontsource 的 .woff。
+ *
+ * 多语言：每个语种各出一套图（/og/x.png、/en/og/x.png、/ja/og/x.png），
+ * 站名、副标题、标签都用该语种的写法 —— 分享到日文社群时卡片上不会是中文。
+ * 字形没问题：Noto Sans SC 的简中子集里带全套假名（实测 20 个平假名能裁出 6KB），
+ * 所以日文标题不会渲染成豆腐块。
  */
 
 import { Resvg } from '@resvg/resvg-js'
@@ -10,7 +15,9 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import satori from 'satori'
-import { site } from '~/config'
+import { getContent } from '~/i18n/content'
+import { defaultLocale, type Locale } from '~/i18n/locales'
+import { loadPosts } from '~/utils/posts'
 
 const require = createRequire(import.meta.url)
 
@@ -71,9 +78,42 @@ interface OgOptions {
   subtitle?: string | undefined
   /** 右下角的标签行 */
   tags?: readonly string[]
+  /** 卡上的站名/作者按这个语种取（默认中文） */
+  locale?: Locale
 }
 
-export async function renderOgImage({ title, subtitle, tags = [] }: OgOptions) {
+/**
+ * 一个语种下全部 OG 图的路由数据：站点默认图 + 每篇文章一张。
+ * 必须是可复用的独立函数 —— getStaticPaths 被 Astro 抽成单独模块执行。
+ */
+export async function ogRoutes(locale: Locale) {
+  const { site } = getContent(locale)
+  const posts = await loadPosts(locale)
+  const pad = (n: number) => String(n).padStart(2, '0')
+
+  return [
+    {
+      params: { slug: 'site' },
+      props: { title: site.title, subtitle: site.description, tags: [] as string[] },
+    },
+    ...posts.map((post) => ({
+      params: { slug: post.id },
+      props: {
+        title: post.title,
+        subtitle: `${post.date.getFullYear()} · ${pad(post.date.getMonth() + 1)} · ${pad(post.date.getDate())}　·　${post.category}`,
+        tags: [...post.tagLabels],
+      },
+    })),
+  ]
+}
+
+export async function renderOgImage({
+  title,
+  subtitle,
+  tags = [],
+  locale = defaultLocale,
+}: OgOptions) {
+  const { site } = getContent(locale)
   const svg = await satori(
     {
       type: 'div',

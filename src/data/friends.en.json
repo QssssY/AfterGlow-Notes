@@ -1,0 +1,22 @@
+[
+  {
+    "href": "https://www.ruanyifeng.com/blog/",
+    "name": "Ruan Yifeng",
+    "desc": "Weekly digest and tutorials"
+  },
+  {
+    "href": "https://www.bilibili.com",
+    "name": "bilibili",
+    "desc": "Tech section and documentaries"
+  },
+  {
+    "href": "https://www.zhangxinxu.com",
+    "name": "Zhang Xinxu",
+    "desc": "CSS and frontend details"
+  },
+  {
+    "href": "https://www.zhihu.com",
+    "name": "Zhihu",
+    "desc": "Columns and long reads"
+  }
+]

@@ -1,4 +1,6 @@
 ---
+import { useI18n } from '~/i18n'
+
 interface Entry {
   title: string
   date: string
@@ -13,12 +15,15 @@ interface Props {
 }
 
 const { entries } = Astro.props
+const { t } = useI18n(Astro)
 ---
 
 <!-- Changelog Card
      圆点用 2px 的 cream 描边把左侧竖线「打穿」，所以描边色必须跟随页面底色。 -->
 <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start rounded-[30px] px-[30px] py-[28px]">
-  <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">站点更新日志</span>
+  <span class="text-[12px] font-normal whitespace-nowrap text-ink-soft">
+    {t('about.changelogTitle')}
+  </span>
 
   {
     entries.map((entry, i) => (
@@ -37,18 +42,28 @@ const { entries } = Astro.props
           ]}
         />
 
-        <span class="relative z-[1] flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+        {/*
+          窄屏把「徽章 + 日期」整组挪到第二行：它们是固定宽且 shrink-0，留在同一行会把
+          标题的可用宽压到 158px，英文首条（带 current 徽章那条）要 246px，直接吞掉 36%。
+          设计稿是定宽画布、标题 nowrap，没有规定窄屏怎么办 —— 所以 sm 以上照设计一行排。
+        */}
+        <span class="relative z-[1] flex h-fit w-full shrink-0 flex-col items-start gap-[4px] sm:flex-row sm:items-center sm:gap-[10px]">
           {/* 标题超宽省略号：320 宽下 nowrap 标题会把右侧日期顶出视口 */}
-          <span class="min-w-0 truncate text-[15px] font-medium text-ink">{entry.title}</span>
-          {entry.badge && (
-            <span class="flex h-fit w-fit shrink-0 flex-row rounded-[10px] bg-fire-tint px-[8px] py-[3px]">
-              <span class="text-[10px] font-medium whitespace-nowrap text-brand-ink">
-                {entry.badge}
+          <span class="w-full min-w-0 truncate text-[15px] font-medium text-ink sm:w-auto">
+            {entry.title}
+          </span>
+
+          <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px] sm:w-auto sm:flex-1">
+            {entry.badge && (
+              <span class="flex h-fit w-fit shrink-0 flex-row rounded-[10px] bg-fire-tint px-[8px] py-[3px]">
+                <span class="text-[10px] font-medium whitespace-nowrap text-brand-ink">
+                  {entry.badge}
+                </span>
               </span>
-            </span>
-          )}
-          <span class="h-[1px] flex-1" />
-          <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{entry.date}</span>
+            )}
+            <span class="hidden h-[1px] flex-1 sm:block" />
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">{entry.date}</span>
+          </span>
         </span>
 
         <span class="relative z-[2] w-full text-[13px]/[23px] font-normal text-ink-soft">

@@ -1,5 +1,8 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 
 /**
  * 致谢 CREDITS · 关于页内容流，站点更新日志之下（用户定位）。
@@ -12,12 +15,12 @@ import { Icon } from 'astro-icon/components'
 const credits = [
   {
     name: 'CuteLeaf / Firefly',
-    note: '界面雏形与 Astro 基础设施',
+    note: t('about.creditsNoteA'),
     href: 'https://github.com/CuteLeaf/Firefly',
   },
   {
     name: 'YYsuni / 2025-blog-public',
-    note: '紧凑布局与首页大时钟',
+    note: t('about.creditsNoteB'),
     href: 'https://github.com/YYsuni/2025-blog-public',
   },
 ]
@@ -27,15 +30,12 @@ const credits = [
 <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[30px] px-[30px] py-[28px]">
   <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-      致 谢 CREDITS
+      {t('about.creditsCaption')}
     </span>
-    <span class="text-[12px] font-normal text-ink-muted">个人学习项目 · 边搭边学</span>
+    <span class="text-[12px] font-normal text-ink-muted">{t('about.creditsBadge')}</span>
   </div>
 
-  <p class="w-full text-[13px]/[22px] font-normal text-ink-soft">
-    这个站从设计到前后端代码都是练手之作。界面与工程上大量借鉴了两个优秀的开源博客，特此感谢
-    —— 站里学来的每一处，代码注释里都注明了出处。
-  </p>
+  <p class="w-full text-[13px]/[22px] font-normal text-ink-soft">{t('about.creditsBlurb')}</p>
 
   <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[12px] xl:flex-row">
     {
@@ -44,7 +44,7 @@ const credits = [
           href={credit.href}
           target="_blank"
           rel="noopener noreferrer"
-          class="group box-border flex h-fit w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[16px] py-[13px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
+          class="group box-border flex w-full flex-row items-center gap-[12px] rounded-[22px] bg-chip px-[16px] py-[13px] outline-1 -outline-offset-[0.5px] outline-hairline xl:flex-1"
         >
           <span class="flex size-[34px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-fire-tint">
             <Icon name="lucide:github" class="size-[16px] shrink-0 text-brand-ink" />

@@ -1,5 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   /** 文章总数，用于搜索框占位文案 */
@@ -7,17 +8,18 @@ interface Props {
 }
 
 const { total } = Astro.props
+const { t } = useI18n(Astro)
 
 /**
  * 分组切换「日 / 周 / 月 / 年 / 分类」。默认「年」，与服务端渲染的分组一致；
  * 点击后由 TimelineCard 里的脚本就地重排组头。选中态样式由 aria-pressed 驱动。
  */
 const GROUPS = [
-  { key: 'day', label: '日' },
-  { key: 'week', label: '周' },
-  { key: 'month', label: '月' },
-  { key: 'year', label: '年' },
-  { key: 'cat', label: '分类' },
+  { key: 'day', label: t('blog.groupDay') },
+  { key: 'week', label: t('blog.groupWeek') },
+  { key: 'month', label: t('blog.groupMonth') },
+  { key: 'year', label: t('blog.groupYear') },
+  { key: 'cat', label: t('blog.groupCat') },
 ] as const
 const ACTIVE = 'year'
 ---
@@ -25,7 +27,7 @@ const ACTIVE = 'year'
 <div class="flex h-[40px] w-full shrink-0 flex-row items-center justify-between gap-[12px]">
   <div
     role="group"
-    aria-label="时间分组"
+    aria-label={t('blog.groupAria')}
     class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[4px] rounded-[16px] p-[4px]"
   >
     {
@@ -49,6 +51,8 @@ const ACTIVE = 'year'
   >
     <Icon name="lucide:search" class="size-[15px] shrink-0 text-ink-muted" />
     <!-- 设计这个搜索框里没有 ⌘K 角标（快捷键照旧能用，见 SearchOverlay） -->
-    <span class="flex-1 text-[13px] font-normal text-ink-muted">搜索 {total} 篇文章…</span>
+    <span class="flex-1 truncate text-[13px] font-normal text-ink-muted">
+      {t('blog.searchPlaceholder', { n: total })}
+    </span>
   </button>
 </div>

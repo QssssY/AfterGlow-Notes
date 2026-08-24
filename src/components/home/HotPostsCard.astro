@@ -1,12 +1,14 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   /** 全部文章（新→旧），slug 与阅读上报用的一致（post.id） */
-  posts: { slug: string; title: string; href: string }[]
+  posts: { slug: string; title: string; href: string; titleLang?: string | undefined }[]
 }
 
 const { posts } = Astro.props
+const { t } = useI18n(Astro)
 const initial = posts.slice(0, 3)
 // 内联 JSON 给脚本换榜用；转义 '<' 防止标题里出现 '</script>' 截断文档
 const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
@@ -21,7 +23,7 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
   data-hot
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[30px] p-[24px]"
 >
-  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">大家在看</span>
+  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">{t('home.hotPosts')}</span>
 
   <div class="-mx-[10px] flex w-[calc(100%+20px)] shrink-0 flex-col items-start gap-[2px]">
     {
@@ -39,7 +41,11 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
           >
             {`0${i + 1}`}
           </span>
-          <span data-hot-title class="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
+          <span
+            data-hot-title
+            lang={post.titleLang}
+            class="min-w-0 flex-1 truncate text-[13px] font-medium text-ink"
+          >
             {post.title}
           </span>
           <span
@@ -60,11 +66,14 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
 
 <script>
   import { getHot, swr } from '~/scripts/api'
+  import { localeNumber } from '~/scripts/i18n'
 
   interface PostRef {
     slug: string
     title: string
     href: string
+    /** 标题语种与页面语种不一致时有值；换榜时要跟着标题一起换 */
+    titleLang?: string
   }
 
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
@@ -104,11 +113,16 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
         if (!item) return
         row.href = item.href
         const title = row.querySelector<HTMLElement>('[data-hot-title]')
-        if (title) title.textContent = item.title
+        if (title) {
+          title.textContent = item.title
+          // 换榜换的是标题，语种标注得跟着换，否则读屏软件念的是上一条的语言
+          if (item.titleLang) title.lang = item.titleLang
+          else title.removeAttribute('lang')
+        }
         const views = row.querySelector<HTMLElement>('[data-hot-views]')
         const count = row.querySelector<HTMLElement>('[data-hot-count]')
         if (views && count && item.count > 0) {
-          count.textContent = item.count.toLocaleString('en-US')
+          count.textContent = localeNumber(item.count)
           views.hidden = false
         }
       })

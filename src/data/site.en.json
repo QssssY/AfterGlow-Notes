@@ -1,0 +1,15 @@
+{
+  "title": "Afterglow Notes",
+  "description": "A writing log, newest first",
+  "bio": "Recording, digging into and extending whatever I run across, notice or think about.",
+  "buildStatus": "Deploy healthy",
+  "hosting": "TBD",
+  "repoNote": "Only repos that are still moving. Status comes from the last commit — keeping dead things listed is just debt.",
+  "finePrintBlurb": "No tracking, no ads, and no selling your data to anyone.",
+  "finePrintPoints": [
+    "Read counts are anonymous totals only — no referrers",
+    "Comments happen over email; nothing extra is stored about you",
+    "Fonts and images are all self-hosted"
+  ],
+  "finePrintReply": "I usually reply within three days. Long letters take a little longer."
+}

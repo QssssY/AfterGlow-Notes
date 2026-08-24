@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import type { ImageMetadata } from 'astro'
-import { greeting, site } from '~/config'
+import { useI18n } from '~/i18n'
 
 interface Props {
   avatar: ImageMetadata
@@ -13,6 +13,9 @@ interface Props {
 
 const { avatar, compact = false, grow = false } = Astro.props
 const size = compact ? 88 : 120
+
+const { t, c } = useI18n(Astro)
+const { site, greeting } = c
 ---
 
 <!-- Greeting Card -->
@@ -54,14 +57,24 @@ const size = compact ? 88 : 120
         compact ? 'gap-[7px]' : 'gap-[8px]',
       ]}
     >
-      <span class="font-display font-normal whitespace-nowrap text-ink">我是</span>
-      <span
-        class:list={[
-          'font-display bg-[linear-gradient(0deg,var(--brand-ink)_15%,var(--fire-warm)_100%)] bg-clip-text font-normal whitespace-nowrap text-transparent',
-          compact ? 'text-[27px]' : 'text-[34px]',
-        ]}>{site.author}</span
-      >
-      <span class="font-display font-normal whitespace-nowrap text-ink">，</span>
+      <span class="font-display font-normal whitespace-nowrap text-ink">{t('home.greetingIm')}</span>
+      {/*
+        名字和它后面的标点必须包在**没有间隙**的一层里：外层那个 gap-8 是给
+        「我是 / 名字」之间留的，标点跟着吃这份间隙的话，英文会写成
+        「Perfect_zzZ ,」（逗号前空一格，实测截到过）。中文全角「，」自带左侧
+        空白所以看不出，正是这种只在某一语种露馅的毛病。
+      */}
+      <span class="flex h-fit w-fit shrink-0 flex-row items-baseline">
+        <span
+          class:list={[
+            'font-display bg-[linear-gradient(0deg,var(--brand-ink)_15%,var(--fire-warm)_100%)] bg-clip-text font-normal whitespace-nowrap text-transparent',
+            compact ? 'text-[27px]' : 'text-[34px]',
+          ]}>{site.author}</span
+        >
+        <span class="font-display font-normal whitespace-nowrap text-ink">
+          {t('home.greetingAfterName')}
+        </span>
+      </span>
     </span>
 
     <span class="font-display w-full text-center font-normal text-ink">Nice to meet you!</span>

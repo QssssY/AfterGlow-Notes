@@ -1,5 +1,8 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 ---
 
 <!--
@@ -18,8 +21,8 @@ import { Icon } from 'astro-icon/components'
     data-like
     data-like-site
     aria-pressed="false"
-    aria-label="喜欢这个站点"
-    title="喜欢这个站点"
+    aria-label={t('home.likeSite')}
+    title={t('home.likeSite')}
     class="glass group/like flex size-[40px] cursor-pointer flex-row items-center justify-center rounded-full"
   >
     <span data-like-burst aria-hidden="true" class="pointer-events-none absolute inset-0"></span>

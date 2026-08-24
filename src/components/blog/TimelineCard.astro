@@ -1,6 +1,6 @@
 ---
-import type { ArchivePost } from './data'
-import { monthDay } from './data'
+import { useI18n } from '~/i18n'
+import type { ArchivePost } from '~/utils/posts'
 import TimelineEntry from './TimelineEntry.astro'
 
 interface Props {
@@ -10,6 +10,19 @@ interface Props {
 }
 
 const { groups, highlightId } = Astro.props
+const { t, fmt, path } = useI18n(Astro)
+
+/*
+ * 分组切换（日/周/月/年/分类）是客户端就地重排的，组头文案得脚本自己拼 ——
+ * 带占位符的模板与「未分类」由服务端写进 data-t-*，日 / 月 的日期由脚本用 Intl
+ * 按 <html lang> 排。这样三种语言下的组头都是地道写法，而不是套中文模板。
+ */
+const scriptText = {
+  'data-t-year': t('blog.yearLabel', { year: '{year}' }),
+  'data-t-week': t('blog.weekLabel', { year: '{year}', week: '{week}' }),
+  'data-t-count': t('common.postsCount', { n: '{n}' }),
+  'data-t-uncat': t('common.uncategorized'),
+}
 ---
 
 <!--
@@ -21,6 +34,7 @@ const { groups, highlightId } = Astro.props
 -->
 <div
   data-timeline
+  {...scriptText}
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[2px] rounded-[32px] max-xl:px-[18px] max-xl:py-[20px] xl:px-[28px] xl:py-[26px]"
 >
   {
@@ -34,24 +48,28 @@ const { groups, highlightId } = Astro.props
           class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px] py-[8px]"
         >
           <span data-tl-title class="text-[16px] font-medium whitespace-nowrap text-ink">
-            {group.year}年
+            {t('blog.yearLabel', { year: group.year })}
           </span>
           <span class="size-[7px] shrink-0 rounded-full bg-dot-idle" />
           <span data-tl-count class="flex-1 text-[13px] font-normal text-ink-soft">
-            {group.posts.length} 篇文章
+            {t('common.postsCount', { n: group.posts.length })}
           </span>
-          <a href="/rss.xml" class="text-[12px] font-normal whitespace-nowrap text-brand-ink">
+          <a
+            href={path('/rss.xml')}
+            class="text-[12px] font-normal whitespace-nowrap text-brand-ink"
+          >
             RSS
           </a>
         </div>
 
         {group.posts.map((post) => (
           <TimelineEntry
-            date={monthDay(post.date)}
+            date={fmt.monthDayNumeric(post.date)}
             title={post.title}
+            titleLang={post.titleLang}
             href={post.href}
             readMinutes={post.minutes}
-            tags={post.tags}
+            tags={post.tagLabels}
             highlight={post.id === highlightId}
             dateIso={post.date.toISOString()}
             category={post.category}
@@ -63,6 +81,8 @@ const { groups, highlightId } = Astro.props
 </div>
 
 <script>
+  import { fill } from '~/scripts/i18n'
+
   // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
   document.addEventListener('astro:page-load', () => {
     /**
@@ -91,24 +111,35 @@ const { groups, highlightId } = Astro.props
           return [t.getUTCFullYear(), Math.ceil(((t.getTime() - yearStart) / 86_400_000 + 1) / 7)]
         }
 
+        // 组头文案：模板由服务端写在 [data-timeline] 上，日/月的日期交给 Intl
+        const T = root.dataset
+        const tag = document.documentElement.lang || 'zh-CN'
+        const dayFmt = new Intl.DateTimeFormat(tag, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+        const monthFmt = new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'long' })
+
         const keyAndLabel = (mode: string, el: HTMLElement): [string, string] => {
           const d = new Date(el.dataset.date ?? 0)
           const y = d.getFullYear()
           switch (mode) {
             case 'day':
-              return [`${y}-${d.getMonth()}-${d.getDate()}`, `${y} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`]
+              return [`${y}-${d.getMonth()}-${d.getDate()}`, dayFmt.format(d)]
             case 'week': {
               const [wy, w] = isoWeek(d)
-              return [`${wy}-w${w}`, `${wy} 年第 ${w} 周`]
+              return [`${wy}-w${w}`, fill(T.tWeek, { year: wy, week: w })]
             }
             case 'month':
-              return [`${y}-${d.getMonth()}`, `${y} 年 ${d.getMonth() + 1} 月`]
+              return [`${y}-${d.getMonth()}`, monthFmt.format(d)]
             case 'cat': {
-              const cat = el.dataset.cat ?? '未分类'
+              // data-cat 存的已经是当前语种的分类显示名（见 utils/posts.ts）
+              const cat = el.dataset.cat || (T.tUncat ?? '')
               return [cat, cat]
             }
             default:
-              return [String(y), `${y}年`]
+              return [String(y), fill(T.tYear, { year: y })]
           }
         }
 
@@ -134,9 +165,10 @@ const { groups, highlightId } = Astro.props
             const header = headerTpl.cloneNode(true) as HTMLElement
             // 锚点 id 只在「年」视图有意义（年表面板跳的就是它）
             header.id = mode === 'year' ? `y-${key}` : ''
-            header.querySelector('[data-tl-title]')!.textContent =
-              mode === 'year' ? `${key}年` : bucket.label
-            header.querySelector('[data-tl-count]')!.textContent = `${bucket.items.length} 篇文章`
+            header.querySelector('[data-tl-title]')!.textContent = bucket.label
+            header.querySelector('[data-tl-count]')!.textContent = fill(T.tCount, {
+              n: bucket.items.length,
+            })
             next.push(header, ...bucket.items)
             i += 1
           }

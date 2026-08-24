@@ -1,11 +1,13 @@
 ---
 import type { MarkdownHeading } from 'astro'
+import { useI18n } from '~/i18n'
 
 interface Props {
   headings: MarkdownHeading[]
 }
 
 const { headings } = Astro.props
+const { t } = useI18n(Astro)
 // 设计里 H3 用 pl-[12px] 表达层级
 const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
 ---
@@ -14,7 +16,7 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
   items.length > 0 && (
     <nav class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[26px] p-[22px]">
       <span class="text-[12px] font-normal tracking-[0.8px] whitespace-nowrap text-ink-soft">
-        目录
+        {t('post.tocCaption')}
       </span>
 
       {/* 长文目录卡内限高自滚（YYsuni 同款 300），粘性组才能保证一屏装得下；

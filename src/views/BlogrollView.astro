@@ -1,0 +1,77 @@
+---
+import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import StatsPageHead from '~/components/StatsPageHead.astro'
+import ApplyPanel from '~/components/blogroll/ApplyPanel.astro'
+import BlogCard from '~/components/blogroll/BlogCard.astro'
+import { useI18n } from '~/i18n'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import { blogrollAvatar } from '~/utils/blogroll-avatars'
+
+/*
+ * 头像按 domain 从 images/blogroll/ 里 glob（utils/blogroll-avatars.ts）：
+ * 管理端新增友链后传一张同域名的图就有头像，没图退回首字 + 渐变，不缺角。
+ */
+const { t, c } = useI18n(Astro)
+const { blogroll } = c
+
+// 设计写的是 18 个 / 9 年；按真实数据算
+const total = blogroll.length
+const oldest = new Date().getFullYear() - Math.min(...blogroll.map((blog) => blog.since))
+
+// 设计是两行定宽三列；移动端按 Home 的规则收成单列
+const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
+---
+
+<BaseLayout title={t('blogroll.title')} description={t('blogroll.subtitle')}>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
+
+  <div class="flex w-full flex-row items-start gap-[48px]">
+    {/* 原版 = 完整 Sidebar（原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
+
+    <div class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]">
+      <StatsPageHead
+        title={t('blogroll.title')}
+        subtitle={t('blogroll.subtitle')}
+        stats={[
+          { value: String(total), label: t('blogroll.statCount') },
+          { value: String(oldest), label: t('blogroll.statOldest') },
+        ]}
+      />
+
+      <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[24px]">
+        {
+          rows.map((row) => (
+            <div class="flex h-fit w-full shrink-0 flex-col items-stretch gap-[24px] xl:flex-row">
+              {row.map((blog) => (
+                <BlogCard
+                  name={blog.name}
+                  initial={blog.initial}
+                  href={blog.href}
+                  domain={blog.domain}
+                  desc={blog.desc}
+                  tags={blog.tags}
+                  avatar={blogrollAvatar(blog.domain)}
+                  from={blog.from}
+                  to={blog.to}
+                  initialColor={blog.initialColor}
+                />
+              ))}
+            </div>
+          ))
+        }
+
+        <ApplyPanel />
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block">
+    <Footer license={t('footer.licenseBlogroll', { title: c.site.title })} />
+  </div>
+</BaseLayout>

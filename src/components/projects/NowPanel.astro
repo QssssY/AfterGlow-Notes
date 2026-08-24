@@ -1,6 +1,9 @@
 ---
 import Panel from '~/components/Panel.astro'
-import { repoNote, repos } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
+const { repos, repoNote } = c
 
 /**
  * 状态 NOW
@@ -14,13 +17,13 @@ import { repoNote, repos } from '~/config'
  */
 function statusOf(pushed: string) {
   const days = Math.floor((Date.now() - new Date(pushed).getTime()) / 86_400_000)
-  if (days <= 30) return { label: '在推进', dot: 'bg-brand' }
-  if (days <= 180) return { label: '偶尔动', dot: 'bg-leaf' }
-  return { label: '搁置中', dot: 'bg-dot-idle' }
+  if (days <= 30) return { label: t('projects.statusActive'), dot: 'bg-brand' }
+  if (days <= 180) return { label: t('projects.statusSlow'), dot: 'bg-leaf' }
+  return { label: t('projects.statusIdle'), dot: 'bg-dot-idle' }
 }
 ---
 
-<Panel caption="状 态  NOW">
+<Panel caption={t('projects.nowCaption')}>
   <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[9px]">
     {
       repos.map((repo) => {

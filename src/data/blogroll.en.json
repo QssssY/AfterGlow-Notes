@@ -1,0 +1,38 @@
+[
+  {
+    "href": "https://www.ruanyifeng.com/blog/",
+    "name": "Ruan Yifeng",
+    "desc": "A weekly tech digest, plus introductory tutorials that read better than the official docs.",
+    "tags": ["Weekly", "Tutorials"]
+  },
+  {
+    "href": "https://www.zhangxinxu.com",
+    "name": "Zhang Xinxu",
+    "desc": "Archaeology of CSS and DOM details — one property can turn up browser differences from a decade ago.",
+    "tags": ["CSS", "Frontend"]
+  },
+  {
+    "href": "https://sspai.com",
+    "name": "SSPAI",
+    "desc": "Productivity tools and digital life. My first stop to see how other people actually use an app.",
+    "tags": ["Productivity", "Digital life"]
+  },
+  {
+    "href": "https://www.bilibili.com",
+    "name": "bilibili",
+    "desc": "Worth browsing for both the tech section and the documentaries; sometimes the comments carry more than the video.",
+    "tags": ["Video", "Tech"]
+  },
+  {
+    "href": "https://juejin.cn",
+    "name": "Juejin",
+    "desc": "The hub for Chinese frontend writing — first-hand notes on a new framework's rough edges usually land here.",
+    "tags": ["Community", "Frontend"]
+  },
+  {
+    "href": "https://www.zhihu.com",
+    "name": "Zhihu",
+    "desc": "Long-form quality varies, but the people who write in earnest are still worth subscribing to.",
+    "tags": ["Q&A", "Columns"]
+  }
+]

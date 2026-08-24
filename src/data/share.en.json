@@ -1,0 +1,98 @@
+[
+  {
+    "href": "https://ray.so",
+    "title": "Ray.so — export code snippets as good-looking images",
+    "desc": "No more screenshotting when you share code. Colours and window padding are adjustable, and the exported PNG drops straight into an article.",
+    "category": "Tools"
+  },
+  {
+    "href": "https://www.warp.dev",
+    "title": "Warp — a modern terminal with block output",
+    "desc": "Commands and their output are split into collapsible blocks, so scrolling back through history stops being a fight. Completions are smarter than a default shell too.",
+    "category": "Tools"
+  },
+  {
+    "href": "https://www.fontshare.com",
+    "title": "Fontshare — free fonts you can use commercially",
+    "desc": "Every family ships complete weights, and the site suggests pairings up front — easier than digging through Google Fonts when you need a display face.",
+    "category": "Tools"
+  },
+  {
+    "href": "https://github.com/sparanoid/chinese-copywriting-guidelines",
+    "title": "Chinese Copywriting Guidelines",
+    "desc": "Clear rules for spacing between Chinese and Latin text, full- vs half-width punctuation, and number usage. Handy to cite when the team argues about whether a space belongs there.",
+    "category": "Articles"
+  },
+  {
+    "href": "https://corecursive.com",
+    "title": "CoRecursive — the stories behind the code",
+    "desc": "Each episode has an author explain why they designed it that way. Better than docs for understanding the trade-offs behind a choice, and just right for a commute.",
+    "category": "Podcasts"
+  },
+  {
+    "href": "https://thebookofshaders.com",
+    "title": "The Book of Shaders — fragment shaders from zero",
+    "desc": "From GLSL basics to noise and pattern generation, with every example editable in the browser and live. The shortest path into graphics.",
+    "category": "Tutorials"
+  },
+  {
+    "href": "https://github.com/doocs/md",
+    "title": "doocs/md — a Markdown editor for WeChat articles",
+    "desc": "Markdown on the left, live layout on the right. Theme, size and code highlighting are all configurable, and one copy pastes into the WeChat editor without breaking styles.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/microsoft/PowerToys",
+    "title": "PowerToys — Microsoft's own Windows power pack",
+    "desc": "FancyZones for custom tiling, PowerRename for bulk renames, a colour picker, Alt+Space quick launch. One install replaces a pile of little utilities.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/files-community/Files",
+    "title": "Files — a modern Windows file manager",
+    "desc": "Tabs, dual-pane copying, cloud sync badges. What Explorer should have grown into — the open-source community built it for Microsoft.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/localsend/localsend",
+    "title": "LocalSend — cross-platform transfers over your LAN",
+    "desc": "Move files between phone and laptop with no server and no cable. Clients on every platform: an open-source AirDrop that works everywhere.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/excalidraw/excalidraw",
+    "title": "Excalidraw — a hand-drawn whiteboard",
+    "desc": "Architecture diagrams and rough flows come out relaxed; nothing has to be pixel-aligned to look right. Share a link for live collaboration, and the SVG export is clean.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/CorentinTh/it-tools",
+    "title": "IT Tools — a developer's utility drawer",
+    "desc": "Timestamps, JWT decoding, regex testing, Base64, UUIDs… a hundred-odd everyday tools on one page, and you can self-host a copy.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/upscayl/upscayl",
+    "title": "Upscayl — open-source AI image upscaling",
+    "desc": "One click to super-resolve old photos and blurry images. The model runs locally with no uploads, and a modest GPU is enough. It has rescued several assets for me.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/Molunerfinn/PicGo",
+    "title": "PicGo — an image-host uploader",
+    "desc": "Drag a screenshot in and it uploads to GitHub / Qiniu / SM.MS, leaving a Markdown image link on your clipboard. Zero friction when illustrating a post.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/agalwood/Motrix",
+    "title": "Motrix — a clean all-purpose downloader",
+    "desc": "HTTP, BitTorrent and magnet links in one client. The interface is tidy, with no ads or bundled extras, and the download list is pleasant to look at.",
+    "category": "Open source"
+  },
+  {
+    "href": "https://github.com/penpot/penpot",
+    "title": "Penpot — open-source design collaboration",
+    "desc": "A Figma alternative in the browser. Your design data stays yours and can be self-hosted, and output is SVG/CSS — unusually friendly to developers.",
+    "category": "Open source"
+  }
+]

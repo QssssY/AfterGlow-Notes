@@ -8,30 +8,32 @@
  * 取哪三篇由页面决定（标签有交集的最近三篇），这里只负责画。
  * 一篇都没有就整块不渲染 —— 空面板比没有面板更难看。
  */
+import { useI18n } from '~/i18n'
+
 interface Props {
-  posts: readonly { title: string; href: string; date: Date }[]
+  posts: readonly { title: string; href: string; date: Date; titleLang?: string | undefined }[]
 }
 
 const { posts } = Astro.props
-
-const pad = (n: number) => String(n).padStart(2, '0')
-const stamp = (d: Date) => `${d.getFullYear()} / ${pad(d.getMonth() + 1)}`
+const { t, fmt } = useI18n(Astro)
 ---
 
 {
   posts.length > 0 && (
     <nav class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[12px] rounded-[26px] p-[22px]">
       <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-        相 关 RELATED
+        {t('post.relatedCaption')}
       </span>
 
       {posts.map((post, i) => (
         <>
           {i > 0 && <span class="h-[1px] w-full shrink-0 bg-hairline" />}
           <a href={post.href} class="flex h-fit w-full shrink-0 flex-col items-start gap-[3px]">
-            <span class="w-full text-[13px]/[1.4] font-medium text-ink">{post.title}</span>
+            <span lang={post.titleLang} class="w-full text-[13px]/[1.4] font-medium text-ink">
+              {post.title}
+            </span>
             <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">
-              {stamp(post.date)}
+              {fmt.yearSlashMonth(post.date)}
             </span>
           </a>
         </>

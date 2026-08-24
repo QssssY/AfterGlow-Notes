@@ -1,6 +1,9 @@
 ---
 import Panel from '~/components/Panel.astro'
-import { stack } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
+const { stack } = c
 
 /**
  * 构成 STACK
@@ -19,7 +22,7 @@ const barColor = {
 } as const
 ---
 
-<Panel caption="构 成  STACK">
+<Panel caption={t('projects.stackCaption')}>
   <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[10px]">
     {
       stack.map((row) => (

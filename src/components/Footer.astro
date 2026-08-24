@@ -1,12 +1,17 @@
 ---
-import { site } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
 
 interface Props {
-  /** License 行文案按页面不同：文章页 CC BY-NC、项目页 MIT、About 页托管信息 */
+  /**
+   * License 行文案按页面不同：文章页 CC BY-NC、项目页 MIT、About 页托管信息。
+   * 各页自己用 t('footer.license*') 取词后传进来 —— 页面才知道自己是哪一页。
+   */
   license?: string
 }
 
-const { license = `文章采用 CC BY-NC 4.0 授权 · ${site.title}` } = Astro.props
+const { license = t('footer.licenseDefault', { title: c.site.title }) } = Astro.props
 ---
 
 <!-- Footer（5 个桌面页共用，仅 License 行文案不同） -->
@@ -20,7 +25,7 @@ const { license = `文章采用 CC BY-NC 4.0 授权 · ${site.title}` } = Astro.
   </div>
 
   <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
-    © {site.since} {site.author} · 由 Astro 与一点耐心构建
+    {t('footer.copyright', { year: c.site.since, author: c.site.author })}
   </span>
 
   <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted opacity-[0.8]">

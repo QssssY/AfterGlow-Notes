@@ -1,17 +1,28 @@
 ---
 import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
-import { email, isNavActive, nav, site, socials, themeChoices } from '~/config'
+import { email } from '~/config'
+import { useI18n } from '~/i18n'
 import { siteAvatar as avatarSrc } from '~/utils/site-images'
+import { handleOf } from '~/utils/social'
 import BilibiliIcon from './BilibiliIcon.astro'
+import LangSwitch from './LangSwitch.astro'
 import NavItem from './NavItem.astro'
 
-const pathname = Astro.url.pathname
+const { t, c, nav, path } = useI18n(Astro)
+const { site, socials } = c
 
 // 社交按钮从管理端可改的 socials 里挑：第一颗深色款进 GitHub 位、
 // 第一颗玻璃款进 bilibili 位；对应款式缺席时按顺序兜底，不让构建崩
 const github = socials.find((s) => s.variant === 'dark') ?? socials[0]!
 const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.length - 1]!
+
+// 外观三档 —— 值是写进 localStorage 的键（与语言无关），文案按语种取
+const themeChoices = [
+  { value: 'light', label: t('theme.light') },
+  { value: 'dark', label: t('theme.dark') },
+  { value: 'auto', label: t('theme.auto') },
+] as const
 ---
 
 <!-- Sidebar
@@ -25,7 +36,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
   <!-- Brand -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[13px]">
     <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px]">
-      <a href="/" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[9px]">
+      <a href={path('/')} class="flex h-fit w-fit shrink-0 flex-row items-center gap-[9px]">
         <span
           class="flex size-[26px] shrink-0 flex-row items-center justify-center rounded-[13px] bg-fire-tint"
         >
@@ -38,9 +49,9 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
         </span>
       </a>
       <a
-        href="/rss.xml"
-        aria-label="RSS 订阅"
-        title="RSS 订阅"
+        href={path('/rss.xml')}
+        aria-label={t('common.rss')}
+        title={t('common.rss')}
         class="hairline-box flex h-[28px] w-[30px] shrink-0 flex-row items-center justify-center rounded-[12px]"
       >
         <Icon name="lucide:rss" class="size-[14px] shrink-0 text-ink-soft" />
@@ -69,7 +80,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
   <!-- General Group -->
   <nav data-nav class="relative flex h-fit w-full shrink-0 flex-col items-start gap-[8px]">
     <span class="text-[12px] font-normal tracking-[1.2px] whitespace-nowrap text-ink-soft">
-      GENERAL
+      {t('sidebar.general')}
     </span>
     <!-- 滑动高亮：跟着指针在条目间弹跳（YYsuni nav-hover 胶囊的 CSS 版），
          位置由下面的脚本摆，键盘 focus 一并跟随；不动激活态那块 glass-solid -->
@@ -85,28 +96,26 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
       class="glass-solid pointer-events-none absolute left-0 w-full rounded-[26px] opacity-0"></span>
     {
       nav.map((item) => (
-        <NavItem
-          label={item.label}
-          icon={item.icon}
-          href={item.href}
-          active={isNavActive(item.match, pathname)}
-          full
-        />
+        <NavItem label={item.label} icon={item.icon} href={item.href} active={item.active} full />
       ))
     }
   </nav>
 
-  <!--
+  {/*
     Social Row —— 设计这轮新加的一行，首页顶部那排大按钮挪到了这里。
     Github 是 Social Button 组件的深色实例，但尺寸另一套（h30 / r12 / 图标 16 /
     Averia 14），所以没复用 SocialButton.astro（那份是 h42 / r14 / 图标 22）。
-  -->
+
+    按钮的 title 从 socials.json 的地址现推（形如「GitHub · 账号名」），不写死账号 ——
+    fork 的人在管理台「社交链接」改完地址，这里要跟着变。
+    这里用 JSX 注释而不是 HTML 注释：后者会原样进产物，而这段是给读代码的人看的。
+  */}
   <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
     <a
       href={github.href}
       target="_blank"
       rel="noopener noreferrer"
-      title="GitHub · QssssY"
+      title={`${github.label} · ${handleOf(github.href)}`}
       class="flex h-[30px] flex-1 flex-row items-center justify-center gap-[8px] rounded-[12px] bg-btn-dark px-[12px] outline-[1.5px] -outline-offset-[0.75px] outline-sheen shadow-[0_24px_44px_-16px_var(--shadow-soft),0_0_20px_0_var(--sheen)] backdrop-blur-[4px]"
     >
       <Icon name="lucide:github" class="size-[16px] shrink-0 text-white" />
@@ -119,8 +128,8 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
       href={bilibili.href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="bilibili 空间"
-      title="bilibili 空间"
+      aria-label={t('sidebar.bilibili')}
+      title={t('sidebar.bilibili')}
       class="hairline-box flex h-[30px] w-fit shrink-0 flex-row items-center justify-center rounded-[12px] px-[8px]"
     >
       <BilibiliIcon class="size-[15px] shrink-0 text-ink-soft" />
@@ -131,8 +140,8 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
     <button
       type="button"
       data-copy-mail
-      aria-label="复制邮箱"
-      title={`点击复制邮箱 · ${email}`}
+      aria-label={t('sidebar.copyMail')}
+      title={t('sidebar.copyMailTitle', { email })}
       class="hairline-box flex h-[30px] w-fit shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] px-[8px]"
     >
       <Icon name="lucide:mail" data-mail-icon class="size-[15px] shrink-0 text-ink-soft" />
@@ -228,11 +237,11 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
   <!-- Appearance Group -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-      APPEARANCE
+      {t('sidebar.appearance')}
     </span>
     <div
       role="radiogroup"
-      aria-label="外观"
+      aria-label={t('theme.aria')}
       data-theme-switch
       class="hairline-box flex h-fit w-full shrink-0 flex-row items-center gap-[2px] rounded-[12px] p-[3px]"
     >
@@ -263,24 +272,24 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
        控件样式复用上面外观切换那套；绑定在 BaseLayout（data-layout-choice）。 -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-      LAYOUT
+      {t('sidebar.layout')}
     </span>
     <div
       role="radiogroup"
-      aria-label="布局"
+      aria-label={t('layout.aria')}
       class="hairline-box flex h-fit w-full shrink-0 flex-row items-center gap-[2px] rounded-[12px] p-[3px]"
     >
       {
         [
-          { value: 'classic', label: '原版' },
-          { value: 'compact', label: '紧凑' },
+          { value: 'classic', label: t('layout.classic'), hint: t('layout.classicHint') },
+          { value: 'compact', label: t('layout.compact'), hint: t('layout.compactHint') },
         ].map((choice) => (
           <button
             type="button"
             role="radio"
             aria-checked="false"
             data-layout-choice={choice.value}
-            title={choice.value === 'classic' ? '每页都有完整侧栏' : '导航缩成图标条，内容更宽'}
+            title={choice.hint}
             class="group flex h-[26px] flex-1 flex-row items-center justify-center gap-[5px] rounded-[6px] outline-1 -outline-offset-[0.5px] outline-transparent aria-checked:bg-card-solid aria-checked:outline-hairline"
           >
             <Icon
@@ -295,4 +304,8 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
       }
     </div>
   </div>
+
+  <!-- Language Group —— 与上面两组同款分段控件，摆在最后一格：
+       语言是最少改动的一项，放外观和布局之后符合「越常用越靠上」 -->
+  <LangSwitch variant="segment" />
 </aside>

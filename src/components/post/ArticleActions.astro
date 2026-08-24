@@ -1,6 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { relativeDay } from '~/utils/post'
+import { useI18n } from '~/i18n'
 
 interface Props {
   /** 文章 id，点赞的本机存储按它区分 */
@@ -9,6 +9,7 @@ interface Props {
 }
 
 const { slug, updated } = Astro.props
+const { t, fmt } = useI18n(Astro)
 ---
 
 <!-- Actions -->
@@ -23,6 +24,8 @@ const { slug, updated } = Astro.props
     data-like
     data-like-slug={slug}
     aria-pressed="false"
+    data-t-like={t('post.like')}
+    data-t-liked={t('post.liked')}
     class="group/like relative flex h-fit w-fit shrink-0 cursor-pointer flex-row items-center gap-[8px] rounded-[22px] bg-like-tint px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-[#F5C0CB66]"
   >
     <span data-like-burst aria-hidden="true" class="pointer-events-none absolute inset-0"></span>
@@ -41,18 +44,21 @@ const { slug, updated } = Astro.props
     </span>
     <span
       data-like-label
-      class="text-[13px] font-medium whitespace-nowrap text-like-text transition-colors">喜欢</span
+      class="text-[13px] font-medium whitespace-nowrap text-like-text transition-colors"
+      >{t('post.like')}</span
     >
   </button>
 
   <button
     type="button"
     data-copy-link
+    data-t-copied={t('common.copied')}
+    data-t-failed={t('common.copyFailed')}
     class="flex h-fit w-fit shrink-0 cursor-pointer flex-row items-center gap-[8px] rounded-[22px] bg-chip px-[18px] py-[10px] outline-1 -outline-offset-[0.5px] outline-card-border"
   >
     <Icon name="lucide:link" class="size-[16px] shrink-0 text-ink-soft" />
     <span data-copy-label class="text-[13px] font-normal whitespace-nowrap text-ink-soft">
-      复制链接
+      {t('common.copyLink')}
     </span>
   </button>
 
@@ -61,7 +67,7 @@ const { slug, updated } = Astro.props
   {
     updated && (
       <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
-        最后更新于 {relativeDay(updated)}
+        {t('post.lastUpdated', { when: fmt.relativeDay(updated) })}
       </span>
     )
   }
@@ -101,7 +107,8 @@ const { slug, updated } = Astro.props
       const render = () => {
         button.setAttribute('aria-pressed', String(liked))
         if (label) {
-          const prefix = liked ? '已喜欢' : '喜欢'
+          // 两种态的文案由服务端写在按钮上（data-t-like / data-t-liked）
+          const prefix = (liked ? button.dataset.tLiked : button.dataset.tLike) ?? ''
           label.textContent = total !== null && total > 0 ? `${prefix} · ${total}` : prefix
         }
       }
@@ -156,7 +163,7 @@ const { slug, updated } = Astro.props
         const ok = await copyText(location.href)
         if (label) {
           const original = label.textContent
-          label.textContent = ok ? '已复制' : '复制失败，请手动复制地址'
+          label.textContent = (ok ? button.dataset.tCopied : button.dataset.tFailed) ?? ''
           setTimeout(() => {
             label.textContent = original
           }, 1600)

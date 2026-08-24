@@ -1,7 +1,10 @@
 ---
 import { Icon } from 'astro-icon/components'
 import Panel from '~/components/Panel.astro'
-import { finePrint } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
+const { finePrint } = c
 
 /**
  * 细则 FINE PRINT
@@ -11,7 +14,7 @@ import { finePrint } from '~/config'
  */
 ---
 
-<Panel caption="细 则  FINE PRINT">
+<Panel caption={t('about.finePrintCaption')}>
   <p class="w-full text-[12px]/[1.55] font-normal text-ink-soft">{finePrint.blurb}</p>
 
   {

@@ -1,5 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   /** 展示用的文章链接（域名 + 路径，域名跟 astro.config 的 site 走） */
@@ -10,22 +11,20 @@ interface Props {
 }
 
 const { permalink, shareUrl, title, updated } = Astro.props
+const { t, fmt } = useI18n(Astro)
 
-const pad = (n: number) => String(n).padStart(2, '0')
-const stamp = updated
-  ? ` · 最后修改于 ${updated.getFullYear()} · ${pad(updated.getMonth() + 1)} · ${pad(updated.getDate())}`
-  : ''
+const stamp = updated ? t('post.lastModified', { date: fmt.dateDots(updated) }) : ''
 
 const shares = [
-  { icon: 'link', label: '复制链接', href: shareUrl },
+  { icon: 'link', label: t('common.copyLink'), href: shareUrl },
   {
     icon: 'twitter',
-    label: '分享到 X',
+    label: t('post.shareX'),
     href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`,
   },
   {
     icon: 'mail',
-    label: '邮件分享',
+    label: t('post.shareMail'),
     href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`,
   },
 ]
@@ -44,9 +43,9 @@ const shares = [
     {/* min-w-0：没有它这列拒绝收窄到 URL 的固有宽度以下，窄屏会把右侧按钮顶穿卡片；
         URL 里没有可断点，配 break-all 让它能在任意字符处换行 */}
     <span class="flex h-fit min-w-0 flex-1 flex-col items-start gap-[4px]">
-      <span class="text-[13.5px] font-bold whitespace-nowrap text-ink">本文采用 CC BY-NC 4.0 授权</span>
+      <span class="text-[13.5px] font-bold whitespace-nowrap text-ink">{t('post.license')}</span>
       <span class="w-full text-[12.5px] font-normal break-all text-ink-soft">
-        转载请注明出处 · {permalink}{stamp}
+        {t('post.licenseNote', { permalink, stamp })}
       </span>
     </span>
   </span>

@@ -1,12 +1,29 @@
 ---
 import { Icon } from 'astro-icon/components'
 import { nowPlaying } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 
 const tracks = nowPlaying.playlist
 // fork 没有歌源时 playlist.json 清成 [] —— 整张卡不渲染，别让空歌单炸构建
 const first = tracks[0]
-const trackLabel = (t: { title: string; artist?: string }) =>
-  t.artist ? `${t.title} — ${t.artist}` : t.title
+const trackLabel = (track: { title: string; artist?: string }) =>
+  track.artist ? `${track.title} — ${track.artist}` : track.title
+
+/*
+ * 脚本要用的文案（换曲时重算 aria-label、切模式时报当前模式、纯音乐提示）
+ * 由服务端写进 data-* 交给脚本，见 scripts/i18n.ts 的说明 —— 不把整本字典打进浏览器。
+ * 带 {} 的是模板，脚本用 fill() 填。
+ */
+const scriptText = {
+  'data-np-t-play': t('player.play', { title: '{title}' }),
+  'data-np-t-mode': t('player.modeState', { mode: '{mode}' }),
+  'data-np-t-order': t('player.modeOrder'),
+  'data-np-t-shuffle': t('player.modeShuffle'),
+  'data-np-t-one': t('player.modeOne'),
+  'data-np-t-instrumental': t('player.instrumental'),
+}
 ---
 
 <!--
@@ -30,8 +47,9 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   role="button"
   tabindex="0"
   aria-pressed="false"
-  aria-label={`播放 ${trackLabel(first)}`}
-  title="点击播放 / 暂停"
+  aria-label={t('player.play', { title: trackLabel(first) })}
+  title={t('player.toggle')}
+  {...scriptText}
   class="glass group/np relative box-border flex h-fit w-full shrink-0 cursor-pointer flex-col items-start justify-center gap-[10px] rounded-[30px] p-[20px]"
 >
   <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
@@ -56,15 +74,15 @@ const trackLabel = (t: { title: string; artist?: string }) =>
       <path d="M18 5v13" />
       <path d="M22 10v3" />
     </svg>
-    <span class="flex-1 text-[12px] font-normal text-ink-soft">正在听</span>
+    <span class="flex-1 text-[12px] font-normal text-ink-soft">{t('player.caption')}</span>
     {
       tracks.length > 1 && (
         <>
           <button
             type="button"
             data-np-prev
-            aria-label="上一首"
-            title="上一首"
+            aria-label={t('player.prev')}
+            title={t('player.prev')}
             class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
           >
             <Icon name="lucide:skip-back" class="size-[13px] shrink-0" />
@@ -72,8 +90,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
           <button
             type="button"
             data-np-next
-            aria-label="下一首"
-            title="下一首"
+            aria-label={t('player.next')}
+            title={t('player.next')}
             class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
           >
             <Icon name="lucide:skip-forward" class="size-[13px] shrink-0" />
@@ -81,8 +99,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
           <button
             type="button"
             data-np-mode
-            aria-label="播放模式"
-            title="播放模式"
+            aria-label={t('player.mode')}
+            title={t('player.mode')}
             class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
           >
             <Icon name="lucide:repeat" data-np-mode-order class="size-[13px] shrink-0" />
@@ -92,8 +110,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
           <button
             type="button"
             data-np-toggle-list
-            aria-label="播放列表"
-            title={`播放列表（${tracks.length} 首）`}
+            aria-label={t('player.playlist')}
+            title={t('player.playlistCount', { n: tracks.length })}
             class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
           >
             <Icon name="lucide:list-music" class="size-[13px] shrink-0" />
@@ -104,8 +122,8 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     <button
       type="button"
       data-np-vol-btn
-      aria-label="音量"
-      title="音量"
+      aria-label={t('player.volume')}
+      title={t('player.volume')}
       class="flex size-[22px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[8px] text-ink-muted opacity-0 transition-opacity group-hover/np:opacity-100 hover:bg-chip max-xl:opacity-100"
     >
       <Icon name="lucide:volume-2" data-np-vol-on class="size-[13px] shrink-0" />
@@ -167,7 +185,9 @@ const trackLabel = (t: { title: string; artist?: string }) =>
         hidden
         class="glass absolute inset-x-[6px] top-[calc(100%+10px)] z-10 box-border max-h-[272px] cursor-default overflow-y-auto rounded-[24px] p-[8px] shadow-[0_26px_52px_-22px_var(--shadow-soft)]"
       >
-        {tracks.map((t, i) => (
+        {/* 循环变量原先叫 t，会遮蔽 i18n 的取词函数 —— 改名 track，别让下次加一句
+            译文时踩到「t 是歌还是翻译函数」的坑 */}
+        {tracks.map((track, i) => (
           <button
             type="button"
             data-np-item={i}
@@ -176,10 +196,10 @@ const trackLabel = (t: { title: string; artist?: string }) =>
             <span class="w-[20px] shrink-0 text-[11px] tabular-nums opacity-60">
               {String(i + 1).padStart(2, '0')}
             </span>
-            <span class="min-w-0 flex-1 truncate font-medium">{t.title}</span>
-            {t.artist && (
+            <span class="min-w-0 flex-1 truncate font-medium">{track.title}</span>
+            {track.artist && (
               <span class="max-w-[45%] shrink-0 truncate text-[11px] text-ink-muted">
-                {t.artist}
+                {track.artist}
               </span>
             )}
           </button>
@@ -203,7 +223,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
         min="0"
         max="100"
         step="1"
-        aria-label="音量"
+        aria-label={t('player.volume')}
         class="min-w-0 flex-1 cursor-pointer"
       />
       <span data-np-vol-pct class="w-[36px] shrink-0 text-right text-[11px] tabular-nums text-ink-muted"></span>
@@ -214,6 +234,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 
 <script>
   import { musicBase, nowPlaying } from '~/config'
+  import { fill } from '~/scripts/i18n'
 
   /**
    * 播放器控制层。音频实体是模块级的 new Audio() —— 不进 DOM：
@@ -260,11 +281,16 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   const MODE_KEY = 'afterglow:playmode'
   const MODES = ['order', 'shuffle', 'one'] as const
   type PlayMode = (typeof MODES)[number]
-  const MODE_LABEL: Record<PlayMode, string> = {
-    order: '顺序播放',
-    shuffle: '随机播放',
-    one: '单曲循环',
-  }
+  /*
+   * 模式名与「播放 X」「纯音乐」这几句由服务端写在卡片的 data-np-t-* 上
+   * （见组件顶部的 scriptText）。第一张卡就够 —— 同一页两张卡语种必然相同。
+   * 拿不到时给空串：宁可少一句提示，也不要在英文页面上蹦出中文。
+   */
+  const text = (key: string) =>
+    document.querySelector<HTMLElement>('[data-np]')?.dataset[key] ?? ''
+  const modeLabel = (m: PlayMode) =>
+    text(m === 'order' ? 'npTOrder' : m === 'shuffle' ? 'npTShuffle' : 'npTOne')
+
   let mode: PlayMode = 'order'
   const savedMode = localStorage.getItem(MODE_KEY)
   if ((MODES as readonly string[]).includes(savedMode ?? '')) mode = savedMode as PlayMode
@@ -559,7 +585,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
   const updateModeUI = () => {
     for (const b of binds) {
       if (!b.modeBtn) continue
-      const label = `播放模式：${MODE_LABEL[mode]}（点击切换）`
+      const label = fill(text('npTMode'), { mode: modeLabel(mode) })
       b.modeBtn.title = label
       b.modeBtn.setAttribute('aria-label', label)
       b.modeBtn.querySelector('[data-np-mode-order]')?.classList.toggle('hidden', mode !== 'order')
@@ -579,11 +605,11 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     player.src = musicUrl(track.src)
     for (const b of binds) {
       if (b.progress) b.progress.style.width = '0%'
-      b.card.setAttribute('aria-label', `播放 ${trackLabel(track)}`)
+      b.card.setAttribute('aria-label', fill(text('npTPlay'), { title: trackLabel(track) }))
     }
     markCurrent()
     // 有词的曲先亮曲名等第一句；纯音乐整曲就这一行 —— 直接说清楚，别挂一整首歌的标题
-    swapLine(track.lrc ? trackLabel(track) : '纯音乐，请欣赏')
+    swapLine(track.lrc ? trackLabel(track) : text('npTInstrumental'))
     loadLrc(track)
     if (autoplay) player.play().catch(() => setLive(false))
   }

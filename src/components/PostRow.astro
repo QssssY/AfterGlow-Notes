@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets'
 import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   /** 设计是两位数序号，如 07 */
@@ -10,10 +11,12 @@ interface Props {
   category: string
   title: string
   excerpt: string
+  /** 标题与摘要的语种，与页面语种不一致时传（见 ArchivePost.titleLang） */
+  titleLang?: string | undefined
   href?: string | undefined
   readMinutes: number
-  /** 设计写法：1.2k 字 */
-  words: string
+  /** 原始字数；「1.2k 字 / 1.2k words」的写法由 fmt 按语种给 */
+  words: number
   /** 真实封面图；没有时退回设计的渐变底 + 图标 */
   cover?: ImageMetadata | undefined
   coverIcon?: string
@@ -25,15 +28,17 @@ const {
   category,
   title,
   excerpt,
+  titleLang,
   href,
   readMinutes,
   words,
   cover,
   coverIcon = 'feather',
 } = Astro.props
+const { t, fmt } = useI18n(Astro)
 
 const pad = (n: number) => String(n).padStart(2, '0')
-const dateLabel = `${date.getFullYear()} · ${pad(date.getMonth() + 1)} · ${pad(date.getDate())}`
+const dateLabel = fmt.dateDots(date)
 const indexLabel = typeof index === 'number' ? pad(index) : index
 ---
 
@@ -62,20 +67,24 @@ const indexLabel = typeof index === 'number' ? pad(index) : index
       <span class="text-[13px] font-bold whitespace-nowrap text-leaf-deep">{category}</span>
     </span>
 
-    <span class="w-full text-[23px]/[32px] font-bold text-ink">{title}</span>
+    <span lang={titleLang} class="w-full text-[23px]/[32px] font-bold text-ink">{title}</span>
 
-    <span class="w-full text-[15px]/[26px] font-normal text-ink-soft">{excerpt}</span>
+    <span lang={titleLang} class="w-full text-[15px]/[26px] font-normal text-ink-soft">
+      {excerpt}
+    </span>
 
     <span class="flex h-[19px] w-fit shrink-0 flex-row items-center gap-[16px]">
       <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
         <Icon name="lucide:clock-3" class="size-[13px] shrink-0 text-ink-muted" />
         <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-muted">
-          {readMinutes} 分钟
+          {t('common.readMinutes', { n: readMinutes })}
         </span>
       </span>
       <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
         <Icon name="lucide:file-text" class="size-[13px] shrink-0 text-ink-muted" />
-        <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-muted">{words}</span>
+        <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-muted">
+          {fmt.wordsLabel(words)}
+        </span>
       </span>
     </span>
   </span>

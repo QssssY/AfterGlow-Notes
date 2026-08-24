@@ -1,0 +1,98 @@
+[
+  {
+    "href": "https://ray.so",
+    "title": "Ray.so — コード片をきれいな画像に書き出す",
+    "desc": "SNS にコードを載せるとき、もう画面を撮る必要はありません。配色も余白も調整でき、書き出した PNG はそのまま記事に使えます。",
+    "category": "ツール"
+  },
+  {
+    "href": "https://www.warp.dev",
+    "title": "Warp — 出力がブロック単位の現代的なターミナル",
+    "desc": "コマンドと出力が折りたためるブロックに分かれるので、履歴をたどるときスクロールと格闘しなくて済みます。補完も既定のシェルより賢いです。",
+    "category": "ツール"
+  },
+  {
+    "href": "https://www.fontshare.com",
+    "title": "Fontshare — 商用可の無料フォント集",
+    "desc": "どの書体もウェイトが揃っていて、組み合わせの提案までページに出ています。見出し用の書体を探すなら Google Fonts をめくるより速いです。",
+    "category": "ツール"
+  },
+  {
+    "href": "https://github.com/sparanoid/chinese-copywriting-guidelines",
+    "title": "中国語コピーの組版ガイド",
+    "desc": "欧文と混植するときの空き、全角・半角の約物、数字の扱いに明確な規則があります。「ここに空白は要るのか」で議論になったとき、そのまま引用できます。",
+    "category": "記事"
+  },
+  {
+    "href": "https://corecursive.com",
+    "title": "CoRecursive — コードの裏側にある物語",
+    "desc": "毎回、当事者が「なぜそう設計したのか」を語ります。ドキュメントを読むより技術選定の取捨が分かり、通勤にちょうどいい長さです。",
+    "category": "ポッドキャスト"
+  },
+  {
+    "href": "https://thebookofshaders.com",
+    "title": "The Book of Shaders — フラグメントシェーダーをゼロから",
+    "desc": "GLSL の基礎からノイズと模様の生成まで。各章の例をブラウザで書き換えて即座に確認できるので、グラフィックス入門の遠回りが最も少ないです。",
+    "category": "チュートリアル"
+  },
+  {
+    "href": "https://github.com/doocs/md",
+    "title": "doocs/md — WeChat 記事向け Markdown エディタ",
+    "desc": "左に Markdown、右に即時プレビュー。テーマ・文字サイズ・コードの色付けを設定でき、コピーして貼るだけでスタイルが崩れません。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/microsoft/PowerToys",
+    "title": "PowerToys — Microsoft 公式の Windows 強化パック",
+    "desc": "FancyZones の画面分割、PowerRename の一括改名、色の吸い取り、Alt+Space のクイック起動。これ一つで小物ツールの山が要らなくなります。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/files-community/Files",
+    "title": "Files — 現代的な Windows ファイルマネージャ",
+    "desc": "タブ、二画面コピー、クラウド同期の表示まで揃っています。エクスプローラーがこうなるべきだった姿を、コミュニティが先に作りました。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/localsend/localsend",
+    "title": "LocalSend — LAN 内のクロスプラットフォーム転送",
+    "desc": "スマホと PC のあいだでサーバーもケーブルも使わずファイルを送れます。全プラットフォームに対応した、AirDrop のオープンソース版です。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/excalidraw/excalidraw",
+    "title": "Excalidraw — 手描き風ホワイトボード",
+    "desc": "構成図やフローのラフに肩の力が抜けた雰囲気が出ます。ピクセル単位で揃えなくても見栄えがし、リンク共有で同時編集、SVG 書き出しも素直です。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/CorentinTh/it-tools",
+    "title": "IT Tools — 開発者向け小物ツール集",
+    "desc": "タイムスタンプ、JWT のデコード、正規表現の試し打ち、Base64、UUID……よく使う百余りの道具が一ページに。自前でも立てられます。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/upscayl/upscayl",
+    "title": "Upscayl — オープンソースの AI 画像拡大",
+    "desc": "古い写真やぼやけた画像をワンクリックで超解像。モデルはローカルで動くのでアップロード不要、ふつうの GPU でも十分です。何度も素材を救われました。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/Molunerfinn/PicGo",
+    "title": "PicGo — 画像アップローダー",
+    "desc": "スクリーンショットを放り込むと GitHub / Qiniu / SM.MS へ上がり、クリップボードには Markdown の画像リンクが入ります。記事に図を入れる手間がゼロに。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/agalwood/Motrix",
+    "title": "Motrix — すっきりした万能ダウンローダー",
+    "desc": "HTTP、BitTorrent、マグネットを一つのクライアントで。広告も抱き合わせもなく画面が整っていて、一覧を眺めていても気分がいいです。",
+    "category": "オープンソース"
+  },
+  {
+    "href": "https://github.com/penpot/penpot",
+    "title": "Penpot — オープンソースのデザイン共同編集",
+    "desc": "ブラウザで動く Figma の代替。デザインデータを自分で持てて自前ホストもでき、出力が SVG/CSS なので開発者にとても優しいです。",
+    "category": "オープンソース"
+  }
+]

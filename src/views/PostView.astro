@@ -1,0 +1,251 @@
+---
+import { Image } from 'astro:assets'
+import { render } from 'astro:content'
+import { Icon } from 'astro-icon/components'
+import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
+import ArticleActions from '~/components/post/ArticleActions.astro'
+import ArticleInfo from '~/components/post/ArticleInfo.astro'
+import LicenseBlock from '~/components/post/LicenseBlock.astro'
+import PrevNext from '~/components/post/PrevNext.astro'
+import ReadingProgress from '~/components/post/ReadingProgress.astro'
+import RelatedCard from '~/components/post/RelatedCard.astro'
+import TocCard from '~/components/post/TocCard.astro'
+import { localeMeta, useI18n } from '~/i18n'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import type { PostRoute } from '~/utils/posts'
+
+type Props = PostRoute
+
+const { post, related, older, newer } = Astro.props
+const { t, fmt, path } = useI18n(Astro)
+
+const { Content, headings } = await render(post.entry)
+
+const date = post.date
+const dateLabel = fmt.dateFull(date)
+
+const entry = (p: typeof older) =>
+  p ? { title: p.title, href: p.href, titleLang: p.titleLang } : undefined
+
+const shareUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href
+const permalink = `${new URL(Astro.site ?? Astro.url).host}${Astro.url.pathname}`
+
+/*
+ * 原作语言提示：文章按作者写作时的语言呈现，不做翻译（只有界面跟着语种切换）。
+ * 与其静默顶替（读者点开英文站却看到中文，不知道是站坏了还是本来如此），
+ * 不如明说一句 —— 并把标题、摘要、正文的 lang 标成原文语种，
+ * 读屏软件和浏览器翻译才不会拿英文语音去念中文。
+ *
+ * lang 只标这三处、不标整个 <article>：article 里还夹着界面文案
+ * （日期行、点赞/复制按钮、授权行），它们跟页面语种走 —— 整卡标成中文的话，
+ * en 页上读屏会拿中文语音去念 "About 3 min read"。
+ */
+const showOriginLang = post.fallback
+const originLang = localeMeta[post.lang]
+const bodyLang = showOriginLang ? originLang.htmlLang : undefined
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.excerpt}
+  ogSlug={post.id}
+  ogType="article"
+  publishedAt={post.date}
+>
+  <ReadingProgress />
+
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
+
+  <div class="flex w-full flex-col items-start gap-[20px] xl:flex-row xl:gap-[48px]">
+    <!--
+      文章页双模式（用户拍板）：
+      原版 = 极简 —— 整页只有「返回文章列表」+ 文章本体（左栏/授权/上下篇/页脚全不出）；
+      紧凑 = YYsuni 文章页短栏 —— 目录+本文+相关 一屏装得下，钉在图标条下方。
+      移动端不受模式影响：导航归 TabBar，目录在返回按钮后（见下）。
+    -->
+    <div
+      data-pin-group
+      class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] compact:xl:sticky compact:xl:top-[84px] compact:xl:flex"
+    >
+      <TocCard headings={headings} />
+      <ArticleInfo
+        words={post.words}
+        minutes={post.minutes}
+        date={date}
+        updated={post.updated}
+      />
+      <RelatedCard posts={related} />
+    </div>
+
+    <div
+      class="flex h-fit w-full flex-col items-start gap-[20px] xl:flex-1 classic:xl:mx-auto classic:xl:max-w-[1016px]"
+    >
+      <a
+        href={path('/archive')}
+        class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[14px] px-[14px] py-[8px]"
+      >
+        <Icon name="lucide:arrow-left" class="size-[16px] shrink-0 text-ink-soft" />
+        <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">{t('post.back')}</span>
+      </a>
+
+      {/* 移动端目录：排在返回按钮之后、正文之前（用户点名的顺序）；桌面版在左栏里 */}
+      <div class="w-full xl:hidden"><TocCard headings={headings} /></div>
+
+      {
+        showOriginLang && (
+          <aside class="glass-panel box-border flex h-fit w-full shrink-0 flex-row items-start gap-[12px] rounded-[22px] px-[18px] py-[14px]">
+            <span class="flex size-[32px] shrink-0 flex-row items-center justify-center rounded-[11px] bg-fire-tint">
+              <Icon name="lucide:languages" class="size-[16px] shrink-0 text-brand-ink" />
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col items-start gap-[3px]">
+              <span class="text-[13px] font-bold text-ink">
+                {t('post.originLangTitle', { language: fmt.languageName(post.lang) })}
+              </span>
+              <span class="w-full text-[12px]/[19px] font-normal text-ink-soft">
+                {t('post.originLangBody')}
+              </span>
+            </span>
+          </aside>
+        )
+      }
+
+      <!-- data-pagefind-* 告诉索引器只收正文，并把标题/日期存进搜索结果 -->
+      <article
+        data-pagefind-body
+        class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[22px] rounded-[34px] p-[20px] xl:p-[36px]"
+      >
+        {
+          post.cover && (
+            <span
+              class="img-sheen skeleton relative block h-[300px] w-full shrink-0 overflow-hidden rounded-[22px]"
+            >
+              {/* 文章页的 LCP：eager + 高优先级；外层骨架屏在图渐显前撑住位置。
+                  srcset：944 = 内容列显示宽（1016 - 卡内边距 72），1900 ≈ 其 2x，
+                  800 给手机（100vw-88 的 2x 封顶）。
+                  不再与列表缩略图共享 transition:name：宽高比差异让变形飞行
+                  变成盖在标题上的半透明残板（用户截到过），封面随内容层整体浮现 */}
+              <Image
+                src={post.cover}
+                alt=""
+                loading="eager"
+                fetchpriority="high"
+                widths={[800, 1200, 1900]}
+                sizes="(min-width: 1280px) 944px, calc(100vw - 88px)"
+                class="h-full w-full object-cover"
+              />
+            </span>
+          )
+        }
+
+        <header class="flex h-fit w-full shrink-0 flex-col items-start gap-[12px]">
+          {
+            post.tags.length > 0 && (
+              <div class="flex h-fit w-fit shrink-0 flex-row flex-wrap items-center gap-[8px]">
+                {post.tags.map((tag, i) => (
+                  <a
+                    href={path(`/tags/${tag}`)}
+                    class="flex h-fit w-fit shrink-0 flex-row rounded-[12px] bg-fire-tint px-[11px] py-[5px]"
+                  >
+                    <span class="text-[12px] font-medium whitespace-nowrap text-brand-ink">
+                      #{post.tagLabels[i]}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )
+          }
+
+          <h1
+            data-pagefind-meta="title"
+            lang={bodyLang}
+            class="font-display w-full text-[28px]/[40px] font-normal text-ink xl:text-[38px]/[51px]"
+          >
+            {post.title}
+          </h1>
+
+          <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[10px]">
+            <time
+              datetime={date.toISOString()}
+              data-pagefind-meta={`date:${dateLabel}`}
+              class="text-[12px] font-normal whitespace-nowrap text-ink-muted"
+            >
+              {dateLabel}
+            </time>
+            <span class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+            <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
+              {t('post.readAbout', { n: post.minutes })}
+            </span>
+            {/* 字数这轮挪进了左栏的 ARTICLE 面板，这行不再重复 */}
+            {/* 设计第三格是「2,148 次阅读」：数字来自 Go 后端，没配后端就整块不出现 */}
+            <span data-views hidden class="size-[4px] shrink-0 rounded-full bg-ink-muted"></span>
+            <span
+              data-views
+              data-views-label
+              data-t-views={t('post.views', { n: '{n}' })}
+              hidden
+              class="text-[12px] font-normal whitespace-nowrap text-ink-muted"></span>
+          </div>
+        </header>
+
+        <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+        {/* 摘要不在正文里，但它是很自然的搜索目标 —— 单独喂给索引器 */}
+        {post.excerpt && <span lang={bodyLang} class="sr-only">{post.excerpt}</span>}
+
+        <div lang={bodyLang} class="article-body"><Content /></div>
+
+        <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+        {/* 点赞与阅读按「文章身份」计数，不分语言版本 —— 同一篇的中英读者算在一起 */}
+        <ArticleActions slug={post.id} updated={post.updated} />
+      </article>
+
+      {/* 原版文章页只留 返回+文章（用户点名「整个页面只有文章」），这两块只在紧凑模式出现 */}
+      <div class="w-full classic:xl:hidden">
+        <LicenseBlock
+          permalink={permalink}
+          shareUrl={shareUrl}
+          title={post.title}
+          updated={post.updated}
+        />
+      </div>
+
+      <div class="w-full classic:xl:hidden">
+        <PrevNext prev={entry(older)} next={entry(newer)} />
+      </div>
+    </div>
+  </div>
+
+  {/* 原版文章页连页脚也不出（「整个页面只有文章」）；外层包一格避免与 xl:block 抢 display */}
+  <div class="classic:xl:hidden">
+    <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+  </div>
+</BaseLayout>
+
+<script>
+  // 记一次阅读并回填「N 次阅读」。slug 从点赞按钮身上拿（同一篇文章）。
+  // touch 是合并接口（阅读 + 点赞态一个往返），和 ArticleActions 共用同一次 POST；
+  // 后端没配 / 没应答时返回 null，两个 span 保持 hidden —— 不编数字。
+  import { swr, touch } from '~/scripts/api'
+  import { fill, localeNumber } from '~/scripts/i18n'
+
+  // 客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化（进别的文章也算一次阅读）
+  document.addEventListener('astro:page-load', () => {
+    const slug = document.querySelector<HTMLElement>('[data-like-slug]')?.dataset.likeSlug
+    if (slug) {
+      swr(`touch:${slug}`, () => touch(slug), (state) => {
+        if (state.views <= 0) return
+        const label = document.querySelector<HTMLElement>('[data-views-label]')
+        // 设计写法带千分位：2,148 次阅读（模板与千分位都按页面语种来）
+        if (label) {
+          label.textContent = fill(label.dataset.tViews, { n: localeNumber(state.views) })
+        }
+        for (const el of document.querySelectorAll('[data-views]')) el.removeAttribute('hidden')
+      })
+    }
+  })
+</script>

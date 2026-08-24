@@ -8,9 +8,11 @@ interface Props {
   title: string
   subtitle: string
   stats: readonly { value: string; label: string }[]
+  /** 副标题下的补充说明，比副标题低一号。不传就不渲染 */
+  note?: string | undefined
 }
 
-const { title, subtitle, stats } = Astro.props
+const { title, subtitle, stats, note } = Astro.props
 ---
 
 <!-- Page Head -->
@@ -20,6 +22,7 @@ const { title, subtitle, stats } = Astro.props
   <div class="flex h-fit w-full flex-col items-start gap-[10px] xl:flex-1">
     <h1 class="font-display text-[30px]/[36px] font-normal text-ink">{title}</h1>
     <p class="w-full text-[15px]/[24px] font-normal text-ink-soft">{subtitle}</p>
+    {note && <p class="w-full text-[12.5px]/[20px] font-normal text-ink-muted">{note}</p>}
   </div>
 
   <div class="flex h-fit w-fit shrink-0 flex-row items-center gap-[26px]">

@@ -1,0 +1,19 @@
+[
+  {
+    "repo": "QssssY/offCat",
+    "desc": "An AI app for job hunting: résumé review, mock interviews, JD matching and template export — frontend and backend in one repo.",
+    "badge": "polishing"
+  },
+  {
+    "repo": "QssssY/AfterGlow-Notes",
+    "desc": "This blog itself: an Astro static site plus a single Go binary backend, pixel-polished, with its own web admin."
+  },
+  {
+    "repo": "QssssY/ai-psychological-assistant",
+    "desc": "An AI companion for emotional support — conversational company and a mood journal."
+  },
+  {
+    "repo": "QssssY/mini-vue",
+    "desc": "Vue 3's core written by hand: reactivity, runtime and compiler each implemented from scratch."
+  }
+]

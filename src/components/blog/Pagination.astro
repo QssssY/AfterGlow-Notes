@@ -1,4 +1,6 @@
 ---
+import { useI18n } from '~/i18n'
+
 interface Props {
   current: number
   totalPages: number
@@ -8,6 +10,7 @@ interface Props {
 }
 
 const { current, totalPages, total, hrefFor } = Astro.props
+const { t } = useI18n(Astro)
 
 /** 首页、末页、当前页 ±1，中间断开处用 … */
 function pageList(current: number, totalPages: number): (number | 'gap')[] {
@@ -39,11 +42,11 @@ const tap =
 {
   totalPages > 1 && (
     <nav
-      aria-label="分页"
+      aria-label={t('blog.paginationAria')}
       class="flex h-[52px] w-full shrink-0 flex-row items-center justify-center gap-[8px]"
     >
       {current > 1 ? (
-        <a href={hrefFor(current - 1)} rel="prev" aria-label="上一页" class:list={[box, idle, tap]}>
+        <a href={hrefFor(current - 1)} rel="prev" aria-label={t('blog.prevPage')} class:list={[box, idle, tap]}>
           ‹
         </a>
       ) : (
@@ -73,7 +76,7 @@ const tap =
       )}
 
       {current < totalPages ? (
-        <a href={hrefFor(current + 1)} rel="next" aria-label="下一页" class:list={[box, idle, tap]}>
+        <a href={hrefFor(current + 1)} rel="next" aria-label={t('blog.nextPage')} class:list={[box, idle, tap]}>
           ›
         </a>
       ) : (
@@ -87,6 +90,6 @@ const tap =
 
 <div class="flex h-[20px] w-full shrink-0 flex-row items-center justify-center gap-[8px]">
   <span class="text-[12px] font-normal whitespace-nowrap text-ink-muted">
-    共 {total} 篇 · 第 {current} / {totalPages} 页
+    {t('blog.pageInfo', { total, current, pages: totalPages })}
   </span>
 </div>

@@ -7,6 +7,7 @@ import expressiveCode from 'astro-expressive-code'
 import icon from 'astro-icon'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
+import { defaultLocale, localeMeta, locales } from './src/i18n/locales.ts'
 import { afterglowCode } from './src/styles/code-theme.ts'
 
 // 上线前把 site 换成真实域名：sitemap 和 RSS 依赖它生成绝对链接
@@ -29,6 +30,23 @@ export default defineConfig({
 
   // 开发工具栏会浮在页面底部中央，挡住截图核对；需要时改回 true
   devToolbar: { enabled: false },
+
+  /*
+   * 多语言 —— 语种清单是 src/i18n/locales.ts 的单一真源，这里只是接上去。
+   *
+   * prefixDefaultLocale: false = 中文留在根路径（/about），其余语种带前缀
+   * （/en/about、/ja/about）。上线前发出去的中文链接一条都不会失效，
+   * 也不必给 / 配一层跳转。
+   *
+   * 不开 fallback：缺译的页面不做「静默拿中文顶替同一个网址」——
+   * 那样英文站会挂着一堆内容是中文的 /en/ 页面，对读者和搜索引擎都是噪音。
+   * 缺译由页面自己处理（文章页显式提示 + 指回原文，见 utils/posts.ts）。
+   */
+  i18n: {
+    defaultLocale,
+    locales: [...locales],
+    routing: { prefixDefaultLocale: false },
+  },
 
   // 站内链接进入视口就预取整页 HTML：静态页都很小（首页 ~30KB），
   // 换页时 ClientRouter 直接命中缓存，点击 → 渲染几乎零等待。
@@ -59,7 +77,14 @@ export default defineConfig({
     }),
     mdx(),
     // 管理台不进站点地图（页面本身无密可泄 —— 数据要 token 才拿得到，但也没必要被收录）
-    sitemap({ filter: (page) => !page.includes('/overview') }),
+    // i18n 让 sitemap 给同一页的三个语种互相标 hreflang，搜索引擎才知道它们是同一篇的不同语言版
+    sitemap({
+      filter: (page) => !page.includes('/overview'),
+      i18n: {
+        defaultLocale,
+        locales: Object.fromEntries(locales.map((code) => [code, localeMeta[code].htmlLang])),
+      },
+    }),
     // 设计的图标全部来自 lucide（@iconify-json/lucide）
     icon(),
   ],

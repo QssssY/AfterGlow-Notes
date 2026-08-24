@@ -1,25 +1,37 @@
 ---
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
 
 interface Props {
   date: Date
   category: string
   title: string
+  /** 标题语种与页面语种不一致时传（见 ArchivePost.titleLang） */
+  titleLang?: string | undefined
   href: string
   minutes: number
-  wordsLabel: string
+  words: number
   glyph?: string
 }
 
-const { date, category, title, href, minutes, wordsLabel, glyph = 'app-window' } = Astro.props
-const pad = (n: number) => String(n).padStart(2, '0')
-const dateLabel = `${date.getFullYear()} · ${pad(date.getMonth() + 1)} · ${pad(date.getDate())}`
+const {
+  date,
+  category,
+  title,
+  titleLang,
+  href,
+  minutes,
+  words,
+  glyph = 'app-window',
+} = Astro.props
+const { t, fmt } = useI18n(Astro)
+const dateLabel = fmt.dateDots(date)
 ---
 
 <!-- Featured -->
 <section class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
   <span class="text-[11px] font-bold tracking-[1.6px] whitespace-nowrap text-ink-muted">
-    精 选 FEATURED
+    {t('mobile.featured')}
   </span>
 
   <a
@@ -41,16 +53,20 @@ const dateLabel = `${date.getFullYear()} · ${pad(date.getMonth() + 1)} · ${pad
         <span class="text-[11.5px] font-bold whitespace-nowrap text-leaf-deep">{category}</span>
       </span>
 
-      <span class="w-full text-[15.5px]/[22px] font-bold text-ink">{title}</span>
+      <span lang={titleLang} class="w-full text-[15.5px]/[22px] font-bold text-ink">{title}</span>
 
       <span class="flex h-[17px] w-fit shrink-0 flex-row items-center gap-[14px]">
         <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
           <Icon name="lucide:clock-3" class="size-[12px] shrink-0 text-ink-muted" />
-          <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">{minutes} 分钟</span>
+          <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">
+            {t('common.readMinutes', { n: minutes })}
+          </span>
         </span>
         <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
           <Icon name="lucide:file-text" class="size-[12px] shrink-0 text-ink-muted" />
-          <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">{wordsLabel}</span>
+          <span class="text-[11.5px] font-normal whitespace-nowrap text-ink-muted">
+            {fmt.wordsLabel(words)}
+          </span>
         </span>
       </span>
     </span>

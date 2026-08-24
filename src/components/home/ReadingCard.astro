@@ -1,10 +1,13 @@
 ---
-import { reading } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
+const { reading } = c
 ---
 
 <!-- Reading Card -->
 <div class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[30px] p-[24px]">
-  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">最近在读</span>
+  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">{t('home.reading')}</span>
 
   {
     reading.map((book) => (

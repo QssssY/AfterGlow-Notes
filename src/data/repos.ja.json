@@ -1,0 +1,19 @@
+[
+  {
+    "repo": "QssssY/offCat",
+    "desc": "就職活動向けの AI アプリ。履歴書診断、模擬面接、求人票マッチング、テンプレート出力をひとつのリポジトリに。",
+    "badge": "磨き中"
+  },
+  {
+    "repo": "QssssY/AfterGlow-Notes",
+    "desc": "このブログ自体。Astro の静的サイト + Go のシングルバイナリ、画面はピクセル単位で調整、管理画面も内蔵。"
+  },
+  {
+    "repo": "QssssY/ai-psychological-assistant",
+    "desc": "AI による心の伴走アシスタント。寄り添う対話と気分の記録。"
+  },
+  {
+    "repo": "QssssY/mini-vue",
+    "desc": "Vue 3 のコアを手書きで再実装。リアクティビティ・ランタイム・コンパイラをそれぞれ一から。"
+  }
+]

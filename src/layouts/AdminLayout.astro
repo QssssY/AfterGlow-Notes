@@ -9,8 +9,15 @@
  *    （数据都要 token 才拿得到），但也没必要被搜索引擎收进去。
  *  - 主题跟随博客本体（同一份 localStorage 'theme'）。
  */
-import { site } from '~/config'
+// 管理台是单语界面（只有站长自己用），所以直接取中文内容，不跟着访客语种走 ——
+// 它也不在 i18n 的路由体系里（无 /en/overview）。
+// 从 i18n/content 直接取而不绕 ~/config：config 被客户端脚本 import，
+// 不能让它牵上内容模块（原因见 config.ts 顶部的警告）
+import { getContent } from '~/i18n/content'
+import { defaultLocale } from '~/i18n/locales'
 import { themeCss } from '~/utils/theme'
+
+const { site } = getContent(defaultLocale)
 import '~/styles/global.css'
 import '~/styles/admin.css'
 

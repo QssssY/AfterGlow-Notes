@@ -1,0 +1,19 @@
+---
+import type { GetStaticPaths } from 'astro'
+import { prefixedLocales } from '~/i18n/locales'
+import { tagRoutes } from '~/utils/posts'
+import TagView from '~/views/TagView.astro'
+
+export const getStaticPaths = (async () => {
+  const routes = []
+  for (const locale of prefixedLocales) {
+    const perLocale = await tagRoutes(locale)
+    routes.push(...perLocale.map((r) => ({ ...r, params: { ...r.params, locale } })))
+  }
+  return routes
+}) satisfies GetStaticPaths
+
+const { tag, posts } = Astro.props
+---
+
+<TagView tag={tag} posts={posts} />

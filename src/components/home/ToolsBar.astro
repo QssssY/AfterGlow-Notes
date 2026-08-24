@@ -1,6 +1,9 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { tools } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c } = useI18n(Astro)
+const { tools } = c
 
 /**
  * 在用 Card
@@ -15,7 +18,7 @@ import { tools } from '~/config'
 <section
   class="glass box-border flex h-fit w-full shrink-0 flex-row items-center gap-[14px] rounded-[22px] px-[22px] py-[20px]"
 >
-  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">在用</span>
+  <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">{t('home.tools')}</span>
 
   <span class="h-[18px] w-[1px] shrink-0 bg-hairline"></span>
 

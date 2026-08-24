@@ -1,0 +1,19 @@
+[
+  {
+    "title": "Admin completed, content filled in",
+    "desc": "Site copy, the about page and the changelog all moved into the admin; blogroll avatars are uploadable and project cards sync from GitHub in one click. Seven new build notes written.",
+    "badge": "current"
+  },
+  {
+    "title": "Interaction and real data",
+    "desc": "The home-page music card plays and follows lyrics; the whole site moved to client-side routing for smooth page changes; every number on the panels is now real data."
+  },
+  {
+    "title": "A counting service of my own",
+    "desc": "Likes and read counts moved to a small Go service I wrote. It stores anonymous totals only — no IPs, no user agents."
+  },
+  {
+    "title": "From design to code",
+    "desc": "The interface design was finalised, the Astro project set up, and the home page and every section rebuilt one-to-one, block by block."
+  }
+]

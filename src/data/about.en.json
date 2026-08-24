@@ -1,0 +1,19 @@
+{
+  "role": "Java / Vue / turning ideas into small things that actually run",
+  "paragraphs": [
+    "Java is my day job, Vue my frontend. This site is the most recent side project: the interface was drawn from scratch and rebuilt one-to-one in Astro, and the service counting likes and reads is a Go binary I wrote myself.",
+    "Most posts are records of the process rather than conclusions. I'm not great at long-term plans, but I am good at spotting a more interesting detour halfway through. If you're building something similar, write to me."
+  ],
+  "listALabel": "What I'm using",
+  "listAItems": [
+    "Astro 7 + Tailwind 4, fully static",
+    "Draw the interface first, then rebuild it in code",
+    "pnpm + Git; deployment still undecided"
+  ],
+  "listBLabel": "What I care about",
+  "listBItems": [
+    "Rebuilding a design in code, one-to-one",
+    "The small details of CJK typesetting",
+    "Build times and font weight on static sites"
+  ]
+}

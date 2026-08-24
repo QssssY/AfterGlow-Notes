@@ -1,5 +1,8 @@
 ---
-import { now } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c, fmt } = useI18n(Astro)
+const { now } = c
 
 /**
  * 此刻 Card
@@ -13,8 +16,8 @@ import { now } from '~/config'
  * Items 竖向 gap10，每行 gap10：5px 圆点（在做=橙 / 其余=dot-idle）+ 类别 11px + 详情 12.5px
  */
 
-/** 设计写法：更新于 8 月 18 日 */
-const updated = `更新于 ${now.updated.getMonth() + 1} 月 ${now.updated.getDate()} 日`
+/** 设计写法：更新于 8 月 18 日 —— 日期由 Intl 按语种排（Aug 18 / 8月18日） */
+const updated = t('home.nowUpdated', { date: fmt.monthDay(now.updated) })
 ---
 
 <section
@@ -22,7 +25,7 @@ const updated = `更新于 ${now.updated.getMonth() + 1} 月 ${now.updated.getDa
 >
   <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
     <span class="size-[6px] shrink-0 rounded-full bg-leaf"></span>
-    <span class="flex-1 text-[13px] font-normal text-ink-soft">此刻</span>
+    <span class="flex-1 text-[13px] font-normal text-ink-soft">{t('home.now')}</span>
     <span class="text-[11px] font-normal whitespace-nowrap text-ink-muted">{updated}</span>
   </div>
 

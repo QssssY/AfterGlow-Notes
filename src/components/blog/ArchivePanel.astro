@@ -1,11 +1,13 @@
 ---
 import Panel from '~/components/Panel.astro'
+import { useI18n } from '~/i18n'
 
 interface Props {
   years: { year: number; count: number }[]
 }
 
 const { years } = Astro.props
+const { t, path } = useI18n(Astro)
 
 /**
  * 每篇文章占多少像素。
@@ -24,11 +26,11 @@ const PX_PER_POST = 7.35
   只有最新那年的条走品牌橙，更早的年份走 accent-leaf —— 设计里
   2026 是橙的，2025 / 2024 / 2023 三条都是绿的。
 -->
-<Panel caption="年 表 ARCHIVE">
+<Panel caption={t('blog.archiveCaption')}>
   {
     years.map((entry, i) => (
       <a
-        href={`/archive#y-${entry.year}`}
+        href={`${path('/archive')}#y-${entry.year}`}
         class="group/year flex h-[20px] w-full shrink-0 flex-row items-center gap-[10px]"
       >
         <span

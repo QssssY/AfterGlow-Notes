@@ -1,0 +1,9 @@
+{
+  "statement": "Rebuilding this blog from the design, one-to-one, in code.",
+  "note": "I build the thing before writing about it — the writing only becomes clear once the building is under way. So there's always something half-finished here, and I'm in no hurry to wrap it up.",
+  "aside": "This block gets updated weekly. If it doesn't move, I was slacking that week.",
+  "items": [
+    { "kind": "Building", "detail": "Moving the design's panels into Astro components, one block at a time" },
+    { "kind": "Chewing on", "detail": "How to arrange Tailwind 4's @theme and theme variables without repeating myself" }
+  ]
+}

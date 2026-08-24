@@ -2,6 +2,9 @@
 import { Image } from 'astro:assets'
 import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
 
 interface Props {
   name: string
@@ -21,12 +24,13 @@ interface Props {
 const { name, initial, href, domain, desc, tags, avatar, from, to, initialColor } = Astro.props
 ---
 
-<!-- Blog Card -->
+<!-- Blog Card。不写 h-fit：交给行上的 items-stretch 撑等高，
+     换语种后 desc 行数不同也不参差 -->
 <a
   href={href}
   target="_blank"
   rel="noopener noreferrer"
-  class="glass group box-border flex h-fit w-full flex-col items-start gap-[14px] rounded-[28px] p-[20px] xl:flex-1"
+  class="glass group box-border flex w-full flex-col items-start gap-[14px] rounded-[28px] p-[20px] xl:flex-1"
 >
   <span class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
     {
@@ -58,7 +62,8 @@ const { name, initial, href, domain, desc, tags, avatar, from, to, initialColor 
     </span>
   </span>
 
-  <span class="w-full text-[13px]/[21px] font-normal text-ink-soft">{desc}</span>
+  <!-- flex-1：desc 吃掉等高后多出的空间，分割线与标签行在同排卡片间对齐 -->
+  <span class="w-full flex-1 text-[13px]/[21px] font-normal text-ink-soft">{desc}</span>
 
   <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
 
@@ -74,7 +79,9 @@ const { name, initial, href, domain, desc, tags, avatar, from, to, initialColor 
     </span>
 
     <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[4px]">
-      <span class="text-[12px]/[17px] font-normal whitespace-nowrap text-brand-ink">访问</span>
+      <span class="text-[12px]/[17px] font-normal whitespace-nowrap text-brand-ink">
+        {t('blogroll.visit')}
+      </span>
       <Icon
         name="lucide:arrow-up-right"
         class="size-[14px] shrink-0 text-brand-ink transition-transform group-hover:-translate-y-[1px] group-hover:translate-x-[1px]"

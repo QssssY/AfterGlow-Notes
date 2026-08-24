@@ -1,0 +1,165 @@
+---
+import { Icon } from 'astro-icon/components'
+import { useI18n } from '~/i18n'
+
+/**
+ * 语言切换器 —— 两种形态，同一份数据源（useI18n 的 alternates）。
+ *
+ *   segment  桌面侧栏：三格分段控件，皮肤与上面的 外观 / 布局 完全一致
+ *   menu     紧凑图标条与移动端顶栏：一颗地球钮 + 玻璃弹层
+ *
+ * 三个选项都是**真链接**：切语言不靠脚本改状态，而是走到对应语种的同一页
+ * （alternates 已算好各语种下当前页的地址），所以停在哪页切都留在那页，
+ * 禁用 JS 也能用。语种也不必记进 localStorage —— 导航链接本身就带着语种前缀，
+ * 点下去自然一路留在同一种语言里。
+ */
+
+interface Props {
+  variant?: 'segment' | 'menu'
+  /** menu 形态的弹层展开方向：图标条朝下，移动端顶栏也朝下但右对齐 */
+  align?: 'left' | 'right'
+  /**
+   * menu 形态的外观：
+   *   bare  图标条里用 —— 36px 裸钮，底色由条子的跟手胶囊负责
+   *   glass 移动端顶栏用 —— 自带玻璃底，尺寸对齐旁边那颗明暗钮（p7 + 20px 图标）
+   */
+  look?: 'bare' | 'glass'
+}
+
+const { variant = 'segment', align = 'right', look = 'bare' } = Astro.props
+const { t, alternates } = useI18n(Astro)
+
+/*
+ * menu 形态里 data-pill-target 挂在**外层 div** 而不是按钮上：图标条的跟手胶囊按
+ * offsetLeft/offsetTop 定位，而这层要 relative 给弹层做定位上下文 —— 内层按钮量出来的
+ * 偏移就成了「相对本层」，胶囊会飞到条子左上角。颜色类也跟着上移（胶囊点亮时
+ * data-pill-on 改的是这层的 color），按钮内用 text-current 承接。
+ */
+const bare = look === 'bare'
+---
+
+{
+  variant === 'segment' ? (
+    <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
+      <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+        {t('sidebar.language')}
+      </span>
+      {/* 皮肤逐字对齐 Sidebar 的外观/布局控件；选中态不走 aria-checked 而是直接算 class ——
+          这三格是链接而非单选钮，硬套 radio 语义反而对读屏软件不诚实 */}
+      <div
+        role="group"
+        aria-label={t('lang.aria')}
+        class="hairline-box flex h-fit w-full shrink-0 flex-row items-center gap-[2px] rounded-[12px] p-[3px]"
+      >
+        {alternates.map((alt) => (
+          <a
+            href={alt.href}
+            hreflang={alt.htmlLang}
+            lang={alt.htmlLang}
+            aria-current={alt.current ? 'true' : undefined}
+            title={alt.current ? alt.label : t('lang.switchTo', { label: alt.label })}
+            class:list={[
+              'flex h-[26px] flex-1 flex-row items-center justify-center gap-[5px] rounded-[6px] outline-1 -outline-offset-[0.5px]',
+              alt.current
+                ? 'bg-card-solid outline-hairline'
+                : 'outline-transparent',
+            ]}
+          >
+            {alt.current && (
+              <Icon name="lucide:languages" class="size-[12px] shrink-0 text-brand-ink" />
+            )}
+            <span
+              class:list={[
+                'text-[11.5px] whitespace-nowrap',
+                alt.current ? 'font-bold text-brand-ink' : 'font-normal text-ink-muted',
+              ]}
+            >
+              {alt.short}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div
+      data-lang-menu
+      data-pill-target={bare ? true : undefined}
+      class:list={[
+        'relative flex shrink-0 rounded-[12px] transition-colors',
+        bare ? 'size-[36px] text-ink-soft' : 'glass h-fit w-fit p-[7px] text-ink',
+      ]}
+    >
+      <button
+        type="button"
+        data-lang-toggle
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-label={t('lang.aria')}
+        title={t('lang.aria')}
+        class:list={[
+          'flex shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] text-current',
+          bare ? 'size-[36px]' : 'size-[20px]',
+        ]}
+      >
+        <Icon name="lucide:languages" class:list={[bare ? 'size-[19px]' : 'size-[20px]', 'shrink-0']} />
+      </button>
+
+      {/* 弹层皮肤对齐播放器的播放列表（玻璃底 + 同款圆角与投影）；
+          z-20 压住相邻卡片的 backdrop-filter 层叠上下文 */}
+      <div
+        data-lang-list
+        hidden
+        class:list={[
+          'glass absolute top-[calc(100%+10px)] z-20 box-border w-[136px] rounded-[18px] p-[6px] shadow-[0_26px_52px_-22px_var(--shadow-soft)]',
+          align === 'right' ? 'right-0' : 'left-0',
+        ]}
+      >
+        {alternates.map((alt) => (
+          <a
+            href={alt.href}
+            hreflang={alt.htmlLang}
+            lang={alt.htmlLang}
+            aria-current={alt.current ? 'true' : undefined}
+            class:list={[
+              'flex w-full flex-row items-center gap-[8px] rounded-[13px] px-[10px] py-[7px] text-[12.5px] transition-colors hover:bg-chip',
+              alt.current ? 'bg-chip font-bold text-brand-ink' : 'font-normal text-ink-soft',
+            ]}
+          >
+            <span class="w-[22px] shrink-0 text-[11px] font-bold opacity-70">{alt.abbr}</span>
+            <span class="min-w-0 flex-1 truncate">{alt.label}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+<script>
+  // 弹层开合。客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  document.addEventListener('astro:page-load', () => {
+    for (const box of document.querySelectorAll<HTMLElement>('[data-lang-menu]')) {
+      const toggle = box.querySelector<HTMLElement>('[data-lang-toggle]')
+      const list = box.querySelector<HTMLElement>('[data-lang-list]')
+      if (!toggle || !list) continue
+
+      const setOpen = (open: boolean) => {
+        list.hidden = !open
+        toggle.setAttribute('aria-expanded', String(open))
+      }
+
+      toggle.addEventListener('click', (e) => {
+        // 图标条整条是可点区域（胶囊跟手），别让开合冒泡成别的动作
+        e.stopPropagation()
+        setOpen(Boolean(list.hidden))
+      })
+
+      // 点外面 / Esc 收起
+      document.addEventListener('click', (e) => {
+        if (!list.hidden && !box.contains(e.target as Node)) setOpen(false)
+      })
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !list.hidden) setOpen(false)
+      })
+    }
+  })
+</script>

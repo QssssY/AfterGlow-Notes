@@ -132,15 +132,32 @@ ADMIN_PASSWORD="$(openssl rand -base64 18)" ./afterglow-server.exe -blog-dir ..
 fork 下来的是「我的余晖录」，这些地方换成你的（大部分在管理台 `/overview` 里点点就行，
 改动全部落成仓库文件）：
 
+> ⚠️ **先做这一步**：仓库里带着**原作者内容的英日译文**（`src/data/*.{en,ja}.json`，
+> 以及 `src/content/posts/{en,ja}/` 下的一篇示例译文）。译文是独立文件，改基准不会带着
+> 它一起变 —— 不清掉的话，中文站是你的、英文站还是别人的（站名、简介这类字段名相同
+> 就直接盖上，不报错，只是静默说错话）。fork 后先跑：
+>
+> ```bash
+> rm -f src/data/*.en.json src/data/*.ja.json
+> rm -rf src/content/posts/en src/content/posts/ja
+> ```
+>
+> 清掉之后英日站的**界面仍然是全译的**（界面字典与内容无关），文章按你写作时的语言呈现。
+> 之后随时用 `pnpm i18n` 看站点数据译到什么程度、有没有和基准错位。
+
 - **站点信息**：站名 / 作者 / 邮箱 / 简介 / 细则 → 管理台「站点数据 · 站点信息」（`src/data/site.json`）
-- **文章**：清掉 `src/content/posts/*.md` 换成你的。front-matter 字段：
-  `title` / `description` / `date` / `updated` / `tags` / `category` / `cover`（封面放 `_covers/`）/ `draft`
+- **文章**：清掉 `src/content/posts/*.md`（和上面的 `en/` `ja/`）换成你的。front-matter 字段：
+  `title` / `description` / `date` / `updated` / `tags` / `category` / `cover`（封面放 `_covers/`）/ `draft`。
+  用什么语言写就用什么语言展示，不必配译文（见下面的「多语言」一节）
 - **活数据**：在读 / 此刻 / 在用 / 更新日志 / 友链 / 项目 / 推荐分享 → 管理台各页签（`src/data/*.json`）
 - **图片**：头像、友链头像、项目配图都从管理台上传（自动归位到 `images/` 对应目录）
 - **音乐**：版权物不进仓库（`public/music/` 已 gitignore）。本地丢进 `public/music/` 即可预览；
   有服务器时放 `-music` 目录并设 `PUBLIC_MUSIC_BASE`。**请只使用你有权使用的曲目**
 - **设计 token**：颜色 / 圆角 / 玻璃卡都在 `src/styles/global.css` 的 `:root` / `.dark` 里，改这里全站生效
-- **结构常量**：导航、建站起始日等在 `src/config.ts`
+- **结构常量**：建站起始日、接口地址等在 `src/config.ts`；导航项在 `src/i18n/index.ts` 的 `navConfig`
+- **语种**：只想留中文，就把 `src/i18n/locales.ts` 的 `locales` 收成 `['zh']`、删掉
+  `localeMeta` 与 `ui.ts` 里对应那两份（三处一起删，否则 TS 会报多余属性），
+  `/en` `/ja` 连页面都不再生成；加语言见下面的「多语言」一节
 
 ## 技术栈与目录
 
@@ -152,14 +169,54 @@ fork 下来的是「我的余晖录」，这些地方换成你的（大部分在
 | 搜索 / 图 | Pagefind 全文搜索 · satori + resvg 构建期 OG 图 · sharp 图片处理 |
 
 ```
-src/content/posts/   文章（front-matter + Markdown），_covers/ 放封面
-src/data/            站点数据 JSON（管理台的写入目标）
+src/content/posts/   文章（front-matter + Markdown），_covers/ 放封面，en/ ja/ 放译文
+src/data/            站点数据 JSON（管理台的写入目标）+ *.en.json / *.ja.json 译文覆盖
+src/i18n/            多语言：语种清单、界面文案字典、内容覆盖合并、Intl 格式化
+src/views/           页面主体（src/pages/ 下只剩路由薄壳，三语共用同一份 view）
 src/components/      按页面分组的 Astro 组件
 src/styles/          global.css（设计 token 在此）+ admin.css
-src/scripts/         浏览器端：api / admin / gh-cms（GitHub 直连）等
+src/scripts/         浏览器端：api / admin / gh-cms（GitHub 直连）/ i18n 取词等
 server/              Go 服务：main / static / visitors / linkcheck / admin / github
 scripts/             字体子集化、仓库数据同步、部署脚本
 ```
+
+## 多语言
+
+站点支持简体中文 / English / 日本語，中文在根路径，其余带前缀（`/en/…`、`/ja/…`）。
+切换器在桌面侧栏的 LANGUAGE 一格、紧凑图标条和移动端顶栏，切换后**留在当前那一页**。
+
+**翻的是界面与站点数据，文章不翻。** 文章按作者写作时用的语言原样呈现 —— 切语言换的是
+导航、面板、按钮那一层，不是正文。混着别的语言的列表会在页头说一句，点进去页顶再说一次，
+标题、摘要与正文的 `lang` 标成原文语种（读屏软件才不会拿英文语音去念中文；界面文案
+仍跟页面语种走，所以不标整卡）。真想给某篇配译文也行，见下表第三行。
+
+改文案的三个地方，按「改什么」对号入座：
+
+| 要改的东西 | 改哪儿 |
+|---|---|
+| 界面文案（按钮 / 面板小标 / 空态 / aria） | `src/i18n/ui.ts`。中文那份定义类型，en / ja 少一个键 TS 直接报错 |
+| 站点内容（简介 / 分享 / 友链 / 更新日志…） | **管理台「站点数据」页签的「内容语言」一行**（中文 = 基准，其余语种是译文视图：只列文本字段、留空回落中文，Go 与 GitHub 直连两种形态都支持）；或直接改 `src/data/<名字>.<语种>.json`（**只写要翻的字段**） |
+| 某篇文章的译文（可选） | 放 `src/content/posts/<语种>/<同名文件>.md`（管理台不管这个）。没有就显示原文 |
+
+全部文案都是**构建期烤进 HTML** 的：`pnpm build` 出的是三套独立静态页，切语言等于跳到
+另一个已生成好的 HTML。不接翻译 API、不在浏览器里替换文字、字典也不打进前端包
+（客户端脚本要的几句提示由服务端写进 `data-t-*`）。代价是文案得人写，没有自动机翻。
+
+日期、相对时间、紧凑数字（21万 / 210K）、以及「用当前语种称呼另一门语言」
+（简体中文 / Simplified Chinese / 簡体中国語）一律不进字典，走 `src/i18n/format.ts` 的
+Intl 包装 —— 这类差异标准库比手写模板可靠。标签与分类的**网址不变**（三语共用），
+只翻显示名，表在 `src/i18n/taxonomy.ts`，没登记的词原样显示。
+
+`pnpm i18n` 出一份盘点：字典键数、每个数据文件各语种译到几成、哪些文章配了译文，
+以及**下标配对错位**的告警 —— 没有 href/repo 这类不可翻字段的短列表
+（tools / stack / reading / changelog / now.items）按下标对应，基准增删条目后
+译文会盖到错的条目上而构建照样成功，这个告警就是为它准备的。
+
+加一门语言：`src/i18n/locales.ts` 里加代码与元信息 → `ui.ts` 补一份字典（TS 会逼你补齐）
+→ 按需加 `src/data/*.<语种>.json`。路由、sitemap、hreflang、RSS、OG 图、pagefind
+索引都从这份清单派生，不用逐处同步。
+
+> 管理台只管**站点数据**的译文；文章译文（如果你要写）在仓库文件里改。
 
 ## 致谢
 

@@ -1,0 +1,16 @@
+---
+/*
+ * 非默认语种的首页：/en/、/ja/。
+ *
+ * getStaticPaths 只吐 prefixedLocales（zh 不在其中 —— 它在根路径的 index.astro）。
+ * 语种不用当 prop 传：Astro 从网址解析出 currentLocale，view 里的 useI18n 直接读。
+ */
+import type { GetStaticPaths } from 'astro'
+import { prefixedLocales } from '~/i18n/locales'
+import HomeView from '~/views/HomeView.astro'
+
+export const getStaticPaths = (() =>
+  prefixedLocales.map((locale) => ({ params: { locale } }))) satisfies GetStaticPaths
+---
+
+<HomeView />

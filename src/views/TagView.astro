@@ -1,0 +1,77 @@
+---
+/*
+ * 标签页主体。
+ *
+ * 设计没有标签页的帧 —— 沿用归档页这轮的新结构（内容栏 Page Head + 标签横带
+ * + 年份时间轴），只把标题换成 #标签、篇数字数按这个标签下的文章算。
+ *
+ * 标签的**网址**用原始标签词（三语共用，见 i18n/taxonomy.ts 的说明），
+ * 显示名按语种翻 —— 所以这里同时收到 tag（网址身份）和 label（显示名）。
+ */
+import { Icon } from 'astro-icon/components'
+import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import StatsPageHead from '~/components/StatsPageHead.astro'
+import TagsBand from '~/components/blog/TagsBand.astro'
+import TimelineCard from '~/components/blog/TimelineCard.astro'
+import { useI18n } from '~/i18n'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import { groupByYear, loadPosts, tagCounts, type ArchivePost } from '~/utils/posts'
+
+interface Props {
+  tag: string
+  posts: ArchivePost[]
+}
+
+const { tag, posts } = Astro.props
+const { t, fmt, path, locale } = useI18n(Astro)
+
+const label = tagCounts(posts, locale).find((x) => x.name === tag)?.label ?? tag
+const all = await loadPosts(locale)
+const words = posts.reduce((sum, post) => sum + post.words, 0)
+const groups = groupByYear(posts)
+---
+
+<BaseLayout
+  title={`#${label}`}
+  description={t('tags.description', { tag: label, n: posts.length })}
+>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
+
+  <div class="flex w-full flex-row items-start gap-[48px]">
+    {/* 原版 = 完整 Sidebar（原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
+
+    <div class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]">
+      <StatsPageHead
+        title={`#${label}`}
+        subtitle={t('tags.subtitle', { tag: label })}
+        stats={[
+          { value: String(posts.length), label: t('blog.statPosts') },
+          { value: fmt.compact(words), label: t('blog.statWords') },
+        ]}
+      />
+
+      <a
+        href={path('/archive')}
+        class="glass box-border flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] rounded-[14px] px-[14px] py-[8px]"
+      >
+        <Icon name="lucide:arrow-left" class="size-[16px] shrink-0 text-ink-soft" />
+        <span class="text-[13px] font-normal whitespace-nowrap text-ink-soft">
+          {t('tags.backToAll')}
+        </span>
+      </a>
+
+      <TagsBand tags={tagCounts(all, locale)} />
+
+      <TimelineCard groups={groups} />
+    </div>
+  </div>
+
+  <!-- 移动端不显示 Footer：由底部 Tab Bar 取代 -->
+  <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
+</BaseLayout>

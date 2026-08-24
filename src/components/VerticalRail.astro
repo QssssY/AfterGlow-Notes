@@ -1,7 +1,8 @@
 ---
-import { site } from '~/config'
+import { useI18n } from '~/i18n'
 
-const chars = [...site.title]
+const { c } = useI18n(Astro)
+const chars = [...c.site.title]
 ---
 
 <!--

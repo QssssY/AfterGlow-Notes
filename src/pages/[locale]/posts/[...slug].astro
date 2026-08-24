@@ -1,0 +1,23 @@
+---
+import type { GetStaticPaths } from 'astro'
+import { prefixedLocales } from '~/i18n/locales'
+import { postRoutes } from '~/utils/posts'
+import PostView from '~/views/PostView.astro'
+
+/*
+ * 每个语种把全部文章都出一份 —— 包括还没译的（回落中文原文并在页顶明示）。
+ * 这样 /en 站的列表点进去总有页面可看，不会撞 404，语言切换器也永远有落点。
+ */
+export const getStaticPaths = (async () => {
+  const routes = []
+  for (const locale of prefixedLocales) {
+    const perLocale = await postRoutes(locale)
+    routes.push(...perLocale.map((r) => ({ ...r, params: { ...r.params, locale } })))
+  }
+  return routes
+}) satisfies GetStaticPaths
+
+const { post, related, older, newer } = Astro.props
+---
+
+<PostView post={post} related={related} older={older} newer={newer} />

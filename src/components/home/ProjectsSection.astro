@@ -1,16 +1,22 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { repoUrl, repos } from '~/config'
+import { repoUrl } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t, c, path } = useI18n(Astro)
+const { repos } = c
 ---
 
 <!-- Projects Section -->
 <section class="flex h-fit w-full flex-col items-start gap-[14px]">
   <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
-      在 做 的 事 PROJECTS
+      {t('home.projects')}
     </span>
-    <a href="/projects" class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
-      <span class="text-[12.5px] font-medium whitespace-nowrap text-brand-ink">全部项目</span>
+    <a href={path('/projects')} class="flex h-fit w-fit shrink-0 flex-row items-center gap-[5px]">
+      <span class="text-[12.5px] font-medium whitespace-nowrap text-brand-ink">
+        {t('home.allProjects')}
+      </span>
       <Icon name="lucide:arrow-right" class="size-[13px] shrink-0 text-brand-ink" />
     </a>
   </div>
