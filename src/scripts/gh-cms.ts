@@ -464,13 +464,20 @@ export async function ghRoute<T>(path: string, init: { method?: string; body?: u
     }
   }
 
-  const dataMatch = /^data\/([a-z0-9-]{1,32})$/.exec(route)
+  // ?locale=en 是译文覆盖文件（src/data/<name>.<locale>.json），与 Go 端同一套合同：
+  // GET 缺文件回 null（前端从空表开始）、DELETE 只对译文开放（删 = 整组回落中文）
+  const dataMatch = /^data\/([a-z0-9-]{1,32})(?:\?locale=([a-z]{2}(?:-[a-z]{2,8})?))?$/.exec(route)
   if (dataMatch) {
     const name = dataMatch[1]!
-    const path = `src/data/${name}.json`
+    const locale = dataMatch[2]
+    if (locale === 'zh') throw new Error('zh 是基准语种，它的真身就是主文件')
+    const path = locale ? `src/data/${name}.${locale}.json` : `src/data/${name}.json`
     if (method === 'GET') {
       const file = await getFile(path)
-      if (!file) throw new Error(`没有这份数据（${name}）`)
+      if (!file) {
+        if (locale) return null as T
+        throw new Error(`没有这份数据（${name}）`)
+      }
       return JSON.parse(decodeText(file.content)) as T
     }
     if (method === 'PUT') {
@@ -478,9 +485,14 @@ export async function ghRoute<T>(path: string, init: { method?: string; body?: u
       await putFile(
         path,
         encodeText(JSON.stringify(init.body, null, 2) + '\n'),
-        `overview: 更新数据 ${name}`,
+        `overview: 更新${locale ? `译文 ${name}.${locale}` : `数据 ${name}`}`,
         file?.sha,
       )
+      return {} as T
+    }
+    if (method === 'DELETE' && locale) {
+      const file = await getFile(path)
+      if (file) await deleteFile(path, `overview: 删除译文 ${name}.${locale}`, file.sha)
       return {} as T
     }
   }

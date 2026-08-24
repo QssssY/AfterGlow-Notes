@@ -531,6 +531,10 @@ func (s *server) adminPost(w http.ResponseWriter, r *http.Request) {
 
 // ---- 站点数据（src/data/*.json）----
 
+// 译文覆盖文件的语种码：两段小写（en / ja / pt-br…）。与前端 src/i18n/content.ts
+// 收集覆盖文件的正则保持子集关系 —— 这里放行的名字，构建时一定会被捡起来
+var localeRe = regexp.MustCompile(`^[a-z]{2}(-[a-z]{2,8})?$`)
+
 func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 	spec, ok := dataFiles[name]
@@ -538,12 +542,30 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, "没有这种数据")
 		return
 	}
-	path := filepath.Join(s.admin.dataDir(), name+".json")
+
+	// ?locale=en → 读写 <name>.en.json（部分覆盖：只存要翻的字段，缺的回落中文基准）。
+	// zh 是基准语种，它的真身就是 <name>.json —— 不允许再造一份 <name>.zh.json 遮蔽自己
+	locale := r.URL.Query().Get("locale")
+	if locale != "" && (locale == "zh" || !localeRe.MatchString(locale)) {
+		fail(w, http.StatusBadRequest, "语种码不合法（形如 en / ja / pt-br）")
+		return
+	}
+	filename := name + ".json"
+	if locale != "" {
+		filename = name + "." + locale + ".json"
+	}
+	path := filepath.Join(s.admin.dataDir(), filename)
 
 	switch r.Method {
 	case http.MethodGet:
 		raw, err := os.ReadFile(path)
 		if err != nil {
+			if locale != "" && os.IsNotExist(err) {
+				// 这个语种还没有译文文件：给 null，前端从空表开始
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
+				w.Write([]byte("null"))
+				return
+			}
 			fail(w, http.StatusInternalServerError, "读取失败: "+err.Error())
 			return
 		}
@@ -568,7 +590,8 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 				fail(w, http.StatusBadRequest, "这份数据应该是数组")
 				return
 			}
-			if len(list) < spec.minItems {
+			// minItems 只约束基准：译文是部分覆盖，只写翻过的条目、少几条是常态
+			if locale == "" && len(list) < spec.minItems {
 				fail(w, http.StatusBadRequest, fmt.Sprintf("至少要保留 %d 条（页面组件会取第一条）", spec.minItems))
 				return
 			}
@@ -591,8 +614,20 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 
+	case http.MethodDelete:
+		// 只有译文文件可删（删 = 该语种整组回落中文基准）；基准是页面的数据源，不许删
+		if locale == "" {
+			fail(w, http.StatusBadRequest, "基准数据不能删，只有译文文件可以")
+			return
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			fail(w, http.StatusInternalServerError, "删除失败: "+err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+
 	default:
-		fail(w, http.StatusMethodNotAllowed, "只支持 GET / PUT")
+		fail(w, http.StatusMethodNotAllowed, "只支持 GET / PUT / DELETE")
 	}
 }
 

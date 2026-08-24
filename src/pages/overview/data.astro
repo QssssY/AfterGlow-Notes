@@ -10,6 +10,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   <nav data-tabs class="flex flex-wrap gap-[6px]"></nav>
 
+  <!-- 内容语言：中文 = 基准（原有编辑），其余语种 = 译文覆盖文件的编辑。
+       只有当前组有可翻译文本字段时才出现（theme/playlist 这类不出） -->
+  <div data-lang-row class="flex flex-wrap items-center gap-[6px]" hidden>
+    <span class="ad-hint">内容语言</span>
+  </div>
+
   <p class="ad-hint" data-desc></p>
 
   <div data-editor class="flex flex-col gap-[14px]">
@@ -40,6 +46,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 <script>
   import { $, api, esc, ghMode, report, siteAssetUrl, toast, today } from '~/scripts/admin'
   import { copyText } from '~/scripts/clipboard'
+  // 语种清单与自称：单一真源在 locales.ts —— fork 加一门语言，这里自动多一颗切换钮
+  import { localeMeta, prefixedLocales, type Locale } from '~/i18n/locales'
 
   // ---- 字段规格：新增一种可编辑内容 = 这里加一段 + server/admin.go 白名单加一行 ----
 
@@ -306,8 +314,19 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   let value: unknown = null
   let dirty = false
 
+  /*
+   * 译文编辑态。curLocale = ''（中文基准，走原有的整套表单）或某个语种码
+   * （en / ja…，走 renderTr 的翻译视图）。译文在内存里存成「输入框表示法」：
+   * 一律字符串（lines 用 \n 连接、csv 用逗号），保存时再转回 JSON 形状 ——
+   * trTop 对应对象顶层字段，trItems 与基准条目按下标严格对齐。
+   */
+  let curLocale: '' | Locale = ''
+  let trTop: Record<string, string> = {}
+  let trItems: Record<string, string>[] = []
+
   const tabs = $('[data-tabs]')
   const editor = $('[data-editor]')
+  const langRow = $('[data-lang-row]')
 
   const spec = () => SPECS[current]!
   /** 这一组有没有「条目列表」：纯 object（站点信息 / 关于页）没有 */
@@ -316,6 +335,52 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     const sp = spec()
     if (!hasList(sp)) return []
     return (sp.kind === 'array' ? value : (value as Item)?.[sp.listKey!]) as Item[]
+  }
+
+  // ---- 可翻译字段的判定 ----
+
+  /*
+   * 译文只碰文本：数字 / 颜色 / 日期 / 勾选 / 下拉 / 图片位都是结构，三语共用。
+   * 文本里也有结构字段（地址、图标名、日期串、语言名这类专名），按键名排除。
+   * playlist 不给翻（曲名歌手是专有名词，且 config.ts 读的是原始 JSON、
+   * 覆盖文件根本不会生效）；theme 全是颜色，本来就轮不到。
+   */
+  const NO_TR_SPECS = new Set(['playlist', 'theme'])
+  const NO_TR_KEYS = new Set([
+    'href', 'domain', 'repo', 'icon', 'src', 'lrc', 'initial', 'initialColor',
+    'email', 'date', 'pushed', 'stack',
+  ])
+  const trFields = (fields: Field[] = []): Field[] =>
+    fields.filter(
+      (f) =>
+        !f.virtual &&
+        !NO_TR_KEYS.has(f.key) &&
+        (!f.input || f.input === 'text' || f.input === 'textarea' || f.input === 'lines' || f.input === 'csv'),
+    )
+  const specTranslatable = (name: string) => {
+    const sp = SPECS[name]!
+    return !NO_TR_SPECS.has(name) && trFields(sp.fields).length + trFields(sp.item).length > 0
+  }
+
+  /** 数组译文的配对主键 —— 与 src/i18n/merge.ts 的 IDENTITY_KEYS 同一份约定 */
+  const IDENTITY = ['repo', 'href', 'domain'] as const
+  const identKeyOf = (items: Item[]): string | null => {
+    if (items.length === 0) return null
+    for (const k of IDENTITY) if (items.every((it) => typeof it[k] === 'string')) return k
+    return null
+  }
+
+  /** JSON 值 ⇄ 输入框字符串（译文视图里 lines 用换行、csv 用逗号，与基准表单同款） */
+  const toInput = (f: Field, v: unknown): string =>
+    v == null ? '' : Array.isArray(v) ? v.join(f.input === 'lines' ? '\n' : ', ') : String(v)
+  const fromInput = (f: Field, s: string): unknown => {
+    const t = s.trim()
+    if (!t) return undefined
+    if (f.input === 'lines')
+      return t.split('\n').map((x) => x.trim()).filter(Boolean)
+    if (f.input === 'csv')
+      return t.split(/[,，]/).map((x) => x.trim()).filter(Boolean)
+    return t
   }
 
   window.addEventListener('beforeunload', (e) => {
@@ -463,6 +528,132 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     loadTilePreviews()
   }
 
+  // ---- 译文视图 ----
+
+  /** 把已有的译文文件摊进 trTop / trItems（与基准对齐；对不上的条目忽略） */
+  function distributeTr(patch: unknown) {
+    const sp = spec()
+    trTop = {}
+    trItems = list().map(() => ({}))
+    const fill = (src: Item | undefined | null, fields: Field[], into: Record<string, string>) => {
+      if (!src || typeof src !== 'object') return
+      for (const f of trFields(fields)) if (f.key in src) into[f.key] = toInput(f, src[f.key])
+    }
+    if (sp.kind === 'object' && sp.fields) fill(patch as Item, sp.fields, trTop)
+    const patchList =
+      sp.kind === 'array'
+        ? Array.isArray(patch)
+          ? (patch as Item[])
+          : undefined
+        : sp.listKey
+          ? ((patch as Item)?.[sp.listKey] as Item[] | undefined)
+          : undefined
+    if (!Array.isArray(patchList)) return
+    const base = list()
+    const ik = identKeyOf(base)
+    if (ik && patchList.every((p) => p && typeof p[ik] === 'string')) {
+      const byId = new Map(base.map((b, i) => [String(b[ik]), i]))
+      for (const p of patchList) {
+        const i = byId.get(String(p[ik]))
+        if (i != null) fill(p, sp.item, trItems[i]!)
+      }
+    } else {
+      // 下标配对（与 merge.ts 的回退口径一致）
+      patchList.forEach((p, i) => {
+        if (i < trItems.length) fill(p, sp.item, trItems[i]!)
+      })
+    }
+  }
+
+  /** trTop / trItems → 覆盖文件的 JSON；整组为空时返回 null（= 该删文件了） */
+  function collectTr(): unknown {
+    const sp = spec()
+    const gather = (src: Record<string, string>, fields: Field[]): Item => {
+      const out: Item = {}
+      for (const f of trFields(fields)) {
+        const v = fromInput(f, src[f.key] ?? '')
+        if (v !== undefined) out[f.key] = v
+      }
+      return out
+    }
+    const base = list()
+    const perItem = base.map((_, i) => gather(trItems[i] ?? {}, sp.item))
+    const ik = identKeyOf(base)
+    let items: Item[] | null = null
+    if (base.length > 0) {
+      if (ik) {
+        // 有配对主键：只写翻过的条目，每条带上主键（merge.ts 按它认亲）
+        const withId = perItem
+          .map((o, i) => (Object.keys(o).length ? { [ik]: base[i]![ik], ...o } : null))
+          .filter((x): x is Item => x !== null)
+        items = withId.length ? withId : null
+      } else {
+        // 下标配对：位置就是身份 —— 中间没翻的写 {} 占位，尾部的空位裁掉
+        let last = -1
+        perItem.forEach((o, i) => {
+          if (Object.keys(o).length) last = i
+        })
+        items = last === -1 ? null : perItem.slice(0, last + 1)
+      }
+    }
+    if (sp.kind === 'array') return items
+    const top = sp.fields ? gather(trTop, sp.fields) : {}
+    if (sp.listKey && items) top[sp.listKey] = items
+    return Object.keys(top).length ? top : null
+  }
+
+  function renderTr() {
+    const sp = spec()
+    const lang = localeMeta[curLocale as Locale]?.label ?? curLocale
+    $('[data-desc]').textContent =
+      `正在编辑「${sp.label}」的 ${lang} 译文。只列文本字段：留空 = 该字段回落中文；` +
+      `数字、颜色、日期、图标、链接这类结构字段三语共用，不用翻。条目的增删排序请回「中文」做。`
+    $('[data-add]').hidden = true
+    $('[data-upload-box]').hidden = true
+    for (const btn of tabs.querySelectorAll('button')) {
+      btn.setAttribute('aria-current', btn.dataset.name === current ? 'page' : 'false')
+    }
+
+    const row = (f: Field, baseVal: unknown, trVal: string, scope: string) => {
+      const baseStr = toInput(f, baseVal)
+      const attrs = `data-tk="${f.key}" data-tscope="${scope}"`
+      // 原文多行或较长就给 textarea，翻译时好对照
+      const area = f.input === 'textarea' || f.input === 'lines' || baseStr.length > 48
+      const control = area
+        ? `<textarea class="ad-textarea" rows="2" placeholder="${esc(baseStr)}" ${attrs}>${esc(trVal)}</textarea>`
+        : `<input class="ad-input" placeholder="${esc(baseStr)}" ${attrs} value="${esc(trVal)}">`
+      return `<label class="flex flex-col gap-[4px] ad-field--wide">
+        <span class="ad-label">${esc(f.label)}</span>
+        <span class="ad-hint">中文：${esc(baseStr) || '—'}</span>
+        ${control}
+      </label>`
+    }
+
+    let html = ''
+    const topFields = trFields(sp.fields)
+    if (topFields.length > 0) {
+      html += `<div class="ad-card p-[20px]"><div class="ad-item-grid">${topFields
+        .map((f) => row(f, (value as Item)[f.key], trTop[f.key] ?? '', 'top'))
+        .join('')}</div></div>`
+    }
+    const itemFields = trFields(sp.item)
+    if (itemFields.length > 0) {
+      html += list()
+        .map((item, i) => {
+          // 条目标题：拿第一个可翻字段的原文当锚，翻的时候知道自己在哪一条
+          const head = toInput(itemFields[0]!, item[itemFields[0]!.key]) || `第 ${i + 1} 条`
+          return `<div class="ad-item">
+            <div class="ad-hint" style="margin-bottom:6px">◇ ${esc(head)}</div>
+            <div class="ad-item-grid">${itemFields
+              .map((f) => row(f, item[f.key], trItems[i]?.[f.key] ?? '', String(i)))
+              .join('')}</div>
+          </div>`
+        })
+        .join('')
+    }
+    editor.innerHTML = html
+  }
+
   // ---- 图片瓦片的当前图回填 ----
   // 站点图片存在 Astro 资产目录（无公开 URL），走管理台预览接口 fetch 转 blob；
   // 站标本来就在 public/，直接引（带时间戳防缓存住旧图）
@@ -484,6 +675,15 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   editor.addEventListener('input', (e) => {
     const el = e.target as HTMLInputElement
+    // 译文视图的输入走 data-tk（与基准表单的 data-k 分开，互不惊扰）
+    const tk = el.dataset.tk
+    if (tk) {
+      const scope = el.dataset.tscope!
+      if (scope === 'top') trTop[tk] = el.value
+      else (trItems[Number(scope)] ??= {})[tk] = el.value
+      dirty = true
+      return
+    }
     const key = el.dataset.k
     if (!key) return
     const sp = spec()
@@ -687,19 +887,100 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   async function load(name: string) {
     current = name
-    value = await api(`/api/overview/data/${name}`)
-    dirty = false
-    render()
+    // 这一组没有可翻字段时把语种拨回中文（theme/playlist 页签不该停在译文态）
+    if (curLocale && !specTranslatable(name)) curLocale = ''
+    if (curLocale === '') {
+      value = await api(`/api/overview/data/${name}`)
+      dirty = false
+      render()
+    } else {
+      // 译文视图要基准 + 覆盖两份：基准当对照原文，覆盖是编辑对象（没有时是 null）
+      const [base, patch] = await Promise.all([
+        api(`/api/overview/data/${name}`),
+        api(`/api/overview/data/${name}?locale=${curLocale}`),
+      ])
+      value = base
+      distributeTr(patch)
+      dirty = false
+      renderTr()
+    }
+    updateLangRow()
   }
 
   $('[data-save]').addEventListener('click', async () => {
     try {
+      if (curLocale !== '') {
+        const lang = localeMeta[curLocale].label
+        const patch = collectTr()
+        if (patch === null) {
+          // 整组全空 = 这门语言不再覆盖任何字段，文件留着只会误导，删掉
+          if (!confirm(`「${spec().label}」的 ${lang} 译文全为空 —— 保存将删除译文文件，该组整体回落中文。继续？`))
+            return
+          await api(`/api/overview/data/${current}?locale=${curLocale}`, { method: 'DELETE' })
+          toast(`${lang} 译文文件已删除，该组回落中文 —— 正式站要重新构建`)
+        } else {
+          await api(`/api/overview/data/${current}?locale=${curLocale}`, { method: 'PUT', body: patch })
+          toast(`${lang} 译文已保存 —— dev 站会热更新，正式站要重新构建`)
+        }
+        dirty = false
+        return
+      }
       await api(`/api/overview/data/${current}`, { method: 'PUT', body: cleaned() })
       dirty = false
       toast('已保存 —— dev 站会热更新，正式站要重新构建')
     } catch (err) {
       report(err)
     }
+  })
+
+  // ---- 内容语言切换 ----
+
+  const LOCALE_CHOICES: readonly ['' | Locale, string][] = [
+    ['', '中文'],
+    ...prefixedLocales.map((l): ['' | Locale, string] => [l, localeMeta[l].label]),
+  ]
+  for (const [loc, label] of LOCALE_CHOICES) {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'ad-tab'
+    btn.dataset.loc = loc
+    btn.textContent = label
+    langRow.append(btn)
+  }
+  function updateLangRow() {
+    langRow.hidden = !specTranslatable(current)
+    for (const btn of langRow.querySelectorAll('button')) {
+      btn.setAttribute('aria-current', btn.dataset.loc === curLocale ? 'page' : 'false')
+    }
+  }
+  /*
+   * 旧版数据服务不认 ?locale= —— GET 会把基准当译文端上来，保存又写回基准文件，
+   * 等于拿半份译文覆盖整份中文数据。用 ?locale=zh 探一次：新服务必答 400
+   * （zh 被显式拒绝），旧服务无视参数答 200 —— 答 200 就说明服务是旧的，不放行。
+   * GitHub 直连模式的合同层和页面一起发版，永远是新的，探测天然通过（抛错分支）。
+   */
+  let localeApiOk: boolean | null = null
+  async function ensureLocaleApi(): Promise<boolean> {
+    if (localeApiOk !== null) return localeApiOk
+    try {
+      await api(`/api/overview/data/site?locale=zh`)
+      localeApiOk = false // 居然成功了 = 旧服务在无视 locale 参数
+    } catch {
+      localeApiOk = true
+    }
+    return localeApiOk
+  }
+
+  langRow.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-loc]')
+    if (!btn || btn.dataset.loc === curLocale) return
+    if (dirty && !confirm('这一组还有没保存的修改，切换语言会丢掉。继续？')) return
+    if (btn.dataset.loc !== '' && !(await ensureLocaleApi().catch(() => false))) {
+      toast('数据服务还是旧版本，不认识译文接口 —— 先重新编译并重启 server/ 再来改译文', false)
+      return
+    }
+    curLocale = btn.dataset.loc as '' | Locale
+    load(current).catch(report)
   })
 
   // ---- 页签 ----
