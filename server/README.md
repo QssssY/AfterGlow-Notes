@@ -54,8 +54,9 @@ PUBLIC_API_BASE=same-origin pnpm build
 ./afterglow-server.exe -site ../dist        # 浏览器开 http://127.0.0.1:8787
 ```
 
-不设 `PUBLIC_API_BASE` 就是纯本机模式：点赞只存访客自己的浏览器，「N 次阅读」整块不渲染。
-管理台是例外 —— 没配时它默认连 `http://127.0.0.1:8787`，`pnpm dev` 免配置可用。
+不设 `PUBLIC_API_BASE` = 纯静态形态：点赞只存访客浏览器、「N 次阅读」整块不渲染，
+管理台 `/overview` 自动切 **GitHub 直连模式**（细粒度令牌登录，保存即提交）。
+本地想用这个 Go 服务的管理台，就在 `.env` 里显式设 `PUBLIC_API_BASE=http://127.0.0.1:8787`。
 
 ## 管理后台
 
@@ -73,11 +74,11 @@ PUBLIC_API_BASE=same-origin pnpm build
   代理头只在直连对端是本机/内网时才采信（防伪造 X-Forwarded-For 洗限流桶）、
   上传扩展名白名单、数据文件按白名单存取、slug/日期/封面路径都有格式校验。
 
-## 部署（分体）：前端交给平台，API 在 2 核 2G 的小机子
+## 部署（分体）：前端交给平台，API 在小机子
 
-页面字节全走 Vercel / Cloudflare Pages / GitHub Pages 的 CDN，小机子跑数字接口 +
-音乐供给（音乐不进仓库，构建产物里没有 —— 歌从这台机器的 `-music` 目录走，
-160kbps 的流只占 1M 带宽的六分之一，个人博客的并发绰绰有余）。
+页面字节全走 Vercel / Cloudflare Pages / GitHub Pages 的 CDN，服务器只跑数字接口 +
+音乐供给（音乐不进仓库、构建产物里没有 —— 歌从这台机器的 `-music` 目录走）。
+低配 VPS 足够：页面在 CDN，服务器出的只是几百字节的 JSON 和按需的音乐流。
 
 **1. API 与音乐上机**（Windows 上交叉编译，纯 Go 不需要 CGO）：
 
@@ -172,9 +173,8 @@ PUBLIC_API_BASE=same-origin pnpm build
 ## 运维备忘
 
 - **备份** = 拷走 `afterglow.db` 一个文件（`sqlite3 afterglow.db ".backup b.db"` 更稳）
-- **带宽**：分体形态下页面字节都在平台 CDN 上，这台机器出 JSON 数字 + 音乐流。
-  160kbps 一路流约占 20KB/s（1M ≈ 128KB/s），听歌的人多到六个并发才会挤 ——
-  个人博客到不了这个量级；真到了就把 mp3 转 128kbps 或给 /music/* 单独套 CDN
+- **带宽**：分体形态下页面都在 CDN，这台机器只出 JSON + 音乐流。音乐是唯一的大头，
+  窄带宽上并发听歌多了才会挤 —— 真遇到就把 mp3 转 128kbps，或给 /music/* 单独套 CDN
 - **限流**：`-max-writes`（默认 200/IP/天）；被限到会返回 429，前端静默降级不报错
 - **CORS**：`-origin` 生产上写成站点的完整来源（如 `https://blog.example.com`），
   默认 `*` 只适合本地调试；同源备选形态用不上它
