@@ -4,13 +4,13 @@ import { Icon } from 'astro-icon/components'
 
 <!--
   站点点赞 —— 迷你圆钮，挂在问候卡右上角。
-  设计稿 Widget Row 里那颗 76px 的大爱心让位给了整行的音乐卡（用户拍板），
+  设计 Widget Row 里那颗 76px 的大爱心让位给了整行的音乐卡（用户拍板），
   交互原样保留：服务端计数、已赞实心心、心形爆裂。
   注意不能用 fill：astro-icon 渲染成 symbol + use，路径自带 fill="none" 属性，
   外部 CSS 选不进 use 的影子树 —— 已赞态靠叠一颗内联实心路径。
 
   计数是真实数据：Go 后端在的话显示全站总数；不在就只显示访客本机的 0/1。
-  设计稿里的 20118 是虚构基数，已删 —— 不编数字。
+  设计里的 20118 是虚构基数，已删 —— 不编数字。
 -->
 <div class="relative shrink-0">
   <button

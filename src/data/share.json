@@ -136,7 +136,7 @@
   },
   {
     "title": "Penpot — 开源的设计协作工具",
-    "desc": "浏览器里的 Figma 平替，设计稿数据完全自持可自部署，输出直接是 SVG/CSS，对开发者格外友好。",
+    "desc": "浏览器里的 Figma 平替，设计数据完全自持可自部署，输出直接是 SVG/CSS，对开发者格外友好。",
     "href": "https://github.com/penpot/penpot",
     "domain": "github.com",
     "icon": "shapes",

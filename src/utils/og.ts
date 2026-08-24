@@ -1,6 +1,6 @@
 /**
  * OG 社交分享图 —— 用 satori 在构建时渲染，纯本地零联网。
- * 配色和字体取自 blog.pen，所以分享卡片和站点是同一套视觉。
+ * 配色和字体取自站点设计，所以分享卡片和站点是同一套视觉。
  *
  * 注意 satori 不支持 WOFF2（只认 TTF/OTF/WOFF），所以这里取 fontsource 的 .woff。
  */
@@ -38,7 +38,7 @@ const FONTS = [
   },
 ]
 
-/** 取自 blog.pen 的浅色 token */
+/** 浅色 token */
 const C = {
   cream: '#F7F1E7',
   ink: '#5B423F',

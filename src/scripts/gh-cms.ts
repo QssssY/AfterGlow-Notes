@@ -403,7 +403,7 @@ export async function ghSiteAssetUrl(name: string): Promise<string | null> {
   for (const e of IMAGE_EXTS) candidates.push(`images/site/${name}${e}`)
   const defaults: Record<string, string> = {
     avatar: 'images/cat001.jpg',
-    art: 'images/bg.png',
+    art: 'images/bg.webp',
     'snapshot-1': 'images/snapshot-dusk.png',
     'snapshot-2': 'images/snapshot-field.png',
     'snapshot-3': 'images/snapshot-lantern.png',

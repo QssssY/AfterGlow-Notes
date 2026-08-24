@@ -2,7 +2,7 @@
 import { Icon } from 'astro-icon/components'
 
 interface Props {
-  /** 设计稿是 08-19 这种月-日 */
+  /** 设计是 08-19 这种月-日 */
   date: string
   title: string
   href?: string | undefined
@@ -13,7 +13,7 @@ interface Props {
 const { date, title, href, readMinutes, tags = [] } = Astro.props
 ---
 
-<!-- Timeline Row · blog.pen jKPjc -->
+<!-- Timeline Row -->
 <a href={href ?? '#'} class="box-border flex w-full flex-row items-center gap-[12px] py-[12px]">
   <span class="w-[44px] shrink-0 text-[13px] font-medium text-ink-soft">{date}</span>
 

@@ -4,7 +4,7 @@ import type { ImageMetadata } from 'astro'
 import { Icon } from 'astro-icon/components'
 
 interface Props {
-  /** 设计稿是两位数序号，如 07 */
+  /** 设计是两位数序号，如 07 */
   index: number | string
   date: Date
   category: string
@@ -12,9 +12,9 @@ interface Props {
   excerpt: string
   href?: string | undefined
   readMinutes: number
-  /** 设计稿写法：1.2k 字 */
+  /** 设计写法：1.2k 字 */
   words: string
-  /** 真实封面图；没有时退回设计稿的渐变底 + 图标 */
+  /** 真实封面图；没有时退回设计的渐变底 + 图标 */
   cover?: ImageMetadata | undefined
   coverIcon?: string
 }
@@ -37,7 +37,7 @@ const dateLabel = `${date.getFullYear()} · ${pad(date.getMonth() + 1)} · ${pad
 const indexLabel = typeof index === 'number' ? pad(index) : index
 ---
 
-<!-- Post Row · blog.pen YZaZG -->
+<!-- Post Row -->
 <a
   href={href ?? '#'}
   class="glass-row box-border flex w-full flex-row items-center gap-[18px] rounded-[22px] p-[14px]"

@@ -3,9 +3,9 @@ import { Icon } from 'astro-icon/components'
 import { now } from '~/config'
 
 /**
- * Now Card · blog.pen Mobile 首页（kXFhg）
+ * Now Card
  *
- * 设计稿这轮用它取代了移动端的「最新文章」面板，和桌面 此刻 Card 是同一件事，
+ * 设计这轮用它取代了移动端的「最新文章」面板，和桌面 此刻 Card 是同一件事，
  * 但不是同一份规格：这里 caption 是「现 在 NOW」、行内是 26px 图标砖而不是圆点、
  * 末尾多一行 aside，所以单独写一个组件，不给 NowCard 加 compact 分支。
  *
@@ -16,7 +16,7 @@ import { now } from '~/config'
  * 末尾 1px hairline + aside 11.5px/1.5 text-secondary
  */
 
-/** 设计稿写法：8 月 */
+/** 设计写法：8 月 */
 const stamp = `${now.updated.getMonth() + 1} 月`
 ---
 

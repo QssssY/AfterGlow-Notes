@@ -5,7 +5,7 @@ import { snapshots } from '~/config'
 
 interface Props {
   /**
-   * 三张照片。设计稿里是 Unsplash 热链占位图，和 Art Card 一样不落进仓库：
+   * 三张照片。设计里是 Unsplash 热链占位图，和 Art Card 一样不落进仓库：
    * 给了就渲染图，没给就是 avatar-bg 底色块。
    */
   images?: readonly (ImageMetadata | undefined)[]
@@ -14,7 +14,7 @@ interface Props {
 const { images = [] } = Astro.props
 
 /**
- * Snapshot Strip · blog.pen Home 首页 / Column B 末位（rHthS）
+ * Snapshot Strip
  *
  * 规格：392×98 · r28（radius-panel）· p8 · 横向 gap8
  * 三格等宽（各 120×82）· 每格 r22（radius-row）

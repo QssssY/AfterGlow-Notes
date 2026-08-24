@@ -43,7 +43,7 @@ const enriched = posts.map((post) => {
   }
 })
 
-// 首页不再有文章列表（设计稿这轮换成了 此刻 Card），只有移动端末尾那张主推卡用得到
+// 首页不再有文章列表（设计这轮换成了 此刻 Card），只有移动端末尾那张主推卡用得到
 const featured = enriched[0]
 
 // 「大家在看」的备选池：全部文章（新→旧），slug 与文章页阅读上报用的一致（post.id）
@@ -53,15 +53,15 @@ const hotPool = posts.map((post) => ({
   href: `/posts/${post.id}`,
 }))
 
-// 桌面区块间距：Body 顶 48（设计稿是 72，用户嫌顶上空得慌，全站统一收到 48）；
-// Body 底 → Projects 34；Projects 底 → Footer 30（取自设计稿绝对坐标差）
+// 桌面区块间距：Body 顶 48（设计是 72，用户嫌顶上空得慌，全站统一收到 48）；
+// Body 底 → Projects 34；Projects 底 → Footer 30（取自设计绝对坐标差）
 ---
 
 <BaseLayout title={site.title}>
   {/* ── 桌面：1440 三栏 ──────────────────────────────────
-      设计稿这轮删掉了右上角那排 Social Button，社交入口挪进了侧栏 Social Row。
+      设计这轮删掉了右上角那排 Social Button，社交入口挪进了侧栏 Social Row。
       首页是短内容页，不做任何粘性（用户拍板：只有长内容才钉）——
-      布局与设计稿完全一致，Projects 恢复满宽伸到侧栏底下。 */}
+      布局与设计完全一致，Projects 恢复满宽伸到侧栏底下。 */}
   <div class="hidden w-full flex-row items-start gap-[48px] xl:flex">
     {/* 左栏 self-stretch + Uptime 拉伸：时钟挪去右栏后左栏偏短，
         差值让「运行天数」卡吃掉（内容居中），三栏底线保持平齐 */}

@@ -7,7 +7,7 @@ interface Props {
   avatar: ImageMetadata
   /** 移动端：头像 88、圆角 28、字号 19/27、bio 12/20（桌面 120、36、24/34、13/22） */
   compact?: boolean
-  /** 桌面右栏用：吸收真实内容比设计稿矮出来的差值，让右栏底边和两侧对齐（列上配 self-stretch） */
+  /** 桌面右栏用：吸收真实内容比设计矮出来的差值，让右栏底边和两侧对齐（列上配 self-stretch） */
   grow?: boolean
 }
 
@@ -15,7 +15,7 @@ const { avatar, compact = false, grow = false } = Astro.props
 const size = compact ? 88 : 120
 ---
 
-<!-- Greeting Card · blog.pen Home / Column B（移动端同名帧） -->
+<!-- Greeting Card -->
 <div
   class:list={[
     'glass box-border flex w-full shrink-0 flex-col items-center',

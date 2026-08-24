@@ -10,14 +10,14 @@ const trackLabel = (t: { title: string; artist?: string }) =>
 ---
 
 <!--
-  Now Playing · blog.pen Home / Widget Row —— 播放列表版播放器。
+  Now Playing
 
-  视觉骨架照设计稿：音波 icon + 「正在听」 + 曲名 + 等化条。
+  视觉骨架照设计：音波 icon + 「正在听」 + 曲名 + 等化条。
   能力（都不改布局）：
   - 点卡播放 / 暂停；多于一首时出现 上一首 / 下一首 / 播放模式 / 播放列表 钮，
     音量钮常驻；播放模式 顺序（列表循环）→ 随机 → 单曲循环 点击轮换、跨页记忆；
     放完按模式接歌；列表和音量是卡下方的玻璃弹层（互斥），点歌即切即播、面板自动收起
-  - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计稿的定格假谱
+  - 播放时等化条由 Web Audio 实时频谱驱动，停下来回到设计的定格假谱
   - 曲名行播放时逐句显示 LRC 歌词，卡拉OK式从左往右点亮（唱到哪亮到哪）；
     渐变挂在贴文本宽的内层 span 上 —— 挂整行容器会按容器宽算，分界线跑得比人声快；
     句子长过卡宽时学 QQ 音乐横向跑马：唱过的字往左让位，位移量按句内进度算；
@@ -131,7 +131,7 @@ const trackLabel = (t: { title: string; artist?: string }) =>
     <span data-np-text class="inline-block">{trackLabel(first)}</span>
   </span>
 
-  <!-- 条形高度循环设计稿定格的那 12 个值。48 根 + justify-between 铺满整行
+  <!-- 条形高度循环设计定格的那 12 个值。48 根 + justify-between 铺满整行
        （此前 24 根定宽只到卡一半，右边空着难受——用户点名）。
        未播放：CSS 假律动；播放（data-live)：JS 用实时频谱写 scaleY，见 global.css -->
   <div data-eq class="flex h-[20px] w-full shrink-0 flex-row items-end justify-between">

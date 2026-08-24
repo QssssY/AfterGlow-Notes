@@ -35,10 +35,7 @@ server/*.db-*
 # 本地把 mp3/lrc 丢进这里照常预览；部署时传到服务器的 -music 目录（见 server/README.md）
 public/music/
 
-# Pencil 备份
-*.pen.bak
-
-# 从 blog.pen 导出的参考 HTML（实现组件时的对照物，不是源码）
+# 设计导出的参考 HTML（实现组件时的对照物，不是源码）
 # 必须忽略：Tailwind 4 的自动内容探测会扫到导出里的 bg-[url('images/...')]，
 # 生成指向不存在图片的 CSS，构建时报一堆 "didn't resolve at build time"
 design-export/
@@ -54,3 +51,11 @@ design-export/
 
 # 部署脚本产的交叉编译二进制
 server/afterglow-server-linux
+
+# 设计文件：本地保留，不进仓库
+*.pen
+*.pen.bak
+
+# 未采用的生图候选、已转 webp 的原始大图：本地留着，不进仓库
+images/generated-*.png
+images/bg.png

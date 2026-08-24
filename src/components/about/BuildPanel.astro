@@ -5,14 +5,14 @@ import { buildInfo } from '~/utils/build'
 import { calendarDaysSince } from '~/utils/post'
 
 /**
- * 构建 BUILD · blog.pen About 关于网站 / Left Column（x7QTJQ）
+ * 构建 BUILD
  *
- * 四行键值的值用等宽字（设计稿写的是 $--font-primary = JetBrains Mono），
+ * 四行键值的值用等宽字（设计写的是 $--font-primary = JetBrains Mono），
  * 和站内其他数字/技术文本一致。
  *
- * 设计稿把版本号和时间都写死了。这里只有「托管」是静态的（还没定平台），
+ * 设计把版本号和时间都写死了。这里只有「托管」是静态的（还没定平台），
  * 框架 / 样式从 package.json 读，上次构建是构建时刻，天数实时算 —— 都不会过期。
- * 设计稿 Status Row 里还有一行「构建耗时 18s」：同一次构建没法自报总耗时，删了。
+ * 设计 Status Row 里还有一行「构建耗时 18s」：同一次构建没法自报总耗时，删了。
  */
 const rows = [
   { key: '框架', value: buildInfo.framework },

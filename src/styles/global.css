@@ -18,14 +18,14 @@
 /* 暗色模式走 class 策略，由 <html class="dark"> 控制 */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 布局双模式（用户拍板）：默认「原版」= blog.pen 的完整侧栏列；
+/* 布局双模式（用户拍板）：默认「原版」= 完整侧栏列；
    可切「紧凑」= YYsuni 结构（图标条导航 + 短栏/居中单列）。
    由 <html data-layout> 控制，机制同暗色模式（预绘制脚本防闪、换页保持）。 */
 @custom-variant classic (&:where([data-layout='classic'], [data-layout='classic'] *));
 @custom-variant compact (&:where([data-layout='compact'], [data-layout='compact'] *));
 
 /* ─────────────────────────────────────────────────────────────
- * 设计 token —— 全部取自 blog.pen 的 `mode: light/dark` 变量轴
+ * 设计 token —— 全部取自设计的 light / dark 变量轴
  * 随主题变的值定义在 :root / .dark，@theme inline 只做引用，
  * 这样 bg-cream / text-ink 这类工具类在两个模式下自动切换。
  * ───────────────────────────────────────────────────────────── */
@@ -123,7 +123,7 @@
   --color-btn-dark: var(--btn-dark);
 
   /* 「喜欢」那一簇粉 —— 跨首页 / 文章页 / 移动端共 9 个节点，
-   * 设计稿这轮把它们抽成了带暗色变体的变量，之前暗色下这几处粉色不跟主题走。 */
+   * 设计这轮把它们抽成了带暗色变体的变量，之前暗色下这几处粉色不跟主题走。 */
   --color-like-fill: var(--like-fill);
   --color-like-ink: var(--like-ink);
   --color-like-text: var(--like-text);
@@ -137,7 +137,7 @@
   --color-syn-keyword: #ffc98b;
   --color-syn-string: #9fe0c8;
 
-  /* 圆角 —— 设计稿里走变量的 5 档 + radius-m */
+  /* 圆角 —— 设计里走变量的 5 档 + radius-m */
   --radius-chip: 12px;
   --radius-btn: 14px;
   --radius-m: 16px;
@@ -153,9 +153,9 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
- * 复用配方 —— 设计稿里高频重复的阴影/模糊组合
- * 描边用 outline + 负 offset 复刻 Pencil 的「内描边」：不占布局、不改内容盒尺寸。
- * backdrop blur 是 4px：Pencil 的 background_blur radius 8 对应 CSS blur(4px)。
+ * 复用配方 —— 设计里高频重复的阴影/模糊组合
+ * 描边用 outline + 负 offset 复刻设计的「内描边」：不占布局、不改内容盒尺寸。
+ * backdrop blur 是 4px：设计里的模糊半径 8 对应 CSS blur(4px)。
  * ───────────────────────────────────────────────────────────── */
 
 /* 玻璃卡片：Sidebar / Social Button / Project Card 等，全站 40 处。
@@ -226,13 +226,13 @@
  * 导航侧栏在所有页面随内容自然滚走；只有长内容页（文章详情、归档）把
  * 一屏装得下的功能面板组包成 xl:sticky top-48（见各页的 data-pin-group），
  * 目录这类可能超长的模块在卡内限高自滚。整栏钉住 + 栏内滚动的
- * rail-pin 方案已废弃 —— 静止布局会被视口高度裁切，和设计稿差太多。 */
+ * rail-pin 方案已废弃 —— 静止布局会被视口高度裁切，和设计差太多。 */
 
 /* Aurora 背景层：每页一个。
- * 设计稿里这层只有模糊没有填充，内容是我按品牌色补的：
+ * 设计里这层只有模糊没有填充，内容是我按品牌色补的：
  * 橙(brand) + 墨绿(leaf) + 金(gold) 三团柔光，落点参考三栏重心。
- * 尺寸用 -inset-[240px] 复刻设计稿的 1920×1808 @ (-240,-240)。
- * Pencil 的模糊半径是 CSS 的两倍，桌面 70→35px、移动 60→30px。 */
+ * 尺寸用 -inset-[240px] 复刻设计的 1920×1808 @ (-240,-240)。
+ * 设计里的模糊半径是 CSS 的两倍，桌面 70→35px、移动 60→30px。 */
 @utility aurora {
   /* 性能账：这层比视口还大 480px，之前挂着 blur(35px)，每次 View Transition
      快照（换页/换主题都要拍两张）都得把它整层重栅格化，卡顿一大半是它贡献的。
@@ -273,8 +273,8 @@
     color: var(--ink);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
-    /* 设计稿里绝大多数文本的 lineHeight 是缺省值（字体自带，约 1.4），
-     * 而 Tailwind preflight 会把 html 设成 1.5 —— 不改的话全站文字都比设计稿松。
+    /* 设计里绝大多数文本的 lineHeight 是缺省值（字体自带，约 1.4），
+     * 而 Tailwind preflight 会把 html 设成 1.5 —— 不改的话全站文字都比设计松。
      * 需要显式行高的地方用 text-[15px]/[26px] 这种写法单独覆盖。 */
     line-height: normal;
   }
@@ -292,8 +292,8 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
- * 文章正文排版 —— 取自 blog.pen「Post 文章详情」的 Prose 区块。
- * 没用 @tailwindcss/typography：设计稿的数值很具体，覆盖插件默认值
+ * 文章正文排版 —— 取自「文章详情」页的正文区块。
+ * 没用 @tailwindcss/typography：设计的数值很具体，覆盖插件默认值
  * 比自己写更麻烦，而且插件会额外产出约 30KB CSS。
  * ───────────────────────────────────────────────────────────── */
 .article-body {
@@ -319,7 +319,7 @@
   font-size: 22px;
   line-height: 33px;
 }
-/* 设计稿只给了 H2 一档，H3/H4 按比例下推 */
+/* 设计只给了 H2 一档，H3/H4 按比例下推 */
 .article-body h3 {
   font-size: 18px;
   line-height: 28px;
@@ -417,7 +417,7 @@
  * 交互动效层 —— 参考 YYsuni/2025-blog-public 的手感移植：
  * 卡片 hover 上浮 / 按下回弹（motion 的 whileHover/whileTap）、
  * 点赞心跳与爆裂、导航滑动高亮、等化条律动、入场错峰浮现。
- * 全部只动 transform / opacity / 阴影，不碰设计稿的静态数值；
+ * 全部只动 transform / opacity / 阴影，不碰设计的静态数值；
  * prefers-reduced-motion 下整层关闭。
  * ───────────────────────────────────────────────────────────── */
 

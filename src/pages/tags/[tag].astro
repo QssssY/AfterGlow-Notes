@@ -11,7 +11,7 @@ import { compactCount, groupByYear, loadPosts, tagCounts } from '~/components/bl
 import BaseLayout from '~/layouts/BaseLayout.astro'
 
 /**
- * 设计稿没有标签页的帧 —— 沿用归档页这轮的新结构（内容栏 Page Head + 标签横带
+ * 设计没有标签页的帧 —— 沿用归档页这轮的新结构（内容栏 Page Head + 标签横带
  * + 年份时间轴），只把标题换成 #标签、篇数字数按这个标签下的文章算。
  * 注意 loadPosts 必须来自独立模块：Astro 会把 getStaticPaths 抽出去。
  */
@@ -45,7 +45,7 @@ const groups = groupByYear(posts)
   </div>
 
   <div class="flex w-full flex-row items-start gap-[48px]">
-    {/* 原版 = 完整 Sidebar（blog.pen 原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    {/* 原版 = 完整 Sidebar（原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
     <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
 
     <div class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]">

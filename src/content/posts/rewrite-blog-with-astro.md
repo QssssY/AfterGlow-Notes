@@ -4,7 +4,7 @@ description: 建站第一天的技术选型记录：为什么最后是 Astro，�
 date: 2026-08-21
 tags: [Astro, 建站, 前端]
 category: 建站笔记
-cover: ./_covers/rewrite-blog-with-astro.png
+cover: ./_covers/rewrite-blog-with-astro.webp
 ---
 
 我主力写 Java，前端用 Vue。所以决定做个人博客的时候，第一反应其实是 Vue 一把梭：Vite 起项目、vue-router 管路由、文章塞进 Markdown 再用插件转组件——每一步都熟。
@@ -58,7 +58,7 @@ front-matter 少写个字段、日期格式打错，构建直接失败并指出�
 ## 没选什么，为什么
 
 - **Next / Nuxt**：能力过剩。SSR、中间件、API 路由我一个都用不上，却要为它们养一台跑 Node 的机器。
-- **Hexo / Hugo**：主题生态很好，但我的设计稿是自己画的（Pencil 里一比一），需要完全掌控每一个像素，模板语言改起来不如组件顺手。
+- **Hexo / Hugo**：主题生态很好，但界面是我自己一比一画出来的，需要完全掌控每一个像素，模板语言改起来不如组件顺手。
 - **纯手写 HTML**：认真考虑过。放弃的原因是想要图片自动压缩和内容 schema 校验，这两样手写维护起来太苦。
 
 至于点赞、阅读数这类必须动态的东西，静态站自己做不了——后面用 Go 写了个小服务，另开一篇记。

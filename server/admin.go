@@ -168,7 +168,7 @@ func (s *server) adminSiteAsset(w http.ResponseWriter, r *http.Request) {
 	// 没传过 → 给仓库自带的默认图（映射与 src/utils/site-images.ts 保持一致），
 	// 管理台的预览瓦片才不会是一排空加号
 	defaults := map[string]string{
-		"avatar": "cat001.jpg", "art": "bg.png",
+		"avatar": "cat001.jpg", "art": "bg.webp",
 		"snapshot-1": "snapshot-dusk.png", "snapshot-2": "snapshot-field.png", "snapshot-3": "snapshot-lantern.png",
 	}
 	if def, ok := defaults[name]; ok {

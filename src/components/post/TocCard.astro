@@ -6,7 +6,7 @@ interface Props {
 }
 
 const { headings } = Astro.props
-// 设计稿里 H3 用 pl-[12px] 表达层级
+// 设计里 H3 用 pl-[12px] 表达层级
 const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
 ---
 

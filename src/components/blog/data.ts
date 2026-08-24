@@ -1,4 +1,4 @@
-/** 归档页的数据派生 —— 都从真实文章集合算出来，不用设计稿里的假数字 */
+/** 归档页的数据派生 —— 都从真实文章集合算出来，不用设计里的假数字 */
 
 import type { ImageMetadata } from 'astro'
 import { getCollection } from 'astro:content'
@@ -45,7 +45,7 @@ export async function loadPosts(): Promise<ArchivePost[]> {
     })
 }
 
-/** 设计稿 Stats 面板的写法：21万 / 3.2k / 48 */
+/** 设计 Stats 面板的写法：21万 / 3.2k / 48 */
 export function compactCount(n: number) {
   if (n >= 10_000) return `${Number((n / 10_000).toFixed(n >= 100_000 ? 0 : 1))}万`
   if (n >= 1_000) return `${Number((n / 1_000).toFixed(1))}k`
@@ -69,7 +69,7 @@ export function groupByYear(posts: ArchivePost[]) {
 /**
  * Archive 面板的年度条形图数据：年份倒序 + 当年篇数。
  *
- * 条长不在这里算 —— 设计稿的条是「每篇固定像素」，不是把最多的那年归一到满轨，
+ * 条长不在这里算 —— 设计的条是「每篇固定像素」，不是把最多的那年归一到满轨，
  * 换算规则跟着面板走（见 ArchivePanel.astro）。
  */
 export function yearBars(posts: ArchivePost[]) {

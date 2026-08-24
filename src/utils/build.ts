@@ -1,7 +1,7 @@
 /**
  * 构建期元信息 —— 给关于页的 BUILD 面板用。
  *
- * 设计稿把「框架 Astro 5」「样式 Tailwind 4」「上次构建 08-21 09:14」都写成了
+ * 设计把「框架 Astro 5」「样式 Tailwind 4」「上次构建 08-21 09:14」都写成了
  * 静态文本。版本号写死会和 package.json 对不上（现在实际是 Astro 7），
  * 时间写死则每次构建后都过期。所以这两类值在构建时算出来。
  *
@@ -22,7 +22,7 @@ const deps: Record<string, string> = {
   ...(pkg.devDependencies as Record<string, string> | undefined),
 }
 
-/** 构建时刻 —— 设计稿的写法是 08-21 09:14 */
+/** 构建时刻 —— 设计的写法是 08-21 09:14 */
 function stamp(date: Date) {
   const two = (n: number) => String(n).padStart(2, '0')
   return `${two(date.getMonth() + 1)}-${two(date.getDate())} ${two(date.getHours())}:${two(date.getMinutes())}`

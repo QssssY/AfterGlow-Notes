@@ -1,4 +1,4 @@
-/** 站点级文案与导航 —— 取自 blog.pen 的 Sidebar / Footer / Banner */
+/** 站点级文案与导航 —— Sidebar / Footer / Banner */
 
 /*
  * 会改的内容真身全在 src/data/*.json —— 网页管理后台（/overview，写接口在
@@ -78,7 +78,7 @@ export const email = siteData.email
 
 /**
  * 导航 —— label 用于桌面侧栏，short 用于移动端 Tab Bar。
- * 末项在设计稿里桌面叫「优秀博客」、移动端 Tab 叫「友链」，是同一个目标。
+ * 末项在设计里桌面叫「优秀博客」、移动端 Tab 叫「友链」，是同一个目标。
  *
  * match 是激活态的路径前缀组。首页与文章是分开的两项：首页只认 '/'，
  * 文章认整个文章区（归档 / 详情 / 标签），否则首页会同时点亮两项。
@@ -126,7 +126,7 @@ export const themeChoices = [
 /**
  * Uptime Card —— 天数按构建日期实时计算，不是写死的。
  * 起点是这个仓库的首次提交（git log --reverse 可查：2026-08-21），
- * 设计稿写的「自 2023 年 10 月」是虚构人设，别改回去。
+ * 设计写的「自 2023 年 10 月」是虚构人设，别改回去。
  */
 export const uptime = {
   // Date.UTC 钉死起点，不随构建机时区漂移（CI 在 UTC，本地在东八区）
@@ -135,14 +135,14 @@ export const uptime = {
 } as const
 
 /**
- * 构建 BUILD（关于页左栏）—— 设计稿把四个值都写死了，会过期也会说假话。
+ * 构建 BUILD（关于页左栏）—— 设计把四个值都写死了，会过期也会说假话。
  *
  * 框架 / 样式：构建时从 package.json 读真实版本（见 utils/build.ts），不写在这里。
  * 上次构建：构建时间戳，同上。
  * 天数：复用 uptime.since 实时算。
  * 托管：还没定部署平台（astro.config.mjs 里 site 也还是 localhost），
  *      所以先写占位；定了改这一行就行。
- * 设计稿还有一行「构建耗时 18s」—— 同一次构建里没法自报耗时，删掉了。
+ * 设计还有一行「构建耗时 18s」—— 同一次构建里没法自报耗时，删掉了。
  */
 export const build = {
   status: siteData.buildStatus,
@@ -155,14 +155,14 @@ export const greeting = {
 }
 
 /*
- * Like Widget 的基数：设计稿写的 20118 是虚构的，已删。
+ * Like Widget 的基数：设计写的 20118 是虚构的，已删。
  * 计数以 Go 后端为准（getLikes('site')）；后端不在时只显示访客本机的 0/1。
  */
 
 /**
- * 此刻 Card（首页中栏）—— 设计稿这轮新加的一块，取代了原来的「最新文章」列表。
+ * 此刻 Card（首页中栏）—— 设计这轮新加的一块，取代了原来的「最新文章」列表。
  *
- * 设计稿里的原文是「在重写画布的相机控制，第七版了」+ Blender / WebGPU 那套，
+ * 设计里的原文是「在重写画布的相机控制，第七版了」+ Blender / WebGPU 那套，
  * 那是虚构人设。这里换成中性表述，说的都是这个仓库里真有的事；
  * 想写具体进展就直接改这几行，updated 记得跟着动。
  */
@@ -182,7 +182,7 @@ export const now = {
 
 /**
  * 在用 Card（首页中栏末位）—— 一行 4 件工具，icon 是 lucide 名。
- * 设计稿列的是 Blender / WebGPU / Astro / Neovim，其中只有 Astro 是真的；
+ * 设计列的是 Blender / WebGPU / Astro / Neovim，其中只有 Astro 是真的；
  * 换成这个仓库实际在用的四件。
  */
 export interface Tool {
@@ -193,7 +193,7 @@ export interface Tool {
 export const tools = toolsData as Tool[]
 
 /**
- * Snapshot Strip（首页中栏末位）—— 设计稿是三张 Unsplash 占位图，热链的。
+ * Snapshot Strip（首页中栏末位）—— 设计是三张 Unsplash 占位图，热链的。
  * 和 Art Card 一样先不落图：给了 src 就渲染图，没给就是 avatar-bg 底色块。
  * 想放真照片，把图片放进 images/ 再 import 进 index.astro 传下来。
  */
@@ -238,7 +238,7 @@ export const finePrint = {
  * 加歌 = mp3（和可选的 LRC）丢进 public/music/（该目录 gitignored，版权物不进仓库；
  * 分体部署时丢进服务器的 -music 目录），这里加一行；
  * 没有 lrc 的歌只显示曲名，不做歌词跟随。多于一首时卡上会出现「下一首」按钮。
- * bars 是未播放时等化条的「定格假谱」高度（取自设计稿），播放时由实时频谱接管。
+ * bars 是未播放时等化条的「定格假谱」高度（取自设计），播放时由实时频谱接管。
  */
 export interface Track {
   title: string
@@ -248,7 +248,7 @@ export interface Track {
 }
 export const nowPlaying = {
   playlist: playlistData as Track[],
-  /** bars 是设计稿常量，不进管理后台 */
+  /** bars 是设计常量，不进管理后台 */
   bars: [8, 14, 6, 18, 11, 20, 9, 15, 7, 12, 17, 5],
 } as const
 
@@ -263,7 +263,7 @@ export const reading = readingData as ReadingItem[]
 
 /**
  * 推荐分享 —— tone 决定图标砖的配色（fire = 橙底橙字，leaf = 玻璃底绿字）。
- * 设计稿里它不跟着 category 走（Fontshare 是工具却用 leaf），所以按条存。
+ * 设计里它不跟着 category 走（Fontshare 是工具却用 leaf），所以按条存。
  */
 export interface ShareItem {
   title: string
@@ -287,7 +287,7 @@ export const shareFilters = ['全部', ...new Set(shareItems.map((i) => i.catego
  * 只有两端颜色和文字色按条手调，所以只存 from / to / initialColor。
  * since 用来算 Page Head 的「年最久」，用各站真实的上线年份。
  *
- * 这六条是占位：设计稿里的站名和域名都是虚构的，点开全是死链，
+ * 这六条是占位：设计里的站名和域名都是虚构的，点开全是死链，
  * 换成真实存在的站点，好让友链页能真的点。渐变按位置原样保留。
  */
 export interface BlogrollEntry {
@@ -305,7 +305,7 @@ export interface BlogrollEntry {
 export const blogroll = blogrollData as BlogrollEntry[]
 
 /**
- * GitHub 仓库 —— 项目页与首页「在做的事」共用这一份，取代设计稿里那批虚构项目
+ * GitHub 仓库 —— 项目页与首页「在做的事」共用这一份，取代设计里那批虚构项目
  * （pen-canvas / live2d-web / spline-lite 等，链接全是死的）。
  *
  * repos[0] 是主推项目，进项目页的 Featured 卡；其余进下面的网格。

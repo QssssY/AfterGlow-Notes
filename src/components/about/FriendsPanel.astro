@@ -8,7 +8,7 @@ interface Friend {
   desc: string
   icon: string
   href: string
-  // 头像渐变逐人不同，设计稿里是手调的，不走 token
+  // 头像渐变逐人不同，设计里是手调的，不走 token
   from: string
   to: string
   /** 各站真实头像（images/blogroll/）；没有时退回 icon + 渐变 */
@@ -22,11 +22,11 @@ interface Props {
 
 const { note, friends } = Astro.props
 
-// 设计稿是两行各两位；移动端收成单列
+// 设计是两行各两位；移动端收成单列
 const rows = [friends.slice(0, 2), friends.slice(2)]
 ---
 
-<!-- Friends Panel · blog.pen About -->
+<!-- Friends Panel -->
 <div class="glass-panel box-border flex h-fit w-full shrink-0 flex-col items-start gap-[14px] rounded-[28px] p-[20px]">
   <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between gap-[10px] xl:h-[22px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">

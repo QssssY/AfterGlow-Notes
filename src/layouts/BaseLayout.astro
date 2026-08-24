@@ -27,7 +27,7 @@ interface Props {
   /** 移动端底部 Tab Bar */
   tabBar?: boolean
   /**
-   * 桌面端顶部内边距。设计稿的 Body 从 y72 起，但用户嫌顶上空得慌，
+   * 桌面端顶部内边距。设计的 Body 从 y72 起，但用户嫌顶上空得慌，
    * 全站统一走默认的 48；72 档保留着以备回调。
    */
   topPad?: 48 | 72
@@ -120,16 +120,16 @@ const ogImage = new URL(`/og/${ogSlug}.png`, base).href
     -->
     <div class="relative w-full overflow-clip">
       <!--
-        Aurora Backdrop · blog.pen 里这层只有 blur(70) 没有填充，
+        Aurora Backdrop
         内容是按品牌色补的（见 global.css 的 @utility aurora）。
-        inset -240 复刻设计稿的 1920×1808 @ (-240,-240)。
+        inset -240 复刻设计的 1920×1808 @ (-240,-240)。
       -->
       <div class="aurora pointer-events-none absolute inset-[-240px] z-0"></div>
 
       <div class="relative z-10 mx-auto w-full max-w-[1440px]">
-        {/* 竖排站名（VerticalRail）已收起：设计稿那版右上角是空的，布局迭代后
+        {/* 竖排站名（VerticalRail）已收起：设计那版右上角是空的，布局迭代后
             它在哪都别扭（压卡 / 悬浮都被用户否了）。组件保留，想复出加一行即可。 */}
-        {/* 页面内边距：移动端 24/28（设计稿 Content 在 390 帧内 left24 top28），桌面 48 左右。
+        {/* 页面内边距：移动端 24/28（设计 Content 在 390 帧内 left24 top28），桌面 48 左右。
             换页动效照搬 YYsuni：瞬时切换 + 新页卡片错峰弹入（global.css 的 card-enter），
             不再挂任何 View Transitions 共享元素名 —— 玻璃卡快照会变成模糊空板 */}
         <div

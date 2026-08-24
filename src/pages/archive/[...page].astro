@@ -36,7 +36,7 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
 
 <BaseLayout title="文章" description={`按时间倒叙的写作记录 —— 共 ${total} 篇`}>
   {/*
-    设计稿这轮删掉了满宽的萤火虫 Banner：文章列表改成内容栏顶部的 Page Head，
+    设计这轮删掉了满宽的萤火虫 Banner：文章列表改成内容栏顶部的 Page Head，
     篇数与字数从副标题挪进右侧那两格统计（原来左栏那块 Stats 面板说的是同一件事，
     重复了，一并删掉）。左栏只剩 年表 + 订阅，间距也从 24 收到 16。
   */}
@@ -47,7 +47,7 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
   </div>
 
   <div class="flex w-full flex-row items-start gap-[48px]">
-    {/* 左栏双模式：原版 = 完整 Sidebar + 面板全静态（blog.pen 原样）；
+    {/* 左栏双模式：原版 = 完整 Sidebar + 面板全静态（原样）；
         紧凑 = 只剩 年表+订阅 短栏，钉在图标条下方（84 = 16 + 条高 52 + 16） */}
     <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex">
       <div class="hidden w-full classic:block"><Sidebar /></div>
@@ -77,7 +77,7 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
       {
         page.currentPage === 1 && newest && (
           <>
-            {/* 桌面：设计稿的 Caption Row + Post Row */}
+            {/* 桌面：设计的 Caption Row + Post Row */}
             <section class="hidden h-fit w-full shrink-0 flex-col items-start gap-[14px] xl:flex">
               <div class="flex h-fit w-full shrink-0 flex-row items-center justify-between">
                 <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
@@ -132,7 +132,7 @@ const hrefFor = (n: number) => (n === 1 ? '/archive' : `/archive/${n}`)
     </div>
   </div>
 
-  <!-- 移动端不显示 Footer：设计稿里由底部 Tab Bar 取代 -->
+  <!-- 移动端不显示 Footer：设计里由底部 Tab Bar 取代 -->
   <div class="mt-[30px] hidden w-full xl:block"><Footer /></div>
 
   <SearchOverlay />

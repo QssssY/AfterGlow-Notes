@@ -2,7 +2,7 @@
 
 # 余晖录 · AFTERGLOW NOTES
 
-**像素级还原自己设计稿的个人博客** —— Astro 静态站 + Go 单二进制，也可以完全不要服务器
+**一个从零手写的个人博客** —— Astro 静态站 + Go 单二进制后端，也可以完全不要服务器
 
 [![deploy](https://img.shields.io/github/actions/workflow/status/QssssY/AfterGlow-Notes/deploy.yml?branch=main&label=deploy&logo=githubactions&logoColor=white)](https://github.com/QssssY/AfterGlow-Notes/actions/workflows/deploy.yml)
 [![license](https://img.shields.io/github/license/QssssY/AfterGlow-Notes?label=license)](LICENSE)
@@ -10,7 +10,7 @@
 [![Tailwind](https://img.shields.io/badge/Tailwind_4-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Go](https://img.shields.io/badge/Go_1.27-00ADD8?logo=go&logoColor=white)](server/)
 
-一个**个人学习项目**：从 Pencil 设计稿到前后端代码都是练手之作，边搭边学，不定期推翻重来。
+一个**个人学习项目**：界面到前后端代码全是自己一行行写出来的练手之作，边搭边学，不定期推翻重来。
 
 ⚡ [三分钟拥有自己的一份（零代码 · 零服务器 · 免费）](docs/easy-deploy.md) ·
 🖥 [服务端部署手册](server/README.md)
@@ -41,7 +41,7 @@
 
 ## 特性
 
-**读者看到的**：像素级还原设计稿的界面 · 明暗主题（圆形揭示切换）· 瞬时换页 + 卡片错峰入场 ·
+**读者看到的**：逐像素打磨的界面 · 明暗主题（圆形揭示切换）· 瞬时换页 + 卡片错峰入场 ·
 双布局模式（原版 / 紧凑）· Pagefind 全文搜索 · 跨页不断的音乐播放器（歌词跟随 · 顺序 / 随机 / 单曲循环）·
 RSS / Sitemap / 每页自动生成 OG 图 · 中文字体子集化（每字重 1.1MB → 约 170KB）
 
@@ -139,8 +139,7 @@ fork 下来的是「我的余晖录」，这些地方换成你的（大部分在
 - **图片**：头像、友链头像、项目配图都从管理台上传（自动归位到 `images/` 对应目录）
 - **音乐**：版权物不进仓库（`public/music/` 已 gitignore）。本地丢进 `public/music/` 即可预览；
   有服务器时放 `-music` 目录并设 `PUBLIC_MUSIC_BASE`。**请只使用你有权使用的曲目**
-- **设计**：`blog.pen` 是 Pencil 设计源文件；设计 token（颜色 / 圆角 / 玻璃卡）都在
-  `src/styles/global.css` 的 `:root` / `.dark` 里，改这里全站生效
+- **设计 token**：颜色 / 圆角 / 玻璃卡都在 `src/styles/global.css` 的 `:root` / `.dark` 里，改这里全站生效
 - **结构常量**：导航、建站起始日等在 `src/config.ts`
 
 ## 技术栈与目录
@@ -160,7 +159,6 @@ src/styles/          global.css（设计 token 在此）+ admin.css
 src/scripts/         浏览器端：api / admin / gh-cms（GitHub 直连）等
 server/              Go 服务：main / static / visitors / linkcheck / admin / github
 scripts/             字体子集化、仓库数据同步、部署脚本
-blog.pen             Pencil 设计源文件
 ```
 
 ## 致谢

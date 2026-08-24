@@ -14,7 +14,7 @@ const github = socials.find((s) => s.variant === 'dark') ?? socials[0]!
 const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.length - 1]!
 ---
 
-<!-- Sidebar · blog.pen I23TnW
+<!-- Sidebar
      不挂任何 View Transitions 共享元素名（历史上 site-sidebar / nav-avatar 都试过）：
      带 backdrop-filter 的玻璃卡被拍成过渡快照会渲染成一块模糊空板（「神秘小方块」）。
      换页动效照搬 YYsuni：瞬时切换，本卡随 panel-enter 弹入。 -->
@@ -97,7 +97,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
   </nav>
 
   <!--
-    Social Row —— 设计稿这轮新加的一行，首页顶部那排大按钮挪到了这里。
+    Social Row —— 设计这轮新加的一行，首页顶部那排大按钮挪到了这里。
     Github 是 Social Button 组件的深色实例，但尺寸另一套（h30 / r12 / 图标 16 /
     Averia 14），所以没复用 SocialButton.astro（那份是 h42 / r14 / 图标 22）。
   -->
@@ -259,7 +259,7 @@ const bilibili = socials.find((s) => s.variant === 'glass') ?? socials[socials.l
   </div>
 
   <!-- Layout Group —— 布局双模式（用户点名要的开关）：
-       原版 = blog.pen 完整侧栏；紧凑 = YYsuni 式图标条 + 短栏。
+       原版 = 完整侧栏；紧凑 = YYsuni 式图标条 + 短栏。
        控件样式复用上面外观切换那套；绑定在 BaseLayout（data-layout-choice）。 -->
   <div class="flex h-fit w-full shrink-0 flex-col items-start gap-[10px]">
     <span class="text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">

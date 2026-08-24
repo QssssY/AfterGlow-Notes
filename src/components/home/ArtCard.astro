@@ -8,7 +8,7 @@ interface Props {
   /** 移动端：h152 / p6 / 圆角 28+22（桌面 h268 / p8 / 圆角 36+29） */
   compact?: boolean
   /**
-   * 桌面中栏用：以 268 为最小高度向下生长，吃掉真实内容比设计稿短出来的差值，
+   * 桌面中栏用：以 268 为最小高度向下生长，吃掉真实内容比设计短出来的差值，
    * 让中栏底边和两侧栏对齐（列上要配 self-stretch）。
    */
   grow?: boolean
@@ -17,7 +17,7 @@ interface Props {
 const { src, alt = '', compact = false, grow = false } = Astro.props
 ---
 
-<!-- Art Card · blog.pen Home / Column A（移动端同名帧） -->
+<!-- Art Card -->
 <div
   class:list={[
     'glass group box-border flex w-full flex-row',

@@ -1,6 +1,6 @@
 /**
- * 代码块配色 —— 取自 blog.pen「Post 文章详情」的 Code Block。
- * 设计稿只画了 4 种 token 色，这里按语义把 Shiki 的 scope 归到这 4 色上：
+ * 代码块配色 —— 取自「文章详情」页的代码块。
+ * 设计只画了 4 种 token 色，这里按语义把 Shiki 的 scope 归到这 4 色上：
  *   keyword  #FFC98B  const / storage / control
  *   value    #9FE0C8  字符串、数字、属性访问
  *   dim      #A2988E  标点、运算符、注释

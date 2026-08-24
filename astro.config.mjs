@@ -37,7 +37,7 @@ export default defineConfig({
 
   integrations: [
     // expressiveCode 必须排在 mdx 之前
-    // 设计稿的代码块在浅色和暗色下都是深色底，所以只挂一个主题
+    // 设计的代码块在浅色和暗色下都是深色底，所以只挂一个主题
     expressiveCode({
       themes: [afterglowCode],
       useDarkModeMediaQuery: false,
@@ -49,7 +49,7 @@ export default defineConfig({
         codeLineHeight: '22px',
         codePaddingBlock: '22px',
         codePaddingInline: '22px',
-        // 走 CSS 变量而不是写死 —— 设计稿的 code-bg 浅色是 #2E2724、暗色是 #0D0B0A，
+        // 走 CSS 变量而不是写死 —— 设计的 code-bg 浅色是 #2E2724、暗色是 #0D0B0A，
         // 写死会让暗色模式下的代码块底色不跟着变
         codeBackground: 'var(--code-bg)',
         frames: {
@@ -60,7 +60,7 @@ export default defineConfig({
     mdx(),
     // 管理台不进站点地图（页面本身无密可泄 —— 数据要 token 才拿得到，但也没必要被收录）
     sitemap({ filter: (page) => !page.includes('/overview') }),
-    // 设计稿的图标全部来自 lucide（@iconify-json/lucide）
+    // 设计的图标全部来自 lucide（@iconify-json/lucide）
     icon(),
   ],
 

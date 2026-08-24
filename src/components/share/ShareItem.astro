@@ -7,7 +7,7 @@ interface Props {
   href: string
   domain: string
   icon: string
-  /** fire = 橙底橙字，leaf = 玻璃底绿字。设计稿里按条手挑，不跟 category 走 */
+  /** fire = 橙底橙字，leaf = 玻璃底绿字。设计里按条手挑，不跟 category 走 */
   tone: 'fire' | 'leaf'
   /** 供筛选脚本读取 */
   category: string
@@ -18,7 +18,7 @@ interface Props {
 const { title, desc, href, domain, icon, tone, category, hidden = false } = Astro.props
 ---
 
-<!-- Share Item · blog.pen FaObM -->
+<!-- Share Item -->
 <a
   href={href}
   target="_blank"

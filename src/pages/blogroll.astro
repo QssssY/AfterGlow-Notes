@@ -14,11 +14,11 @@ import { blogrollAvatar } from '~/utils/blogroll-avatars'
  * 管理端新增友链后传一张同域名的图就有头像，没图退回首字 + 渐变，不缺角。
  */
 
-// 设计稿写的是 18 个 / 9 年；按真实数据算
+// 设计写的是 18 个 / 9 年；按真实数据算
 const total = blogroll.length
 const oldest = new Date().getFullYear() - Math.min(...blogroll.map((blog) => blog.since))
 
-// 设计稿是两行定宽三列；移动端按 Home 的规则收成单列
+// 设计是两行定宽三列；移动端按 Home 的规则收成单列
 const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
 ---
 
@@ -32,7 +32,7 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
   </div>
 
   <div class="flex w-full flex-row items-start gap-[48px]">
-    {/* 原版 = 完整 Sidebar（blog.pen 原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    {/* 原版 = 完整 Sidebar（原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
     <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
 
     <div class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]">

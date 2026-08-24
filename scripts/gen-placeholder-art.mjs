@@ -2,7 +2,7 @@
  * 生成站内占位图 —— 萤火虫主题的品牌插画，配色取自 global.css 的设计 token。
  *
  * 产物（提交进 images/，站内当真实资源 import）：
- *   snapshot-dusk / snapshot-field / snapshot-lantern  首页快照带的三格（3:2.05，同设计稿 120×82）
+ *   snapshot-dusk / snapshot-field / snapshot-lantern  首页快照带的三格（3:2.05，同设计 120×82）
  *   placeholder-art                                    通用占位（2:1，项目卡 / 主推卡没有截图时用）
  *
  * 想换成真照片：直接覆盖同名文件重新构建即可。

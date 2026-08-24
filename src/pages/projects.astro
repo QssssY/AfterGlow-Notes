@@ -27,12 +27,12 @@ function relative(iso: string) {
 
 /**
  * 档位从全部仓库派生（含主推的 offCat，所以 Java 也在档位里），
- * 不照抄设计稿的 ['全部','TypeScript','Rust','Astro','归档'] —— 那批项目本身就是虚构的。
+ * 不照抄设计的 ['全部','TypeScript','Rust','Astro','归档'] —— 那批项目本身就是虚构的。
  * 等真有归档项目了再给数据加 archived 字段补回来。
  */
 const stacks = ['全部', ...new Set(repos.map((repo) => repo.stack))]
 
-// 设计稿写的是 12 仓库 / 868 Star，按真实数据算；Star 总数还会被浏览器端刷新
+// 设计写的是 12 仓库 / 868 Star，按真实数据算；Star 总数还会被浏览器端刷新
 const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
 ---
 
@@ -81,7 +81,7 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
       </div>
 
       {/*
-        设计稿画的是两行定宽三列。这里用单个 flex-wrap 容器代替两个定长行：
+        设计画的是两行定宽三列。这里用单个 flex-wrap 容器代替两个定长行：
         全排满时几何完全一样（1/3 = (100% - 两个 24 间隙) / 3），
         但筛选隐藏卡片后能自然回流，不会留下空洞。
       */}

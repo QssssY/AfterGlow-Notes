@@ -6,7 +6,7 @@
  * 没传过的用仓库自带的默认图兜底 —— 和友链头像、项目配图同一套路子。
  */
 import type { ImageMetadata } from 'astro'
-import defaultArt from '../../images/bg.png'
+import defaultArt from '../../images/bg.webp'
 import defaultAvatar from '../../images/cat001.jpg'
 import snapDusk from '../../images/snapshot-dusk.png'
 import snapField from '../../images/snapshot-field.png'

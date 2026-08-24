@@ -9,7 +9,7 @@ import { shareFilters, shareItems } from '~/config'
 import { Icon } from 'astro-icon/components'
 import BaseLayout from '~/layouts/BaseLayout.astro'
 
-// 设计稿写的是 32 条 / 4 个分类；按真实数据算，等条目攒够了数字自己会长上去
+// 设计写的是 32 条 / 4 个分类；按真实数据算，等条目攒够了数字自己会长上去
 const total = shareItems.length
 const categories = new Set(shareItems.map((item) => item.category)).size
 
@@ -29,7 +29,7 @@ const PAGE_SIZE = 8
   </div>
 
   <div class="flex w-full flex-row items-start gap-[48px]">
-    {/* 原版 = 完整 Sidebar（blog.pen 原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    {/* 原版 = 完整 Sidebar（原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
     <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
 
     <div class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]">

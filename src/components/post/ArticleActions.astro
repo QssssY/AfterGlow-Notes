@@ -11,12 +11,12 @@ interface Props {
 const { slug, updated } = Astro.props
 ---
 
-<!-- Actions · blog.pen Post 文章详情 / Article Card -->
+<!-- Actions -->
 <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[12px]">
   <!--
     「喜欢 · N」的 N 来自 Go 后端（配了 PUBLIC_API_BASE 时），一人一票可取消；
     后端不在就退回本机模式：localStorage 记住、不显示数字 —— 不编计数。
-    描边 #F5C0CB66 在设计稿里仍是写死的（那轮抽 like-* 变量漏了它），照抄。
+    描边 #F5C0CB66 在设计里仍是写死的（那轮抽 like-* 变量漏了它），照抄。
   -->
   <button
     type="button"

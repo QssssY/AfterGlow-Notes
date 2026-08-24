@@ -20,12 +20,12 @@ export function postStats(body: string) {
   return {
     words: count,
     minutes: Math.max(1, Math.round(count / SPEED)),
-    /** 设计稿的写法：1.8k 字 / 860 字 */
+    /** 设计的写法：1.8k 字 / 860 字 */
     wordsLabel: count >= 1000 ? `${(count / 1000).toFixed(1)}k 字` : `${count} 字`,
   }
 }
 
-/** 设计稿 Uptime Card 的写法：1,024 */
+/** 设计 Uptime Card 的写法：1,024 */
 /**
  * 日历天数差：跨过几个午夜就是几天（8/21 → 8/24 = 3），按运行环境本地时区起算。
  * 旧口径 floor((now-since)/24h) 是「满 24 小时才算一天」—— 起点钉在 UTC 零点时，
@@ -47,7 +47,7 @@ export function daysSince(since: Date) {
 }
 
 /**
- * 设计稿的相对时间写法：今天 / 昨天 / 3 天前 / 2 个月前 / 1 年前。
+ * 设计的相对时间写法：今天 / 昨天 / 3 天前 / 2 个月前 / 1 年前。
  * 文章页的 Actions 行和左栏 ARTICLE 面板都要说「更新于」，共用这一份。
  */
 export function relativeDay(date: Date) {

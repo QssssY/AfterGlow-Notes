@@ -1,10 +1,8 @@
 # 仓库内统一 LF，检出时也用 LF —— 避免跨平台换行符抖动
 * text=auto eol=lf
 
-# 二进制：绝对不能做换行符转换。
-# blog.pen 是加密的设计文件，git 会误判成文本，
-# 在 core.autocrlf=true 的机器上检出时 LF→CRLF 会直接把它弄坏。
-*.pen binary
+# 二进制：绝对不能做换行符转换 —— core.autocrlf=true 的机器上
+# 检出时 LF→CRLF 会直接把文件弄坏。
 *.png binary
 *.jpg binary
 *.jpeg binary
