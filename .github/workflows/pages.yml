@@ -18,6 +18,11 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+  schedule:
+    # 每天空跑一轮：刷新「更新于 X 天前」「在推进/偶尔动」这类构建期烤进
+    # HTML 的相对时间，并同步仓库星标/最近推送（下面的同步步骤）。
+    # GitHub 会在仓库 60 天无活动后自动停掉定时，push 一次即恢复
+    - cron: '43 20 * * *'
 
 # 本仓库（QssssY）不走 Pages：站点部署在自己的服务器上（deploy.yml）
 # —— fork 后这个条件自然放行，无需改动
@@ -47,6 +52,11 @@ jobs:
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
+
+      - name: 刷新仓库动态数据（stars / 最近推送 → repos.json，失败沿用旧值）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/sync-repos.mjs
 
       - name: 构建（纯静态形态）
         env:
