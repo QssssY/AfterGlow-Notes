@@ -626,25 +626,16 @@
     }
   }
 
-  /* 正在听 —— 等化条律动，节拍参数由内联 --eq-delay / --eq-dur 给 */
-  @keyframes eq {
-    from {
-      transform: scaleY(1);
-    }
-    to {
-      transform: scaleY(0.42);
-    }
-  }
-  [data-eq] > * {
-    transform-origin: bottom;
-    animation: eq var(--eq-dur, 1s) ease-in-out var(--eq-delay, 0s) infinite alternate;
-  }
-  /* 播放中：JS 用实时频谱逐帧写 scaleY，假律动必须让位
-     （animation 在层叠里压过内联 style，不关掉的话 JS 写了也白写）。
+  /* 正在听 —— 等化条只在播放时动（用户点名：不播不动）：电平由 Web Audio
+     实时频谱逐帧写 scaleY（player.ts 的 tick，每根条映射一段频带 —— 律动
+     就是歌本身的），停下来回到设计定格的静止谱形。原先闲时的 CSS 假律动
+     已删：静与动的对比本身就是「在放 / 没放」的状态语言。
      will-change 让每根条独立成合成层：JS 逐帧写 transform 就只走属性树更新，
      不再整卡重绘 —— 没有它，播放 5 秒的 Paint 实测 ~280ms/s */
+  [data-eq] > * {
+    transform-origin: bottom;
+  }
   [data-eq][data-live] > * {
-    animation: none;
     will-change: transform;
   }
 
@@ -786,9 +777,8 @@ html.theme-vt::view-transition-new(root) {
   animation: theme-reveal-in 480ms both;
 }
 /* 揭示进行中按停无限循环动画：它们动一帧，新页实时快照就要整层重栅格化
-   （唱盘不在列 —— 它已改由播放循环驱动，theme-vt 期间 tick 自己跳写） */
-html.theme-vt
-  :is([data-eq] > span, .site-dot, [data-np-icon] > span, [data-clock-colon]) {
+   （唱盘与等化条不在列 —— 都由播放循环驱动，theme-vt 期间 tick 自己跳写） */
+html.theme-vt :is(.site-dot, [data-np-icon] > span, [data-clock-colon]) {
   animation-play-state: paused !important;
 }
 html.theme-vt :is(.skeleton, .site-dot)::after {
@@ -984,7 +974,8 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
 
 /* ─── CD 机（听歌页左侧）───
    结构（Stage.astro）：机座 [data-np-cd] 内凹托盘 > 唱片 [data-np-disc]（转）
-   > 定光 [data-np-glint]（不转）> 轴帽 [data-np-spindle] > 读碟灯 [data-np-led]。
+   > 定光 [data-np-glint]（不转）> 轴帽 [data-np-spindle] > 拾音臂 [data-np-arm]
+   （落针/抬针）> 读碟灯 [data-np-led]。
    旋转由播放循环 rAF 写 rotate（军规④，不用 CSS 动画），暂停停在原角度、
    跨页接着转。虹彩彩瓣是 conic-gradient 画进 disc 合成层里的纹理：转的是
    整层 transform，一个像素都不重绘 —— 彩瓣从钉死的定光下扫过，
@@ -1077,6 +1068,69 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
 [data-np][data-playing] [data-np-led] {
   background: var(--brand);
   box-shadow: 0 0 8px 1px var(--glow-fire);
+}
+/* 拾音臂：开播从右侧臂枕摆入、针头落在数据区（微过冲 = 落针的顿感），
+   暂停利落摆回原位钉住不动。整臂是一层 inset-0 的覆盖层，轴心定在
+   transform-origin（88% 20%，臂座圆心）—— 旋转只动这一个 transform，
+   且只在 data-playing 翻转时过渡一次，不是循环动画（军规内）。
+   几何用百分比：小盘大盘同一套；臂杆自带 55° 内角，摆入 0° 时针头
+   正好落在数据带中段，摆出 -68° 时贴着盘缘垂在右侧。 */
+[data-np-arm] {
+  pointer-events: none;
+  transform-origin: 88% 20%;
+  transform: rotate(-68deg);
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-np][data-playing] [data-np-arm] {
+  transform: rotate(0deg);
+  transition: transform 1.05s cubic-bezier(0.32, 1.16, 0.36, 1);
+}
+/* 臂杆（含 ::after 唱头，跟着杆走天然对齐）与臂座 */
+[data-np-arm-shaft] {
+  position: absolute;
+  top: 20%;
+  left: calc(88% - 1px);
+  width: 2px;
+  height: 26%;
+  border-radius: 999px;
+  transform-origin: top center;
+  rotate: 55deg;
+  background: linear-gradient(var(--ink-muted), var(--ink-soft));
+  box-shadow: 0 1px 2px var(--shadow-soft);
+}
+[data-np-arm-shaft]::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 12px;
+  height: 7px;
+  translate: -50% 0;
+  border-radius: 3px;
+  background: var(--ink-soft);
+  box-shadow:
+    inset 0 1px 0 #ffffff38,
+    0 2px 4px -1px var(--shadow-soft);
+}
+[data-np-arm-base] {
+  position: absolute;
+  top: 20%;
+  left: 88%;
+  width: 14px;
+  height: 14px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, var(--sheen), transparent 62%),
+    var(--avatar-bg);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  box-shadow: 0 1px 4px -1px var(--shadow-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-np-arm] {
+    transition: none;
+  }
 }
 
 /* 放歌期间的动画交接（动效军规第 ④ 条的落地）：播放循环在产主帧，

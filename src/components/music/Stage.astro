@@ -39,7 +39,8 @@ const secondary =
   <!-- CD 机（样式全在 global.css 的 [data-np-cd] 一节）：内凹机座托一张 CD，
        盘面虹彩画在 data-np-disc 的合成层里、由播放循环驱动旋转（军规④），
        定光 glint 与轴帽 spindle 钉着不转 —— 光扫过彩瓣就是「碟在读」的动感；
-       右下的读碟灯跟 data-playing 亮灭。暂停停在原角度，跨页接着转 -->
+       拾音臂 arm 落针/抬针跟 data-playing 走（一次性 transform 过渡，非循环），
+       右下的读碟灯同步亮灭。暂停停在原角度，跨页接着转 -->
   <div data-np-cd class="relative size-[128px] shrink-0 xl:size-[164px]">
     <div data-np-disc class="absolute inset-[10px] xl:inset-[12px]"></div>
     <div data-np-glint aria-hidden="true" class="absolute inset-[10px] xl:inset-[12px]"></div>
@@ -47,6 +48,10 @@ const secondary =
       data-np-spindle
       class="absolute top-1/2 left-1/2 size-[16px] -translate-x-1/2 -translate-y-1/2 xl:size-[20px]"
     >
+    </div>
+    <div data-np-arm aria-hidden="true" class="absolute inset-0">
+      <span data-np-arm-shaft></span>
+      <span data-np-arm-base></span>
     </div>
     <span data-np-led class="absolute right-[9px] bottom-[9px] size-[5px] xl:right-[11px] xl:bottom-[11px]"></span>
   </div>
@@ -90,12 +95,13 @@ const secondary =
       <span data-np-text class="inline-block">{label}</span>
     </span>
 
+    {/* 等化条：不播放静止在定格谱形，播放时实时频谱逐条驱动（律动跟歌走） */}
     <div data-eq class="flex h-[36px] w-full shrink-0 flex-row items-end justify-between">
       {
-        bars.map((h, i) => (
+        bars.map((h) => (
           <span
             class="w-[3px] shrink-0 origin-bottom rounded-[2px] bg-brand opacity-[0.55]"
-            style={`height:${h}px;--eq-dur:${(0.8 + (i % 3) * 0.18).toFixed(2)}s;--eq-delay:${(-i * 0.13).toFixed(2)}s`}
+            style={`height:${h}px`}
           />
         ))
       }

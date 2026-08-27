@@ -134,14 +134,15 @@ const scriptText = playerScriptText(t)
 
   <!-- 条形高度循环设计定格的那 12 个值。48 根 + justify-between 铺满整行
        （此前 24 根定宽只到卡一半，右边空着难受——用户点名）。
-       未播放：CSS 假律动；播放（data-live)：JS 用实时频谱写 scaleY，见 global.css -->
+       不播放就静止在这套定格谱形（用户点名：波浪只在放歌时动）；
+       播放（data-live）：JS 用实时频谱逐条写 scaleY —— 律动跟歌走，见 global.css -->
   <div data-eq class="flex h-[20px] w-full shrink-0 flex-row items-end justify-between">
     {
       Array.from({ length: 48 }, (_, i) => nowPlaying.bars[i % nowPlaying.bars.length]!).map(
-        (h, i) => (
+        (h) => (
           <span
             class="w-[3px] shrink-0 origin-bottom rounded-[2px] bg-brand opacity-[0.55]"
-            style={`height:${h}px;--eq-dur:${(0.8 + (i % 3) * 0.18).toFixed(2)}s;--eq-delay:${(-i * 0.13).toFixed(2)}s`}
+            style={`height:${h}px`}
           />
         ),
       )
