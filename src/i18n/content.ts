@@ -57,6 +57,8 @@ export interface Track {
   artist: string
   src: string
   lrc?: string
+  /** 专辑封面（听歌页 CD 面上转的就是它）：本地文件，由 scripts/fetch-covers.mjs 入库；没有就显示纯盘面 */
+  cover?: string
 }
 
 /** Reading Card —— progress 是百分比；accent 只有 brand / gold 两档 */

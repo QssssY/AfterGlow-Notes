@@ -107,16 +107,20 @@ const panes = [
               ))}
             </div>
 
+            {/* 桌面：歌词在中间吃掉多出来的宽度（用户点名要它当主角），歌单收到
+                右侧定宽 300 —— 选歌是「够用就行」的功能，歌词才是要读的东西。
+                歌词面板绝对填充所在列，列高由右侧歌单撑起，两块严格平齐。
+                移动端仍是两格切换（data-pane 决定谁显示），DOM 顺序不影响它 */}
             <div
               data-music-panes
               data-pane="list"
               class="group/panes flex w-full flex-col gap-[24px] xl:min-h-0 xl:flex-1 xl:flex-row"
             >
-              <div class="flex w-full flex-col max-xl:group-data-[pane=lyrics]/panes:hidden xl:flex-1">
-                <TrackList />
-              </div>
-              <div class="flex w-full flex-col max-xl:group-data-[pane=list]/panes:hidden xl:relative xl:w-[352px] xl:shrink-0">
+              <div class="flex w-full flex-col max-xl:group-data-[pane=list]/panes:hidden xl:relative xl:min-w-0 xl:flex-1">
                 <LyricsPanel />
+              </div>
+              <div class="flex w-full flex-col max-xl:group-data-[pane=lyrics]/panes:hidden xl:w-[300px] xl:shrink-0">
+                <TrackList />
               </div>
             </div>
           </div>

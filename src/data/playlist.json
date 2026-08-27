@@ -3,138 +3,161 @@
     "title": "K歌之王(国语)",
     "artist": "陈奕迅",
     "src": "/music/陈奕迅 - K歌之王(国语).mp3",
-    "lrc": "/music/陈奕迅 - K歌之王(国语).lrc"
+    "lrc": "/music/陈奕迅 - K歌之王(国语).lrc",
+    "cover": "/music/陈奕迅 - K歌之王(国语).jpg"
   },
   {
     "title": "十面埋伏",
     "artist": "陈奕迅",
     "src": "/music/shimianmaifu.mp3",
-    "lrc": "/music/shimianmaifu.lrc"
+    "lrc": "/music/shimianmaifu.lrc",
+    "cover": "/music/shimianmaifu.jpg"
   },
   {
     "title": "富士山下",
     "artist": "陈奕迅",
     "src": "/music/富士山下.mp3",
-    "lrc": "/music/陈奕迅 - 富士山下.lrc"
+    "lrc": "/music/陈奕迅 - 富士山下.lrc",
+    "cover": "/music/富士山下.jpg"
   },
   {
     "title": "葡萄成熟时",
     "artist": "陈奕迅",
     "src": "/music/葡萄成熟时.mp3",
-    "lrc": "/music/陈奕迅 - 葡萄成熟时.lrc"
+    "lrc": "/music/陈奕迅 - 葡萄成熟时.lrc",
+    "cover": "/music/葡萄成熟时.jpg"
   },
   {
     "title": "陀飞轮",
     "artist": "陈奕迅",
     "src": "/music/陀飞轮.mp3",
-    "lrc": "/music/陈奕迅 - 陀飞轮.lrc"
+    "lrc": "/music/陈奕迅 - 陀飞轮.lrc",
+    "cover": "/music/陀飞轮.jpg"
   },
   {
     "title": "任我行",
     "artist": "陈奕迅",
     "src": "/music/任我行.mp3",
-    "lrc": "/music/陈奕迅 - 任我行.lrc"
+    "lrc": "/music/陈奕迅 - 任我行.lrc",
+    "cover": "/music/任我行.jpg"
   },
   {
     "title": "单车",
     "artist": "陈奕迅",
     "src": "/music/单车.mp3",
-    "lrc": "/music/陈奕迅 - 单车.lrc"
+    "lrc": "/music/陈奕迅 - 单车.lrc",
+    "cover": "/music/单车.jpg"
   },
   {
     "title": "最佳损友",
     "artist": "陈奕迅",
     "src": "/music/最佳损友.mp3",
-    "lrc": "/music/陈奕迅 - 最佳损友.lrc"
+    "lrc": "/music/陈奕迅 - 最佳损友.lrc",
+    "cover": "/music/最佳损友.jpg"
   },
   {
     "title": "K歌之王",
     "artist": "陈奕迅",
     "src": "/music/K歌之王.mp3",
-    "lrc": "/music/陈奕迅 - K歌之王.lrc"
+    "lrc": "/music/陈奕迅 - K歌之王.lrc",
+    "cover": "/music/K歌之王.jpg"
   },
   {
     "title": "苦瓜",
     "artist": "陈奕迅",
     "src": "/music/苦瓜.mp3",
-    "lrc": "/music/陈奕迅 - 苦瓜.lrc"
+    "lrc": "/music/陈奕迅 - 苦瓜.lrc",
+    "cover": "/music/苦瓜.jpg"
   },
   {
     "title": "爱情讯息",
     "artist": "郭静",
     "src": "/music/爱情讯息.mp3",
-    "lrc": "/music/郭静 - 爱情讯息.lrc"
+    "lrc": "/music/郭静 - 爱情讯息.lrc",
+    "cover": "/music/爱情讯息.jpg"
   },
   {
     "title": "不怕",
     "artist": "赵蓓 / 赵蕾",
     "src": "/music/不怕.mp3",
-    "lrc": "/music/赵蓓_赵蕾 - 不怕.lrc"
+    "lrc": "/music/赵蓓_赵蕾 - 不怕.lrc",
+    "cover": "/music/不怕.jpg"
   },
   {
     "title": "Mr. Broken Heart",
     "artist": "松下優也",
     "src": "/music/Mr. Broken Heart.mp3",
-    "lrc": "/music/松下優也 - Mr. ”Broken Heart”.lrc"
+    "lrc": "/music/松下優也 - Mr. ”Broken Heart”.lrc",
+    "cover": "/music/Mr. Broken Heart.jpg"
   },
   {
     "title": "Call You Tonight",
     "artist": "Whitney Houston",
     "src": "/music/Call You Tonight.mp3",
-    "lrc": "/music/WhitneyHouston - Call You Tonight.lrc"
+    "lrc": "/music/WhitneyHouston - Call You Tonight.lrc",
+    "cover": "/music/Call You Tonight.jpg"
   },
   {
     "title": "The Way I Still Love You",
     "artist": "Reynard Silva",
     "src": "/music/The Way I Still Love You.mp3",
-    "lrc": "/music/ReynardSilva - The Way I Still Love You.lrc"
+    "lrc": "/music/ReynardSilva - The Way I Still Love You.lrc",
+    "cover": "/music/The Way I Still Love You.jpg"
   },
   {
     "title": "同花顺",
     "artist": "林倛玉",
     "src": "/music/同花顺.mp3",
-    "lrc": "/music/林倛玉 - 同花顺.lrc"
+    "lrc": "/music/林倛玉 - 同花顺.lrc",
+    "cover": "/music/同花顺.jpg"
   },
   {
     "title": "特别的人",
     "artist": "方大同",
     "src": "/music/特别的人.mp3",
-    "lrc": "/music/方大同 - 特别的人.lrc"
+    "lrc": "/music/方大同 - 特别的人.lrc",
+    "cover": "/music/特别的人.jpg"
   },
   {
     "title": "一直很安静",
     "artist": "阿桑",
     "src": "/music/一直很安静.mp3",
-    "lrc": "/music/阿桑 - 一直很安静.lrc"
+    "lrc": "/music/阿桑 - 一直很安静.lrc",
+    "cover": "/music/一直很安静.jpg"
   },
   {
     "title": "紧急联络人",
     "artist": "Gareth.T",
     "src": "/music/紧急联络人.mp3",
-    "lrc": "/music/Gareth.T - 紧急联络人.lrc"
+    "lrc": "/music/Gareth.T - 紧急联络人.lrc",
+    "cover": "/music/紧急联络人.jpg"
   },
   {
     "title": "开往春天的地铁",
     "artist": "纯音乐",
-    "src": "/music/开往春天的地铁.mp3"
+    "src": "/music/开往春天的地铁.mp3",
+    "cover": "/music/开往春天的地铁.jpg"
   },
   {
     "title": "一点一滴",
     "artist": "林倛玉",
     "src": "/music/一点一滴.mp3",
-    "lrc": "/music/林倛玉 - 一点一滴 (青蛙王子 主题曲).lrc"
+    "lrc": "/music/林倛玉 - 一点一滴 (青蛙王子 主题曲).lrc",
+    "cover": "/music/一点一滴.jpg"
   },
   {
     "title": "孤独患者",
     "artist": "陈奕迅",
     "src": "/music/孤独患者.mp3",
-    "lrc": "/music/陈奕迅 - 孤独患者.lrc"
+    "lrc": "/music/陈奕迅 - 孤独患者.lrc",
+    "cover": "/music/孤独患者.jpg"
   },
   {
     "title": "So Sick",
     "artist": "Ne-Yo",
     "src": "/music/So Sick.mp3",
-    "lrc": "/music/Ne-Yo - So Sick.lrc"
+    "lrc": "/music/Ne-Yo - So Sick.lrc",
+    "cover": "/music/So Sick.jpg"
   },
   {
     "title": "Fatal Love",
@@ -146,6 +169,7 @@
     "title": "Boyfriend",
     "artist": "Justin Bieber",
     "src": "/music/Boyfriend.mp3",
-    "lrc": "/music/JustinBieber - Boyfriend.lrc"
+    "lrc": "/music/JustinBieber - Boyfriend.lrc",
+    "cover": "/music/Boyfriend.jpg"
   }
 ]

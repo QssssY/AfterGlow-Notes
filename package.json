@@ -13,6 +13,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "fonts": "node scripts/subset-cjk.mjs",
+    "covers": "node scripts/fetch-covers.mjs",
     "i18n": "node --experimental-strip-types scripts/i18n-report.mjs",
     "astro": "astro"
   },

@@ -27,7 +27,15 @@ import { fill } from '~/scripts/i18n'
 /** end 是这句「唱完」的时刻（见 loadLrc 里的估算），亮字渐变只跑 t→end 这段 */
 type LrcLine = { t: number; text: string; end: number; est: number }
 /** offset：这首歌词整体快/慢时的微调（秒），正值=歌词推迟出现（管理端可改） */
-type Track = { title: string; artist?: string; src: string; lrc?: string; offset?: number }
+type Track = {
+  title: string
+  artist?: string
+  src: string
+  lrc?: string
+  offset?: number
+  /** 专辑封面（听歌页 CD 面上转的就是它），本地文件；没有就露出纯盘面 */
+  cover?: string
+}
 
 const tracks: readonly Track[] = nowPlaying.playlist
 const trackLabel = (t: Track) => (t.artist ? `${t.title} — ${t.artist}` : t.title)
@@ -103,6 +111,8 @@ interface Bind {
   /** 音波 icon 的六根线 + 唱盘：放歌期间由 tick 亲自驱动（global.css 动效军规④） */
   icons: HTMLElement[]
   disc: HTMLElement | null
+  /** CD 面上的专辑封面（听歌页有，首页没有 —— null 时整段跳过） */
+  cover: HTMLImageElement | null
   /** 以下五项只有听歌页那张大卡有，首页是 null / 空数组，各处自然跳过 */
   title: HTMLElement | null
   artist: HTMLElement | null
@@ -553,13 +563,36 @@ const updateModeUI = () => {
   }
 }
 
-/** 听歌页的常驻曲名行（歌词行在别处，换句会变，曲名不能跟着变） */
+/** 听歌页的常驻曲名行（歌词行在别处，换句会变，曲名不能跟着变）+ CD 面的专辑封面 */
 const updateTrackUI = () => {
   const track = tracks[cur]
   if (!track) return
   for (const b of binds) {
     if (b.title) b.title.textContent = track.title
     if (b.artist) b.artist.textContent = track.artist ?? ''
+    if (b.cover) {
+      // 没配上封面的歌藏起来露出纯盘面；换曲时先藏再换 src —— 否则新图解码前
+      // 会露出上一首的封面在新歌上转
+      const url = track.cover ? musicUrl(track.cover) : ''
+      if (!url) {
+        b.cover.hidden = true
+        b.cover.removeAttribute('src')
+      } else if (b.cover.getAttribute('src') !== url) {
+        b.cover.hidden = true
+        b.cover.src = url
+        // decode() 等图真正可画再露脸（缓存命中时同一帧就好，不会闪）
+        b.cover
+          .decode?.()
+          .then(() => {
+            if (tracks[cur]?.cover && musicUrl(tracks[cur]!.cover!) === url) b.cover!.hidden = false
+          })
+          .catch(() => {
+            b.cover!.hidden = false // 不支持 decode / 解码失败也照常显示
+          })
+      } else {
+        b.cover.hidden = false
+      }
+    }
   }
 }
 
@@ -621,6 +654,7 @@ document.addEventListener('astro:page-load', () => {
     items: [...card.querySelectorAll<HTMLElement>('[data-np-item]')],
     icons: [...card.querySelectorAll<HTMLElement>('[data-np-icon] > span')],
     disc: card.querySelector<HTMLElement>('[data-np-disc]'),
+    cover: card.querySelector<HTMLImageElement>('[data-np-cover]'),
     modeBtn: card.querySelector<HTMLElement>('[data-np-mode]'),
     vol: card.querySelector<HTMLElement>('[data-np-vol]'),
     volRange: card.querySelector<HTMLInputElement>('[data-np-vol-range]'),

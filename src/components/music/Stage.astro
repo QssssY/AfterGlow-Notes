@@ -1,6 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components'
-import { nowPlaying } from '~/config'
+import { musicBase, nowPlaying } from '~/config'
 import { useI18n } from '~/i18n'
 
 const { t } = useI18n(Astro)
@@ -28,6 +28,10 @@ const bars = Array.from({ length: 64 }, (_, i) =>
   Math.round(nowPlaying.bars[i % nowPlaying.bars.length]! * 1.8),
 )
 
+/* 首屏那首的封面直接渲进 HTML（不必等 JS）；换曲由引擎改 src。
+   分体部署时歌在别的机子上，所以要拼 musicBase —— 与 mp3/lrc 同一条路径规则 */
+const coverUrl = first.cover ? musicBase + first.cover : ''
+
 const secondary =
   'flex size-[42px] shrink-0 xl:size-[36px] cursor-pointer flex-row items-center justify-center rounded-full hairline-box text-ink-soft transition-colors hover:text-brand-ink'
 ---
@@ -42,7 +46,12 @@ const secondary =
        拾音臂 arm 落针/抬针跟 data-playing 走（一次性 transform 过渡，非循环），
        右下的读碟灯同步亮灭。暂停停在原角度，跨页接着转 -->
   <div data-np-cd class="relative size-[216px] shrink-0 xl:size-[252px]">
-    <div data-np-disc class="absolute inset-[14px] xl:inset-[16px]"></div>
+    <div data-np-disc class="absolute inset-[14px] xl:inset-[16px]">
+      {/* 专辑封面：转的是它所在的盘（img 是盘的孩子，跟着一起转）。
+          src 由引擎按当前曲写，中孔用遮罩挖空、外圈留一道虹彩边（见 global.css）；
+          没有封面的歌 hidden，露出纯 CD 盘面 */}
+      <img data-np-cover alt="" hidden={!coverUrl} src={coverUrl || undefined} />
+    </div>
     <div data-np-glint aria-hidden="true" class="absolute inset-[14px] xl:inset-[16px]"></div>
     <div
       data-np-spindle
