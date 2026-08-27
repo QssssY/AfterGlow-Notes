@@ -33,7 +33,12 @@ if [ -d public/music ]; then
 fi
 
 echo "==> 上传 dist 并原子替换（歌不随 dist 走，由 -music 目录供给）"
-tar -C dist --exclude='./music' -czf - . | ssh "$HOST" "
+# 只排除音频与歌词文件，不能排除整个 ./music —— 那里还躺着「我的音乐」页面
+# （dist/music/index.html，本地构建时会和 public/music 的歌混在同一目录）。
+# 曾经整目录排除，上线后 /music/ 页面 404（歌反而都在）。
+tar -C dist --exclude='./music/*.mp3' --exclude='./music/*.lrc' \
+  --exclude='./music/*.flac' --exclude='./music/*.m4a' --exclude='./music/*.ogg' \
+  --exclude='./music/*.wav' --exclude='./music/*.aac' -czf - . | ssh "$HOST" "
   set -e
   rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
   tar -xzf - -C $ROOT/dist.new

@@ -359,13 +359,22 @@ func (st *staticSite) serve(w http.ResponseWriter, r *http.Request) {
 //
 // 目录是平的（不收子目录）：只取 URL 的最后一段当文件名，路径穿越天然无从谈起；
 // 再拒掉含 \ 与 .. 的名字 —— Windows 上 filepath.Join 会把反斜杠当分隔符。
-func musicHandler(dir string) http.HandlerFunc {
+//
+// ⚠️ /music/ 这个 URL 本身是「我的音乐」页面：同源整站时 ServeMux 按最长前缀
+// 把整个 /music/* 都给了本 handler，页面会被盖成 404（上线当天踩的坑）——
+// 所以带一个 page 兜底：URL 只到 /music(/) 时让回给 -site；分体部署没有页面
+// 可让（page=nil），保持原来的 404。
+func musicHandler(dir string, page http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			fail(w, http.StatusMethodNotAllowed, "只支持 GET / HEAD")
 			return
 		}
 		name := path.Base(path.Clean(r.URL.Path))
+		if name == "music" && page != nil {
+			page(w, r)
+			return
+		}
 		if name == "." || name == "/" || name == "music" ||
 			strings.Contains(name, "\\") || strings.Contains(name, "..") {
 			http.Error(w, "404 没有这首歌", http.StatusNotFound)

@@ -168,7 +168,13 @@ func main() {
 			log.Fatalf("-music 不是目录: %s", abs)
 		}
 		musicAbs = abs
-		mux.HandleFunc("/music/", s.cors(musicHandler(abs)))
+		// /music/ 本身是「我的音乐」页面 —— 同开 -site 时把页面请求让回站点，
+		// 只有 /music/文件名 才是取歌（见 static.go musicHandler 的说明）
+		var musicPage http.HandlerFunc
+		if s.static != nil {
+			musicPage = s.static.serve
+		}
+		mux.HandleFunc("/music/", s.cors(musicHandler(abs, musicPage)))
 		log.Printf("music dir: %s", abs)
 	}
 
