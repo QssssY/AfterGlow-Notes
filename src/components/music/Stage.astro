@@ -144,43 +144,49 @@ const secondary =
       </button>
       {
         multi && (
-          <>
-            <button type="button" data-np-next aria-label={t('player.next')} title={t('player.next')} class={secondary}>
-              <Icon name="lucide:skip-forward" class="size-[17px] shrink-0" />
-            </button>
+          <button type="button" data-np-next aria-label={t('player.next')} title={t('player.next')} class={secondary}>
+            <Icon name="lucide:skip-forward" class="size-[17px] shrink-0" />
+          </button>
+        )
+      }
+
+      <!-- 第二排（仅移动端）：模式 + 音量 —— 主运输排只留 上一首|播放|下一首，
+           大橙钮才能落在正中（四钮一排它永远偏着，用户点名不协调）。
+           桌面 xl:contents 把这层壳溶解掉，孩子们回到主排原来的位置 -->
+      <div class="flex w-full shrink-0 flex-row items-center justify-center gap-[12px] xl:contents">
+        {
+          multi && (
             <button type="button" data-np-mode aria-label={t('player.mode')} title={t('player.mode')} class={secondary}>
               <Icon name="lucide:repeat" data-np-mode-order class="size-[17px] shrink-0" />
               <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[17px] shrink-0" />
               <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[17px] shrink-0" />
             </button>
-          </>
-        )
-      }
+          )
+        }
 
-      <!-- 音量：这儿不做弹层（页面够大，摊开更好使）—— 没有 [data-np-vol] 外壳，
-           引擎的「收起弹层」自然跳过，滑杆与静音图标照常广播 -->
-      <div
-        class="flex w-full shrink-0 flex-row items-center justify-center gap-[10px] xl:ml-auto xl:w-auto"
-      >
-        <Icon name="lucide:volume-2" data-np-vol-on class="size-[15px] shrink-0 text-ink-muted" />
-        <Icon
-          name="lucide:volume-x"
-          data-np-vol-off
-          class="hidden size-[15px] shrink-0 text-ink-muted"
-        />
-        <input
-          data-np-vol-range
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          aria-label={t('player.volume')}
-          class="w-[172px] shrink-0 cursor-pointer xl:w-[110px]"
-        />
-        <span
-          data-np-vol-pct
-          class="w-[36px] shrink-0 text-right text-[11px] font-normal tabular-nums text-ink-muted"
-        ></span>
+        <!-- 音量：这儿不做弹层（页面够大，摊开更好使）—— 没有 [data-np-vol] 外壳，
+             引擎的「收起弹层」自然跳过，滑杆与静音图标照常广播 -->
+        <div class="flex shrink-0 flex-row items-center gap-[10px] xl:ml-auto">
+          <Icon name="lucide:volume-2" data-np-vol-on class="size-[15px] shrink-0 text-ink-muted" />
+          <Icon
+            name="lucide:volume-x"
+            data-np-vol-off
+            class="hidden size-[15px] shrink-0 text-ink-muted"
+          />
+          <input
+            data-np-vol-range
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            aria-label={t('player.volume')}
+            class="w-[150px] shrink-0 cursor-pointer xl:w-[110px]"
+          />
+          <span
+            data-np-vol-pct
+            class="w-[36px] shrink-0 text-right text-[11px] font-normal tabular-nums text-ink-muted"
+          ></span>
+        </div>
       </div>
     </div>
   </div>

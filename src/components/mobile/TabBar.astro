@@ -6,7 +6,12 @@ const { nav } = useI18n(Astro)
 ---
 
 <!-- Tab Bar
-     不挂共享元素名：玻璃条的过渡快照是块模糊空板；换页瞬时，位置固定视觉本就连续 -->
+     不挂共享元素名：玻璃条的过渡快照是块模糊空板；换页瞬时，位置固定视觉本就连续。
+
+     七个目的地全保留，但只有激活项展开成「图标+文字」的胶囊，其余只亮图标
+     （Material 底部导航的 shifting 模式）—— 之前七格全带 10px 小字平分屏宽，
+     每格 ~47px 挤成一团（用户点名）。图标格的触达面积反而更大了；
+     文字入口没丢：aria-label/title 都在，激活后也能看到自己在哪。 -->
 <nav
   class="glass fixed bottom-[29px] left-[16px] right-[16px] z-20 flex h-fit flex-row items-center gap-[2px] rounded-[22px] p-[8px] xl:hidden"
 >
@@ -15,30 +20,22 @@ const { nav } = useI18n(Astro)
       <a
         href={item.href}
         aria-current={item.active ? 'page' : undefined}
+        aria-label={item.label}
+        title={item.label}
         class:list={[
-          'flex h-fit flex-1 flex-col items-center justify-center gap-[3px] rounded-[15px] py-[7px]',
-          item.active && 'bg-fire-tint',
+          'flex h-[42px] flex-row items-center justify-center gap-[6px] rounded-[15px]',
+          item.active ? 'flex-[2.1] bg-fire-tint px-[10px]' : 'flex-1',
         ]}
       >
         <Icon
           name={`lucide:${item.icon}`}
           class:list={['size-[20px] shrink-0', item.active ? 'text-brand-ink' : 'text-ink-soft']}
         />
-        {/*
-          Tab 文案用 short（短标）：七格平分 390 屏宽（减去两侧 16px 边距和
-          8px 内边距），每格约 47px。英文/日文的短标比中文长（Posts / ホーム），
-          10px 字号下最长的「ブログロール」也放不下 —— 所以移动端一律用 short，
-          且译文里特意挑了短词（见 ui.ts 的 nav.*.short）。加了「听歌」这一格
-          之后余量更小，新增导航项前先在 390px 宽下看一眼截断情况。
-        */}
-        <span
-          class:list={[
-            'max-w-full truncate text-[10px]',
-            item.active ? 'font-semibold text-brand-ink' : 'font-normal text-ink',
-          ]}
-        >
-          {item.short}
-        </span>
+        {item.active && (
+          <span class="truncate text-[11.5px] font-semibold whitespace-nowrap text-brand-ink">
+            {item.short}
+          </span>
+        )}
       </a>
     ))
   }
