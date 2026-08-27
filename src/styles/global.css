@@ -940,6 +940,9 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
   padding: 7px 0;
   font-size: 14.5px;
   line-height: 1.5;
+  /* 居中（用户点名）：歌词面板宽了近一倍之后，左对齐的短句只占四成宽、
+     右边一大片空；居中让长短句围着一根中轴走，也和播放器的读法一致 */
+  text-align: center;
   color: var(--ink-muted);
   cursor: pointer;
   opacity: 0.5;
@@ -1005,56 +1008,47 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
     inset 0 2px 9px -2px var(--shadow-soft),
     inset 0 1px 0 var(--glass-edge);
 }
+/* 黑胶盘面。原先是 CD 的虹彩银盘，贴上专辑封面后彩虹与封面互相打架
+   （用户点名「不适配」）—— 换成黑胶：封面当中心纸标，外圈是黑色沟纹，
+   指针落在沟纹上（真唱机就是这么读的，网易云同款读法）。
+   黑胶在两个主题下都是黑的（它是件东西，不是界面表面），所以这一段
+   刻意用字面量而不是 token；暖调偏棕，跟站里的 ink 是一家人。 */
 [data-np-disc] {
   border-radius: 50%;
   background:
-    /* 中孔（透出机座底色）与夹持环：环内一圈细高光示意透明塑料的折边 */
-    radial-gradient(circle closest-side, var(--cream) 0 12.5%, transparent 13%),
+    /* 无封面时的纸标（有封面时被 img 完全盖住）：品牌橙 + 中心轴孔 */
+    radial-gradient(circle closest-side, var(--cream) 0 7%, transparent 7.5%),
+    radial-gradient(circle closest-side, var(--brand) 0 27.5%, transparent 28%),
+    /* 引入槽：纸标外一圈略宽的无纹区，真唱片上是过渡带 */
+    radial-gradient(circle closest-side, rgb(255 255 255 / 0.05) 28% 31%, transparent 31.5%),
+    /* 高光：左上一大片柔反光 + 右下一道弱回光，弧面感全靠这两笔 */
+    radial-gradient(52% 40% at 30% 22%, rgb(255 255 255 / 0.16), transparent 72%),
+    radial-gradient(38% 30% at 72% 80%, rgb(255 255 255 / 0.07), transparent 70%),
+    /* 沟纹：发丝级同心圆，密到看不清单根、只剩细腻的哑光质感 */
+    repeating-radial-gradient(
+      circle closest-side,
+      rgb(255 255 255 / 0.055) 0 0.5px,
+      transparent 0.5px 3.5px
+    ),
+    /* 胶基：中心稍亮、外围压深、最外一圈又提亮 = 唱片边缘的倒角 */
     radial-gradient(
       circle closest-side,
-      transparent 0 13%,
-      var(--glass-edge) 13.5% 14.5%,
-      transparent 15% 36%,
-      var(--glass-edge) 36.5% 37.5%,
-      transparent 38%
-    ),
-    radial-gradient(circle closest-side, transparent 0 13%, var(--sheen) 13.5% 37.5%, transparent 38%),
-    /* 虹彩：两组彩瓣带空档，转起来才有「光在盘上跑」的节奏。
-       粉/金/薄荷取自调色板（like-fill / gold / syn-string），蓝紫是 CD
-       衍射谱系的补位色 —— 盘面是"物件"不是界面，允许两枚字面量 */
-    conic-gradient(
-      from 212deg,
-      transparent 0deg,
-      rgb(245 192 203 / 0.5) 30deg,
-      rgb(238 194 94 / 0.55) 64deg,
-      rgb(159 224 200 / 0.5) 98deg,
-      transparent 134deg,
-      transparent 176deg,
-      rgb(156 199 240 / 0.45) 206deg,
-      rgb(201 168 240 / 0.45) 237deg,
-      rgb(245 192 203 / 0.4) 264deg,
-      transparent 296deg
-    ),
-    /* 数据纹：发丝级同心圆 —— 金属面的细腻全靠它 */
-    repeating-radial-gradient(circle closest-side, #ffffff24 0 0.5px, transparent 0.5px 3px),
-    /* 银基：暖银随主题走（avatar-bg 提亮），边缘略收暗有弧面感 */
-    radial-gradient(
-      circle closest-side,
-      color-mix(in srgb, var(--avatar-bg) 55%, #fff) 0 62%,
-      var(--avatar-bg) 96%,
-      color-mix(in srgb, var(--avatar-bg) 78%, #000) 100%
+      #2c2622 0 24%,
+      #221c19 58%,
+      #171310 90%,
+      #2a2320 100%
     );
   box-shadow:
-    inset 0 0 0 1px var(--glass-edge),
-    0 7px 18px -9px var(--shadow-soft);
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    0 9px 22px -10px rgb(0 0 0 / 0.5);
 }
 [data-np][data-playing] [data-np-disc] {
   will-change: transform;
 }
 
 /* 专辑封面（贴在盘面上，跟着盘一起转 —— img 是 disc 的孩子）。
-   比例照网易云那种「唱片贴纸」读法：中间 66% 是封面圆，外圈 34% 留给虹彩
-   与数据纹（一眼还是张碟，不是个圆头像），正中的轴帽当唱片中心的轴孔。
+   就是黑胶中心那张纸标：占直径 56%，外圈 44% 全留给黑色沟纹 ——
+   指针必须落在沟纹上，纸标太大就会被指到脸上（用户点名过）。
    ⚠️ 尺寸必须显式给（width/height），不能靠 inset 缩 —— img 是替换元素，
    四边 inset 对它无效，加上 Tailwind preflight 的 max-width:100%，
    实测会被撑成 220×250 的非方形并偏心（封面孔与轴帽错开就是这么来的）。
@@ -1062,36 +1056,37 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
    转起来就是光从专辑图上掠过。没配上封面的歌由引擎 hidden，露出纯盘面。 */
 [data-np-cover] {
   position: absolute;
-  top: 17%;
-  left: 17%;
-  width: 66%;
-  height: 66%;
+  top: 22%;
+  left: 22%;
+  width: 56%;
+  height: 56%;
   border-radius: 50%;
   object-fit: cover;
-  /* 内描边压住封面与虹彩的接缝（印刷边缘），外投影让贴纸微微浮起 */
+  /* 纸标压在胶面上：外一圈暗边是压印痕，内一圈亮边是纸的受光缘 */
   box-shadow:
-    inset 0 0 0 1px var(--glass-edge),
-    0 0 0 1px var(--hairline),
-    0 2px 6px -3px var(--shadow-soft);
+    inset 0 0 0 1px rgb(255 255 255 / 0.16),
+    0 0 0 1px rgb(0 0 0 / 0.35),
+    0 2px 7px -3px rgb(0 0 0 / 0.5);
 }
 /* 定光：斜向一道镜面高光 + 左上环境光，钉着不随盘转 —— 反光属于光源不属于盘 */
 [data-np-glint] {
   pointer-events: none;
   border-radius: 50%;
   background:
-    linear-gradient(118deg, transparent 34%, rgb(255 255 255 / 0.34) 47%, transparent 60%),
-    radial-gradient(circle at 30% 24%, var(--sheen), transparent 44%);
+    linear-gradient(118deg, transparent 38%, rgb(255 255 255 / 0.16) 47%, transparent 57%),
+    radial-gradient(circle at 30% 24%, rgb(255 255 255 / 0.1), transparent 46%);
 }
 /* 轴帽：盖住中孔的小圆台，中心一点轴孔 */
 [data-np-spindle] {
   border-radius: 50%;
   background:
-    radial-gradient(circle closest-side, var(--cream) 0 26%, transparent 30%),
-    radial-gradient(circle at 32% 28%, var(--sheen), transparent 62%),
-    var(--avatar-bg);
-  outline: 1px solid var(--hairline);
-  outline-offset: -0.5px;
-  box-shadow: 0 1px 4px -1px var(--shadow-soft);
+    /* 中心轴孔（透黑）+ 金属轴销的受光面 */
+    radial-gradient(circle closest-side, #14100e 0 22%, transparent 24%),
+    radial-gradient(circle at 33% 28%, rgb(255 255 255 / 0.55), transparent 64%),
+    linear-gradient(150deg, #cfc6bd, #8d8279);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.25),
+    0 1px 5px -1px rgb(0 0 0 / 0.55);
 }
 /* 读碟灯：待机灰、读碟亮橙带一圈微光；只在状态翻转时过渡，没有循环动画 */
 [data-np-led] {
@@ -1108,18 +1103,19 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
 /* 拾音臂 —— 按真臂的解剖画（轴承座 > 配重 > 主臂管 > 肘弯前臂 > 唱头壳+针尖），
    嵌套元素各自带固定内角，旋转天然对齐；整臂是一层 inset-0 覆盖层，
    轴心 transform-origin 定在轴承座圆心（84% 13%）。
-   开播从臂枕摆入 26°（网易云那档收敛的机械摆幅），针尖落在数据带外段
-   （盘心 31% 半径处 —— 唱针从外圈读起，扎盘心是外行）；暂停摆回，
-   针尖正好悬在盘缘外。只在 data-playing 翻转时过渡一次 transform，
+   开播摆入 27°，针尖落在黑胶沟纹带上（盘心 76% 半径处 —— 纸标外缘是
+   56%/2=28%…100%，落在这段里才是「在读唱片」；此前落到 62% 直接插在
+   封面脸上，用户点名过）；暂停摆回，针尖悬在盘缘外。
+   只在 data-playing 翻转时过渡一次 transform，
    不是循环动画（军规内）。几何全用百分比，小盘大盘同一套。 */
 [data-np-arm] {
   pointer-events: none;
   transform-origin: 84% 13%;
-  transform: rotate(-34deg);
+  transform: rotate(-40deg);
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 [data-np][data-playing] [data-np-arm] {
-  transform: rotate(0deg);
+  transform: rotate(-13deg);
   transition: transform 0.95s cubic-bezier(0.3, 1.1, 0.4, 1); /* 微过冲 = 落针的顿感 */
 }
 /* 主臂管：轴心垂下、内倾 6°；圆管的立体感靠横向三段金属渐变。
