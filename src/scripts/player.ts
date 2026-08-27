@@ -157,6 +157,28 @@ const ensureGraph = (el: HTMLAudioElement) => {
 const lrcCache = new Map<string, Promise<LrcLine[]>>()
 let lrcLines: LrcLine[] = []
 
+/**
+ * 一句歌词的演唱「份量」（拍数），不是字符数 —— 日文一个汉字常唱两拍
+ * （假名才近似一字一拍），英文一串字母只是一两个音节。日英混排的歌
+ * （Mr. Broken Heart，用户点名）按纯字符数算：英文钩子句把全曲中位字速
+ * 拉低，日文句 est 被低估一半，正常演唱间隙被误判成「间奏」，亮字提前唱满。
+ * 加权后同一首歌里各句 gap/份量 落回同一量级，中位拍速才可信。
+ * 行内没有假名时汉字按中文一字一拍；纯中文/纯英文歌里权重是整体缩放，
+ * est = 份量×中位拍速 的乘积不变，行为与从前一致。
+ */
+const sungLen = (text: string) => {
+  let kana = 0
+  let ideo = 0
+  let latin = 0
+  for (const ch of text) {
+    if (/[぀-ヿ]/.test(ch)) kana += 1
+    else if (/[㐀-鿿豈-﫿]/.test(ch)) ideo += 1
+    else if (/[a-z0-9]/i.test(ch)) latin += 1
+    // 标点、空白（含 　 全角空格与  ）不占拍
+  }
+  return kana + ideo * (kana > 0 ? 2 : 1) + latin * 0.35
+}
+
 const loadLrc = (track: Track) => {
   if (!track.lrc) {
     lrcLines = []
@@ -193,19 +215,19 @@ const loadLrc = (track: Track) => {
               !/^[/℗©]/.test(l.text),
           )
           // 每句的「唱完时刻」end：正常句到下一句开始为止（跟真实演唱最贴）；
-          // 间隙明显超出这句该唱的时长（按本曲中位「每字秒速」估）就认定后面是
+          // 间隙明显超出这句该唱的时长（按本曲中位「每拍秒速」估）就认定后面是
           // 间奏/尾奏，亮字只跑演唱段 —— 否则最后一句会把整段尾奏都当成还在唱，
           // 渐变慢速爬完全曲、跑马也跟着慢吞吞（用户点名的结尾走向不对）
           const rates: number[] = []
           for (let i = 0; i + 1 < lines.length; i += 1) {
             const gap = lines[i + 1]!.t - lines[i]!.t
-            if (gap > 0.8 && gap < 8) rates.push(gap / Math.max(1, lines[i]!.text.length))
+            if (gap > 0.8 && gap < 8) rates.push(gap / Math.max(1, sungLen(lines[i]!.text)))
           }
           rates.sort((a, b) => a - b)
-          const perChar = rates[Math.floor(rates.length / 2)] ?? 0.42
+          const perBeat = rates[Math.floor(rates.length / 2)] ?? 0.42
           for (let i = 0; i < lines.length; i += 1) {
             const line = lines[i]!
-            const est = Math.max(2, line.text.length * perChar)
+            const est = Math.max(2, sungLen(line.text) * perBeat)
             const gap = i + 1 < lines.length ? lines[i + 1]!.t - line.t : Infinity
             line.end = line.t + (gap <= est * 1.8 ? gap : est)
             line.est = est

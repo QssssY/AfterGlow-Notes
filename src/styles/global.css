@@ -869,11 +869,12 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
   );
 }
 
-/* 播放列表 / 音量弹层：在玻璃卡内部，嵌套 backdrop-filter 不再取样（Chrome 的
-   backdrop root 规则），模糊指望不上 —— 同色叠两层把 70% 抬到 ~91% 实底，
-   两个主题共用 --card-solid。列表顺带一条低调的细滚动条 */
+/* 播放列表 / 音量 / 语言菜单弹层：在玻璃卡（或玻璃钮）内部，嵌套 backdrop-filter
+   不再取样（Chrome 的 backdrop root 规则），模糊指望不上 —— 同色叠两层把 70%
+   抬到 ~91% 实底，两个主题共用 --card-solid。列表顺带一条低调的细滚动条 */
 [data-np-list],
-[data-np-vol] {
+[data-np-vol],
+[data-lang-list] {
   background:
     linear-gradient(var(--card-solid), var(--card-solid)),
     linear-gradient(var(--card-solid), var(--card-solid));
