@@ -1069,55 +1069,107 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
   background: var(--brand);
   box-shadow: 0 0 8px 1px var(--glow-fire);
 }
-/* 拾音臂：开播从右侧臂枕摆入、针头落在数据区（微过冲 = 落针的顿感），
-   暂停利落摆回原位钉住不动。整臂是一层 inset-0 的覆盖层，轴心定在
-   transform-origin（88% 20%，臂座圆心）—— 旋转只动这一个 transform，
-   且只在 data-playing 翻转时过渡一次，不是循环动画（军规内）。
-   几何用百分比：小盘大盘同一套；臂杆自带 55° 内角，摆入 0° 时针头
-   正好落在数据带中段，摆出 -68° 时贴着盘缘垂在右侧。 */
+/* 拾音臂 —— 按真臂的解剖画（轴承座 > 配重 > 主臂管 > 肘弯前臂 > 唱头壳+针尖），
+   嵌套元素各自带固定内角，旋转天然对齐；整臂是一层 inset-0 覆盖层，
+   轴心 transform-origin 定在轴承座圆心（84% 13%）。
+   开播从臂枕摆入 26°（网易云那档收敛的机械摆幅），针尖落在数据带外段
+   （盘心 31% 半径处 —— 唱针从外圈读起，扎盘心是外行）；暂停摆回，
+   针尖正好悬在盘缘外。只在 data-playing 翻转时过渡一次 transform，
+   不是循环动画（军规内）。几何全用百分比，小盘大盘同一套。 */
 [data-np-arm] {
   pointer-events: none;
-  transform-origin: 88% 20%;
-  transform: rotate(-68deg);
-  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: 84% 13%;
+  transform: rotate(-34deg);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 [data-np][data-playing] [data-np-arm] {
   transform: rotate(0deg);
-  transition: transform 1.05s cubic-bezier(0.32, 1.16, 0.36, 1);
+  transition: transform 0.95s cubic-bezier(0.3, 1.1, 0.4, 1); /* 微过冲 = 落针的顿感 */
 }
-/* 臂杆（含 ::after 唱头，跟着杆走天然对齐）与臂座 */
-[data-np-arm-shaft] {
+/* 主臂管：轴心垂下、内倾 6°；圆管的立体感靠横向三段金属渐变。
+   ::before 是轴后的配重锤 —— 拾音臂的身份特征，少了它就是根牙签 */
+[data-np-arm-tube] {
   position: absolute;
-  top: 20%;
-  left: calc(88% - 1px);
-  width: 2px;
-  height: 26%;
+  top: 13%;
+  left: 82.9%;
+  width: 2.2%;
+  height: 17%;
   border-radius: 999px;
   transform-origin: top center;
-  rotate: 55deg;
-  background: linear-gradient(var(--ink-muted), var(--ink-soft));
-  box-shadow: 0 1px 2px var(--shadow-soft);
+  rotate: 6deg;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ink) 32%, var(--avatar-bg)),
+    color-mix(in srgb, #fff 55%, var(--avatar-bg)) 45%,
+    color-mix(in srgb, var(--ink) 40%, var(--avatar-bg))
+  );
+  box-shadow: 0 1px 3px -1px var(--shadow-soft);
 }
-[data-np-arm-shaft]::after {
+[data-np-arm-tube]::before {
   content: '';
   position: absolute;
-  bottom: -4px;
+  top: -40%;
   left: 50%;
-  width: 12px;
-  height: 7px;
+  width: 340%;
+  height: 38%;
   translate: -50% 0;
-  border-radius: 3px;
-  background: var(--ink-soft);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ink) 58%, var(--avatar-bg)),
+    color-mix(in srgb, var(--ink) 30%, var(--avatar-bg))
+  );
+  box-shadow: 0 1px 3px -1px var(--shadow-soft);
+}
+/* 肘弯前臂：接在主臂管末端，再向盘内折 12°（合计 18°） */
+[data-np-arm-fore] {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 100%;
+  height: 53%;
+  translate: -50% 0;
+  border-radius: 999px;
+  transform-origin: top center;
+  rotate: 12deg;
+  background: inherit;
+}
+/* 唱头壳：顺着前臂轴向的圆头壳体，底缘中点一粒针尖 */
+[data-np-arm-head] {
+  position: absolute;
+  top: 86%;
+  left: 50%;
+  width: 215%;
+  height: 66%;
+  translate: -50% 0;
+  border-radius: 34% 34% 48% 48% / 24% 24% 44% 44%;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ink) 64%, var(--avatar-bg)),
+    color-mix(in srgb, var(--ink) 42%, var(--avatar-bg))
+  );
   box-shadow:
-    inset 0 1px 0 #ffffff38,
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
     0 2px 4px -1px var(--shadow-soft);
 }
+[data-np-arm-head]::after {
+  content: '';
+  position: absolute;
+  bottom: -7%;
+  left: 50%;
+  width: 24%;
+  height: 18%;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: var(--glass-edge);
+}
+/* 轴承座：外圈机壳色 + 内圈金属盘 + 中心轴销，双圈才有轴承的读法 */
 [data-np-arm-base] {
   position: absolute;
-  top: 20%;
-  left: 88%;
-  width: 14px;
-  height: 14px;
+  top: 13%;
+  left: 84%;
+  width: 11%;
+  height: 11%;
   translate: -50% -50%;
   border-radius: 50%;
   background:
@@ -1125,7 +1177,26 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
     var(--avatar-bg);
   outline: 1px solid var(--hairline);
   outline-offset: -0.5px;
-  box-shadow: 0 1px 4px -1px var(--shadow-soft);
+  box-shadow: 0 2px 6px -2px var(--shadow-soft);
+}
+[data-np-arm-base]::before {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, #fff 40%, var(--avatar-bg)),
+    color-mix(in srgb, var(--ink) 34%, var(--avatar-bg))
+  );
+}
+[data-np-arm-base]::after {
+  content: '';
+  position: absolute;
+  inset: 41%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 55%, var(--avatar-bg));
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.25);
 }
 @media (prefers-reduced-motion: reduce) {
   [data-np-arm] {
