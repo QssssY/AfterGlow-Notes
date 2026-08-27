@@ -446,7 +446,7 @@ const tick = (now: number) => {
       const transform = `scaleY(${s})`
       for (const b of binds) if (b.icons[i]) b.icons[i]!.style.transform = transform
     }
-    discAngle = (discAngle + dt * 0.04) % 360 // 360° / 9s
+    discAngle = (discAngle + dt * 0.12) % 360 // 360° / 3s —— CD 的转速观感（黑胶时代是 9s）
     const deg = Math.round(discAngle * 2) / 2
     if (deg !== lastDisc) {
       lastDisc = deg

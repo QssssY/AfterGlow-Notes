@@ -982,26 +982,101 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
   appearance: none;
 }
 
-/* 唱盘：播放时匀速转（由播放循环 rAF 写 rotate，不用 CSS 动画 —— 见下方
-   动效军规第 ④ 条），暂停自然停在原角度（引擎记着角度，不是回零硬跳）。
-   盘面全用现成 token 画：avatar-bg 打底、hairline 的重复径向渐变做纹路、
-   sheen 一道偏光、brand 的中心标签、cream 的轴孔 —— 圆点尺寸用百分比给，
-   所以移动端小盘和桌面大盘是同一套比例 */
+/* ─── CD 机（听歌页左侧）───
+   结构（Stage.astro）：机座 [data-np-cd] 内凹托盘 > 唱片 [data-np-disc]（转）
+   > 定光 [data-np-glint]（不转）> 轴帽 [data-np-spindle] > 读碟灯 [data-np-led]。
+   旋转由播放循环 rAF 写 rotate（军规④，不用 CSS 动画），暂停停在原角度、
+   跨页接着转。虹彩彩瓣是 conic-gradient 画进 disc 合成层里的纹理：转的是
+   整层 transform，一个像素都不重绘 —— 彩瓣从钉死的定光下扫过，
+   就是 CD 在读时那种流光。比例全按真 CD（中孔 12.5%R、透明夹持环到 38%R、
+   数据区到外缘），尺寸用 closest-side 百分比，小盘大盘同一套。 */
+[data-np-cd] {
+  border-radius: 26px;
+  background:
+    radial-gradient(140% 120% at 28% 18%, var(--sheen), transparent 55%),
+    var(--chip);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  box-shadow:
+    inset 0 2px 9px -2px var(--shadow-soft),
+    inset 0 1px 0 var(--glass-edge);
+}
 [data-np-disc] {
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 50%, var(--cream) 0 4.5%, transparent 5%),
-    radial-gradient(circle at 50% 50%, var(--brand) 0 27%, transparent 27.5%),
-    radial-gradient(circle at 32% 26%, var(--sheen) 0, transparent 58%),
-    repeating-radial-gradient(
-      circle at 50% 50%,
-      var(--hairline) 0 1px,
-      transparent 1px 5px
+    /* 中孔（透出机座底色）与夹持环：环内一圈细高光示意透明塑料的折边 */
+    radial-gradient(circle closest-side, var(--cream) 0 12.5%, transparent 13%),
+    radial-gradient(
+      circle closest-side,
+      transparent 0 13%,
+      var(--glass-edge) 13.5% 14.5%,
+      transparent 15% 36%,
+      var(--glass-edge) 36.5% 37.5%,
+      transparent 38%
     ),
-    var(--avatar-bg);
+    radial-gradient(circle closest-side, transparent 0 13%, var(--sheen) 13.5% 37.5%, transparent 38%),
+    /* 虹彩：两组彩瓣带空档，转起来才有「光在盘上跑」的节奏。
+       粉/金/薄荷取自调色板（like-fill / gold / syn-string），蓝紫是 CD
+       衍射谱系的补位色 —— 盘面是"物件"不是界面，允许两枚字面量 */
+    conic-gradient(
+      from 212deg,
+      transparent 0deg,
+      rgb(245 192 203 / 0.5) 30deg,
+      rgb(238 194 94 / 0.55) 64deg,
+      rgb(159 224 200 / 0.5) 98deg,
+      transparent 134deg,
+      transparent 176deg,
+      rgb(156 199 240 / 0.45) 206deg,
+      rgb(201 168 240 / 0.45) 237deg,
+      rgb(245 192 203 / 0.4) 264deg,
+      transparent 296deg
+    ),
+    /* 数据纹：发丝级同心圆 —— 金属面的细腻全靠它 */
+    repeating-radial-gradient(circle closest-side, #ffffff24 0 0.5px, transparent 0.5px 3px),
+    /* 银基：暖银随主题走（avatar-bg 提亮），边缘略收暗有弧面感 */
+    radial-gradient(
+      circle closest-side,
+      color-mix(in srgb, var(--avatar-bg) 55%, #fff) 0 62%,
+      var(--avatar-bg) 96%,
+      color-mix(in srgb, var(--avatar-bg) 78%, #000) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px var(--glass-edge),
+    0 7px 18px -9px var(--shadow-soft);
 }
 [data-np][data-playing] [data-np-disc] {
   will-change: transform;
+}
+/* 定光：斜向一道镜面高光 + 左上环境光，钉着不随盘转 —— 反光属于光源不属于盘 */
+[data-np-glint] {
+  pointer-events: none;
+  border-radius: 50%;
+  background:
+    linear-gradient(118deg, transparent 34%, rgb(255 255 255 / 0.34) 47%, transparent 60%),
+    radial-gradient(circle at 30% 24%, var(--sheen), transparent 44%);
+}
+/* 轴帽：盖住中孔的小圆台，中心一点轴孔 */
+[data-np-spindle] {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle closest-side, var(--cream) 0 26%, transparent 30%),
+    radial-gradient(circle at 32% 28%, var(--sheen), transparent 62%),
+    var(--avatar-bg);
+  outline: 1px solid var(--hairline);
+  outline-offset: -0.5px;
+  box-shadow: 0 1px 4px -1px var(--shadow-soft);
+}
+/* 读碟灯：待机灰、读碟亮橙带一圈微光；只在状态翻转时过渡，没有循环动画 */
+[data-np-led] {
+  border-radius: 50%;
+  background: var(--dot-idle);
+  transition:
+    background-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+[data-np][data-playing] [data-np-led] {
+  background: var(--brand);
+  box-shadow: 0 0 8px 1px var(--glow-fire);
 }
 
 /* 放歌期间的动画交接（动效军规第 ④ 条的落地）：播放循环在产主帧，

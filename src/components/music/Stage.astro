@@ -36,12 +36,19 @@ const secondary =
   data-np-glow
   class="glass box-border flex w-full shrink-0 flex-col items-center gap-[22px] rounded-[30px] p-[22px] xl:flex-row xl:items-center xl:gap-[30px] xl:p-[28px]"
 >
-  <!-- 唱盘：纹路与中心标签全在 CSS 里画（global.css 的 [data-np-disc]），
-       播放时匀速转、暂停停在原角度 -->
-  <div
-    data-np-disc
-    class="size-[128px] shrink-0 shadow-[0_14px_30px_-14px_var(--shadow-soft)] xl:size-[164px]"
-  >
+  <!-- CD 机（样式全在 global.css 的 [data-np-cd] 一节）：内凹机座托一张 CD，
+       盘面虹彩画在 data-np-disc 的合成层里、由播放循环驱动旋转（军规④），
+       定光 glint 与轴帽 spindle 钉着不转 —— 光扫过彩瓣就是「碟在读」的动感；
+       右下的读碟灯跟 data-playing 亮灭。暂停停在原角度，跨页接着转 -->
+  <div data-np-cd class="relative size-[128px] shrink-0 xl:size-[164px]">
+    <div data-np-disc class="absolute inset-[10px] xl:inset-[12px]"></div>
+    <div data-np-glint aria-hidden="true" class="absolute inset-[10px] xl:inset-[12px]"></div>
+    <div
+      data-np-spindle
+      class="absolute top-1/2 left-1/2 size-[16px] -translate-x-1/2 -translate-y-1/2 xl:size-[20px]"
+    >
+    </div>
+    <span data-np-led class="absolute right-[9px] bottom-[9px] size-[5px] xl:right-[11px] xl:bottom-[11px]"></span>
   </div>
 
   <div
