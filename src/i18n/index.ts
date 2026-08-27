@@ -58,6 +58,7 @@ export const navConfig = [
   { key: 'home', icon: 'house', href: '/', match: ['/'] },
   { key: 'posts', icon: 'notebook-text', href: '/archive', match: ['/archive', '/posts', '/tags'] },
   { key: 'projects', icon: 'layout-grid', href: '/projects', match: ['/projects'] },
+  { key: 'music', icon: 'disc-3', href: '/music', match: ['/music'] },
   { key: 'about', icon: 'circle-user', href: '/about', match: ['/about'] },
   { key: 'share', icon: 'share-2', href: '/share', match: ['/share'] },
   { key: 'blogroll', icon: 'bookmark', href: '/blogroll', match: ['/blogroll'] },

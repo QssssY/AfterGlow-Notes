@@ -286,7 +286,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     },
     playlist: {
       label: '正在听',
-      desc: '首页播放器的歌单，按顺序播、到底循环。音频先用下方工具上传，再把地址填进来。至少留一首。',
+      desc: '首页播放器与听歌页（/music）共用的歌单，按顺序播、到底循环。音频先用下方工具上传，再把地址填进来。至少留一首。',
       kind: 'array',
       minItems: 1,
       upload: 'music',
@@ -313,6 +313,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   let current = 'site'
   let value: unknown = null
   let dirty = false
+
+  // 条目分页：数组页签（歌单 / 分享 / 友链…）条目多时分页显示，省得一屏拖很长。
+  // 关键：卡片的 data-idx / data-scope 始终是「整个数组里的真实下标」，不是本页下标 ——
+  // 上移/下移/删除/编辑都按真实下标操作，翻页只影响「显示哪一段」。
+  const ITEMS_PER_PAGE = 10
+  let itemPage = 1
 
   /*
    * 译文编辑态。curLocale = ''（中文基准，走原有的整套表单）或某个语种码
@@ -508,9 +514,18 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       html += `</div>`
     }
     if (hasList(sp)) {
-      html += list()
-        .map(
-          (item, i) => `<div class="ad-item" data-idx="${i}">
+      const items = list()
+      const total = items.length
+      const pages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE))
+      if (itemPage > pages) itemPage = pages
+      if (itemPage < 1) itemPage = 1
+      const start = (itemPage - 1) * ITEMS_PER_PAGE
+      // 只渲染本页那一段，但下标用 start + 本页序号 = 数组真实下标（操作按它走）
+      html += items
+        .slice(start, start + ITEMS_PER_PAGE)
+        .map((item, k) => {
+          const i = start + k
+          return `<div class="ad-item" data-idx="${i}">
             <div class="ad-item-grid">${sp.item.map((f) => fieldHtml(f, item[f.key], String(i))).join('')}</div>
             <div class="ad-item-tools">
               ${(sp.itemTools ?? [])
@@ -520,9 +535,17 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
               <button type="button" data-act="down" data-idx="${i}">下移</button>
               <button type="button" data-act="del" data-idx="${i}" class="ad-danger">删除</button>
             </div>
-          </div>`,
-        )
+          </div>`
+        })
         .join('')
+      // 超过一页才出翻页条（短列表不打扰）
+      if (pages > 1) {
+        html += `<div class="flex items-center justify-center gap-[12px] pt-[8px]">
+          <button type="button" data-page="prev" class="ad-btn-ghost"${itemPage <= 1 ? ' disabled' : ''}>← 上一页</button>
+          <span class="ad-hint">第 ${itemPage} / ${pages} 页 · 共 ${total} 条</span>
+          <button type="button" data-page="next" class="ad-btn-ghost"${itemPage >= pages ? ' disabled' : ''}>下一页 →</button>
+        </div>`
+      }
     }
     editor.innerHTML = html
     loadTilePreviews()
@@ -728,6 +751,17 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   // ---- 条目操作（上移 / 下移 / 删除 / GitHub 同步 / 头像）----
 
   editor.addEventListener('click', async (e) => {
+    // 翻页条：换页只改显示段，不动数据
+    const pageBtn = (e.target as HTMLElement).closest<HTMLElement>('[data-page]')
+    if (pageBtn) {
+      const pages = Math.max(1, Math.ceil(list().length / ITEMS_PER_PAGE))
+      if (pageBtn.dataset.page === 'prev' && itemPage > 1) itemPage -= 1
+      else if (pageBtn.dataset.page === 'next' && itemPage < pages) itemPage += 1
+      render()
+      editor.scrollIntoView({ block: 'start' })
+      return
+    }
+
     const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')
     if (!btn) return
     const i = Number(btn.dataset.idx)
@@ -772,8 +806,9 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     }
     list().push(item)
     dirty = true
+    itemPage = Math.max(1, Math.ceil(list().length / ITEMS_PER_PAGE)) // 跳到最后一页看新增那条
     render()
-    editor.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    editor.querySelector('.ad-item:last-of-type')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   })
 
   // ---- GitHub 同步：一键拉星数 / 推送时间 / 主语言 ----
@@ -887,6 +922,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
   async function load(name: string) {
     current = name
+    itemPage = 1 // 换页签回到第一页
     // 这一组没有可翻字段时把语种拨回中文（theme/playlist 页签不该停在译文态）
     if (curLocale && !specTranslatable(name)) curLocale = ''
     if (curLocale === '') {

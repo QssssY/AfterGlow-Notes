@@ -1,0 +1,10 @@
+---
+import type { GetStaticPaths } from 'astro'
+import { prefixedLocales } from '~/i18n/locales'
+import MusicView from '~/views/MusicView.astro'
+
+export const getStaticPaths = (() =>
+  prefixedLocales.map((locale) => ({ params: { locale } }))) satisfies GetStaticPaths
+---
+
+<MusicView />

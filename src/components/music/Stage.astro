@@ -1,0 +1,180 @@
+---
+import { Icon } from 'astro-icon/components'
+import { nowPlaying } from '~/config'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
+
+/*
+ * 播放台 —— 首页那张 Now Playing 卡摊开的样子。
+ *
+ * 控制层是同一份（scripts/player.ts 的单例），所以这里只管摆钩子：
+ *   data-np-glow    播放态的品牌微光落在这张卡上（外壳是透明的，见 global.css）
+ *   data-np-play    显式的大播放钮（听歌页整卡不点播，误触太容易）
+ *   data-np-title/artist  常驻曲名与歌手（歌词行会换字，曲名不能跟着变）
+ *   data-np-time/dur      时间读数
+ *   data-np-line/text     单行歌词（卡拉OK渐变 + 长句跑马，与首页同款）
+ *   data-eq / data-np-seek / data-np-prev|next|mode / data-np-vol-*
+ *
+ * 空歌单时整页不渲染播放台（MusicView 先判），所以这里可以直接取 tracks[0]。
+ */
+const tracks = nowPlaying.playlist
+const first = tracks[0]!
+const multi = tracks.length > 1
+const label = first.artist ? `${first.title} — ${first.artist}` : first.title
+
+/** 等化条：设计定格的 12 个高度循环铺 64 根，整体放大 1.8 倍撑住大卡 */
+const bars = Array.from({ length: 64 }, (_, i) =>
+  Math.round(nowPlaying.bars[i % nowPlaying.bars.length]! * 1.8),
+)
+
+const secondary =
+  'flex size-[34px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-full hairline-box text-ink-soft transition-colors hover:text-brand-ink'
+---
+
+<section
+  data-np-glow
+  class="glass box-border flex w-full shrink-0 flex-col items-center gap-[22px] rounded-[30px] p-[22px] xl:flex-row xl:items-center xl:gap-[30px] xl:p-[28px]"
+>
+  <!-- 唱盘：纹路与中心标签全在 CSS 里画（global.css 的 [data-np-disc]），
+       播放时匀速转、暂停停在原角度 -->
+  <div
+    data-np-disc
+    class="size-[128px] shrink-0 shadow-[0_14px_30px_-14px_var(--shadow-soft)] xl:size-[164px]"
+  >
+  </div>
+
+  <div
+    class="flex min-w-0 w-full flex-col items-center gap-[13px] text-center xl:flex-1 xl:items-start xl:text-left"
+  >
+    <div class="flex w-full shrink-0 flex-row items-center gap-[8px]">
+      <!-- lucide audio-lines 的 HTML span 等价形（与首页卡同款）：SVG path 的
+           transform 动画每帧走布局拖垮主线程，span 版才能上合成器 -->
+      <span data-np-icon aria-hidden="true" class="flex size-[17px] shrink-0 flex-row items-center justify-between px-[0.75px] text-brand">
+        {[5, 13, 20, 9, 15, 5].map((h) => (
+          <span class="w-[1.5px] shrink-0 rounded-full bg-current" style={`height:${((h / 24) * 100).toFixed(2)}%`} />
+        ))}
+      </span>
+      <span class="flex-1 text-left text-[12px] font-normal text-ink-soft">
+        {t('player.caption')}
+      </span>
+      <span class="shrink-0 text-[11.5px] font-normal tabular-nums text-ink-muted">
+        <span data-np-time>0:00</span> / <span data-np-dur>--:--</span>
+      </span>
+    </div>
+
+    <div class="flex w-full shrink-0 flex-col items-center gap-[4px] xl:items-start">
+      <h2
+        data-np-title
+        class="w-full truncate font-display text-[25px]/[34px] font-normal text-ink xl:text-[29px]/[38px]"
+      >
+        {first.title}
+      </h2>
+      <span data-np-artist class="w-full truncate text-[13px] font-normal text-ink-soft">
+        {first.artist ?? ''}
+      </span>
+    </div>
+
+    <!-- 单行歌词：外层管淡切与截断，内层贴文本宽（渐变与跑马都挂内层） -->
+    <span
+      data-np-line
+      class="w-full truncate text-[15px]/[24px] font-medium text-ink transition-opacity duration-150 xl:text-[16px]/[26px]"
+    >
+      <span data-np-text class="inline-block">{label}</span>
+    </span>
+
+    <div data-eq class="flex h-[36px] w-full shrink-0 flex-row items-end justify-between">
+      {
+        bars.map((h, i) => (
+          <span
+            class="w-[3px] shrink-0 origin-bottom rounded-[2px] bg-brand opacity-[0.55]"
+            style={`height:${h}px;--eq-dur:${(0.8 + (i % 3) * 0.18).toFixed(2)}s;--eq-delay:${(-i * 0.13).toFixed(2)}s`}
+          />
+        ))
+      }
+    </div>
+
+    <!-- 进度条：常驻（首页那条是 hover 才出现的细线，这里是页面主角） -->
+    <div data-np-seek class="relative h-[14px] w-full shrink-0 cursor-pointer">
+      <div class="absolute inset-x-0 top-[5px] h-[4px] overflow-hidden rounded-[2px] bg-hairline">
+        <div data-np-progress class="h-full w-0 rounded-[2px] bg-brand"></div>
+      </div>
+    </div>
+
+    <!-- 控制排：移动端居中换行（音量自己占一行），桌面一行到底、音量靠右 -->
+    <div
+      class="flex w-full shrink-0 flex-row flex-wrap items-center justify-center gap-[10px] xl:flex-nowrap xl:justify-start"
+    >
+      {
+        multi && (
+          <button type="button" data-np-prev aria-label={t('player.prev')} title={t('player.prev')} class={secondary}>
+            <Icon name="lucide:skip-back" class="size-[15px] shrink-0" />
+          </button>
+        )
+      }
+      <button
+        type="button"
+        data-np-play
+        aria-label={t('player.toggle')}
+        title={t('player.toggle')}
+        class="group/play flex size-[52px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-full bg-brand text-on-brand shadow-[0_10px_22px_-8px_var(--glow-fire)] transition-transform hover:scale-[1.06]"
+      >
+        <Icon
+          name="lucide:play"
+          class="size-[20px] shrink-0 translate-x-[1px] group-data-[playing]/np:hidden"
+        />
+        <Icon name="lucide:pause" class="hidden size-[20px] shrink-0 group-data-[playing]/np:block" />
+      </button>
+      {
+        multi && (
+          <>
+            <button type="button" data-np-next aria-label={t('player.next')} title={t('player.next')} class={secondary}>
+              <Icon name="lucide:skip-forward" class="size-[15px] shrink-0" />
+            </button>
+            <button type="button" data-np-mode aria-label={t('player.mode')} title={t('player.mode')} class={secondary}>
+              <Icon name="lucide:repeat" data-np-mode-order class="size-[15px] shrink-0" />
+              <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[15px] shrink-0" />
+              <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[15px] shrink-0" />
+            </button>
+          </>
+        )
+      }
+
+      <!-- 音量：这儿不做弹层（页面够大，摊开更好使）—— 没有 [data-np-vol] 外壳，
+           引擎的「收起弹层」自然跳过，滑杆与静音图标照常广播 -->
+      <div
+        class="flex w-full shrink-0 flex-row items-center justify-center gap-[10px] xl:ml-auto xl:w-auto"
+      >
+        <Icon name="lucide:volume-2" data-np-vol-on class="size-[15px] shrink-0 text-ink-muted" />
+        <Icon
+          name="lucide:volume-x"
+          data-np-vol-off
+          class="hidden size-[15px] shrink-0 text-ink-muted"
+        />
+        <input
+          data-np-vol-range
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          aria-label={t('player.volume')}
+          class="w-[132px] shrink-0 cursor-pointer xl:w-[96px]"
+        />
+        <span
+          data-np-vol-pct
+          class="w-[36px] shrink-0 text-right text-[11px] font-normal tabular-nums text-ink-muted"
+        ></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  同一份引擎（src/scripts/player.ts）。首页那张卡也引它，两处 import 指向同一个
+  模块，Astro 打进同一个 bundle、模块体只求值一次 —— 所以「同一个 Audio 单例」
+  在两页之间是成立的，来回走不断播。引擎按 [data-np] 找卡、把状态广播给页面上
+  所有绑定组，这页的外壳在 MusicView 上（把播放台、歌单、歌词圈在一张卡里）。
+-->
+<script>
+  import '~/scripts/player'
+</script>

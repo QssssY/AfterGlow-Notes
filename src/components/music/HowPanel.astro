@@ -1,0 +1,30 @@
+---
+import { Icon } from 'astro-icon/components'
+import Panel from '~/components/Panel.astro'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
+
+/** 玩 法 HOW —— 三条不点开就不知道的操作（点歌词跳句 / 回车播首条 / 记住音量与模式） */
+const rows = [
+  { icon: 'mic-vocal', text: t('music.how1') },
+  { icon: 'corner-down-left', text: t('music.how2') },
+  { icon: 'save', text: t('music.how3') },
+] as const
+---
+
+<Panel caption={t('music.howCaption')}>
+  <ul class="flex h-fit w-full shrink-0 list-none flex-col items-start gap-[10px]">
+    {
+      rows.map((row) => (
+        <li class="flex h-fit w-full shrink-0 flex-row items-start gap-[9px]">
+          <Icon
+            name={`lucide:${row.icon}`}
+            class="mt-[2px] size-[14px] shrink-0 text-brand"
+          />
+          <span class="min-w-0 flex-1 text-[12px]/[1.55] font-normal text-ink-soft">{row.text}</span>
+        </li>
+      ))
+    }
+  </ul>
+</Panel>

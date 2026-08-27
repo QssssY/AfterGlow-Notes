@@ -25,10 +25,11 @@ const { nav } = useI18n(Astro)
           class:list={['size-[20px] shrink-0', item.active ? 'text-brand-ink' : 'text-ink-soft']}
         />
         {/*
-          Tab 文案用 short（短标）：六格平分 390 屏宽，每格约 57px。
-          英文/日文的短标比中文长（Posts / ホーム），10px 字号下最长的
-          「ブログロール」也放不下 —— 所以移动端一律用 short，且译文里
-          特意挑了短词（见 ui.ts 的 nav.*.short）。
+          Tab 文案用 short（短标）：七格平分 390 屏宽（减去两侧 16px 边距和
+          8px 内边距），每格约 47px。英文/日文的短标比中文长（Posts / ホーム），
+          10px 字号下最长的「ブログロール」也放不下 —— 所以移动端一律用 short，
+          且译文里特意挑了短词（见 ui.ts 的 nav.*.short）。加了「听歌」这一格
+          之后余量更小，新增导航项前先在 390px 宽下看一眼截断情况。
         */}
         <span
           class:list={[

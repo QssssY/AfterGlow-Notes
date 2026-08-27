@@ -1,0 +1,260 @@
+---
+import AdminLayout from '~/layouts/AdminLayout.astro'
+---
+
+<!--
+  找歌 —— 管理台加歌的主入口（独立成页，不再挤在「站点数据 · 正在听」里）。
+  搜聚合音源 → 点「加入」即由服务端下载音频 + 歌词入库，并加到歌单最上面、立即保存。
+  精调（歌词偏移 / 排序 / 改地址）仍在「站点数据 · 正在听」。仅服务器（Go）模式可用。
+-->
+<AdminLayout title="找歌" active="music">
+  <div class="flex flex-wrap items-center justify-between gap-[10px]">
+    <h1 class="font-display text-[22px] text-ink">找歌 · 加进歌单</h1>
+    <a href="/overview/data" class="ad-btn-ghost">去「正在听」精调 ↗</a>
+  </div>
+  <p class="ad-hint" data-ms-note>
+    搜到中意的点「加入」：服务端把音频和歌词下载入库，加到下面歌单的最上面并立即保存。
+    VIP / 独家歌（付费墙）拿不到完整音源时自动多源兜底，实在没有会提示换首。每页 5 条，点「加载更多」翻页。
+  </p>
+
+  <!-- 搜索 -->
+  <section class="ad-card flex flex-col gap-[12px] p-[20px]">
+    <div class="flex flex-wrap items-center gap-[8px]">
+      <select data-ms-source class="ad-select" style="width:auto;flex:none">
+        <option value="netease">网易云</option>
+        <option value="qq">QQ 音乐</option>
+        <option value="migu">咪咕</option>
+      </select>
+      <input
+        data-ms-kw
+        type="search"
+        placeholder="歌名 / 歌手，回车搜索"
+        class="ad-input"
+        style="flex:1;min-width:200px"
+      />
+      <button type="button" data-ms-go class="ad-btn-primary">搜索</button>
+    </div>
+    <div data-ms-results class="flex flex-col gap-[4px]">
+      <span class="ad-hint">输入歌名或歌手开始搜索。</span>
+    </div>
+    <button type="button" data-ms-more hidden class="ad-btn-ghost self-center">加载更多</button>
+  </section>
+
+  <!-- 当前歌单 -->
+  <section class="ad-card flex flex-col gap-[10px] p-[20px]">
+    <span class="text-[14px] font-medium text-ink">当前歌单 <span data-pl-count class="ad-hint"></span></span>
+    <div data-pl-list class="flex flex-col gap-[4px]">
+      <span class="ad-hint">加载中…</span>
+    </div>
+  </section>
+</AdminLayout>
+
+<script>
+  import { $, api, esc, ghMode, report, toast } from '~/scripts/admin'
+
+  interface MusicHit {
+    source: string
+    id: string
+    title: string
+    artist: string
+    album: string
+    vip?: boolean
+  }
+  interface Track {
+    title: string
+    artist?: string
+    src: string
+    lrc?: string
+    offset?: number
+  }
+
+  const MS_PAGE = 5 // 必须与后端 musicPageSize 一致
+  const msResults = $('[data-ms-results]')
+  const msMore = $('[data-ms-more]')
+  const msKw = $<HTMLInputElement>('[data-ms-kw]')
+  const msSource = $<HTMLSelectElement>('[data-ms-source]')
+  const plList = $('[data-pl-list]')
+  const plCount = $('[data-pl-count]')
+
+  let msHits: MusicHit[] = []
+  let msPage = 1
+  let playlist: Track[] = []
+
+  // GitHub 直连模式没有服务端下载能力：整页停用，给明确说明
+  if (ghMode) {
+    $('[data-ms-note]').textContent =
+      'GitHub 直连模式没有服务端下载能力，找歌不可用。想用请切服务器模式（设 PUBLIC_API_BASE 指向 Go 服务）。'
+    ;($('[data-ms-go]') as HTMLButtonElement).disabled = true
+    msKw.disabled = true
+    plList.innerHTML = ''
+  } else {
+    wire()
+    loadPlaylist().catch(report)
+  }
+
+  // ---- 当前歌单（分页显示）----
+  // 行的 data-pl-del 始终是整个歌单里的真实下标，翻页只改显示段，移除不会错位
+
+  const PL_PAGE = 10
+  let plPage = 1
+
+  function renderPlaylist() {
+    plCount.textContent = `（${playlist.length} 首）`
+    if (playlist.length === 0) {
+      plList.innerHTML = '<span class="ad-hint">还没有歌 —— 上面搜一首加进来。</span>'
+      return
+    }
+    const pages = Math.max(1, Math.ceil(playlist.length / PL_PAGE))
+    if (plPage > pages) plPage = pages
+    if (plPage < 1) plPage = 1
+    const start = (plPage - 1) * PL_PAGE
+    let html = playlist
+      .slice(start, start + PL_PAGE)
+      .map((t, k) => {
+        const i = start + k
+        return `
+        <div class="flex items-center gap-[10px] rounded-[10px] px-[10px] py-[7px] hover:bg-chip">
+          <span class="w-[22px] shrink-0 text-[11px] tabular-nums text-ink-muted">${String(i + 1).padStart(2, '0')}</span>
+          <span class="min-w-0 flex-1 truncate text-[13px] text-ink">${esc(t.title)}${t.artist ? `<span class="text-ink-muted"> — ${esc(t.artist)}</span>` : ''}${t.lrc ? '' : ' <span class="ad-hint">· 无词</span>'}</span>
+          <button type="button" class="ad-btn-ghost" data-pl-del="${i}">移除</button>
+        </div>`
+      })
+      .join('')
+    if (pages > 1) {
+      html += `<div class="flex items-center justify-center gap-[12px] pt-[8px]">
+        <button type="button" data-plpage="prev" class="ad-btn-ghost"${plPage <= 1 ? ' disabled' : ''}>← 上一页</button>
+        <span class="ad-hint">第 ${plPage} / ${pages} 页</span>
+        <button type="button" data-plpage="next" class="ad-btn-ghost"${plPage >= pages ? ' disabled' : ''}>下一页 →</button>
+      </div>`
+    }
+    plList.innerHTML = html
+  }
+
+  async function loadPlaylist() {
+    playlist = ((await api<Track[]>('/api/overview/data/playlist')) ?? []) as Track[]
+    renderPlaylist()
+  }
+
+  const savePlaylist = () =>
+    api('/api/overview/data/playlist', { method: 'PUT', body: playlist })
+
+  // ---- 搜索（分页）----
+
+  const msRow = (it: MusicHit, i: number) => `
+    <div class="flex items-center gap-[10px] rounded-[10px] px-[10px] py-[7px] hover:bg-chip">
+      <span class="min-w-0 flex-1 truncate text-[13px] text-ink">${esc(it.title)}<span class="text-ink-muted"> — ${esc(it.artist)}</span>${it.album ? ` <span class="ad-hint">· ${esc(it.album)}</span>` : ''}${it.vip ? ' <span class="text-[11px] text-brand-ink">VIP</span>' : ''}</span>
+      <button type="button" class="ad-btn-ghost" data-ms-add="${i}">加入</button>
+    </div>`
+
+  async function loadMusicPage(reset: boolean) {
+    const kw = msKw.value.trim()
+    if (!kw) {
+      toast('搜什么呢？先输入歌名或歌手', false)
+      return
+    }
+    if (reset) {
+      msPage = 1
+      msHits = []
+      msResults.innerHTML = '<span class="ad-hint">搜索中…</span>'
+      msMore.hidden = true
+    } else {
+      msMore.textContent = '加载中…'
+    }
+    try {
+      const { items } = await api<{ items: MusicHit[] }>(
+        `/api/overview/music/search?source=${encodeURIComponent(msSource.value)}&kw=${encodeURIComponent(kw)}&page=${msPage}`,
+      )
+      if (reset) msResults.innerHTML = ''
+      const start = msHits.length
+      msHits.push(...items)
+      if (msHits.length === 0) {
+        msResults.innerHTML = '<span class="ad-hint">没搜到，换个词或换个音源</span>'
+        msMore.hidden = true
+        return
+      }
+      msResults.insertAdjacentHTML('beforeend', items.map((it, k) => msRow(it, start + k)).join(''))
+      msMore.hidden = items.length < MS_PAGE // 不足一页 = 到底了
+      msMore.textContent = '加载更多'
+      msPage += 1
+    } catch (err) {
+      if (reset) msResults.innerHTML = ''
+      msMore.hidden = true
+      msMore.textContent = '加载更多'
+      report(err)
+    }
+  }
+
+  function wire() {
+    $('[data-ms-go]').addEventListener('click', () => loadMusicPage(true))
+    msKw.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        loadMusicPage(true)
+      }
+    })
+    msMore.addEventListener('click', () => loadMusicPage(false))
+
+    // 加入：下载入库 → 加到歌单最上面 → 立即保存
+    msResults.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-ms-add]')
+      if (!btn) return
+      const hit = msHits[Number(btn.dataset.msAdd)]
+      if (!hit) return
+      const original = btn.textContent
+      btn.textContent = '下载中…'
+      btn.setAttribute('disabled', '')
+      try {
+        const { track, note } = await api<{
+          track: { title: string; artist: string; src: string; lrc?: string }
+          note?: string
+        }>('/api/overview/music/fetch', {
+          method: 'POST',
+          body: { source: hit.source, id: hit.id, title: hit.title, artist: hit.artist },
+        })
+        const entry: Track = { title: track.title, artist: track.artist, src: track.src }
+        if (track.lrc) entry.lrc = track.lrc
+        playlist.unshift(entry) // 加到最上面
+        await savePlaylist() // 立即落 playlist.json（这页没有单独的「保存」步骤）
+        plPage = 1 // 新歌在顶部 —— 跳回第一页正好看见它
+        renderPlaylist()
+        toast(`已加到歌单顶部「${track.title}」${track.lrc ? '（含歌词）' : ''}${note ? ` —— ${note}` : ''}`, !note)
+        btn.textContent = '已加入 ✓'
+      } catch (err) {
+        report(err)
+        btn.textContent = original
+        btn.removeAttribute('disabled')
+      }
+    })
+
+    // 移除：从歌单删掉 → 立即保存（至少留一首，播放器要取第一条）；翻页条也委托在这
+    plList.addEventListener('click', async (e) => {
+      const pageBtn = (e.target as HTMLElement).closest<HTMLElement>('[data-plpage]')
+      if (pageBtn) {
+        const pages = Math.max(1, Math.ceil(playlist.length / PL_PAGE))
+        if (pageBtn.dataset.plpage === 'prev' && plPage > 1) plPage -= 1
+        else if (pageBtn.dataset.plpage === 'next' && plPage < pages) plPage += 1
+        renderPlaylist()
+        return
+      }
+      const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-pl-del]')
+      if (!btn) return
+      const i = Number(btn.dataset.plDel)
+      if (!playlist[i]) return
+      if (playlist.length <= 1) {
+        toast('至少留一首 —— 播放器要取第一条', false)
+        return
+      }
+      const removed = playlist[i]!
+      playlist.splice(i, 1)
+      try {
+        await savePlaylist()
+        renderPlaylist()
+        toast(`已移除「${removed.title}」（音频文件仍留在磁盘上）`)
+      } catch (err) {
+        playlist.splice(i, 0, removed) // 保存失败回滚
+        renderPlaylist()
+        report(err)
+      }
+    })
+  }
+</script>

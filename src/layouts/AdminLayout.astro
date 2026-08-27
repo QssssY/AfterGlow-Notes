@@ -24,7 +24,7 @@ import '~/styles/admin.css'
 interface Props {
   title: string
   /** 顶部导航高亮项 */
-  active?: 'dashboard' | 'posts' | 'data' | 'theme' | 'stats' | undefined
+  active?: 'dashboard' | 'posts' | 'data' | 'music' | 'theme' | 'stats' | undefined
   /** 登录页不做前置跳转检查 */
   guard?: boolean
 }
@@ -34,6 +34,7 @@ const tabs = [
   { key: 'dashboard', label: '概览', href: '/overview' },
   { key: 'posts', label: '文章', href: '/overview/posts' },
   { key: 'data', label: '站点数据', href: '/overview/data' },
+  { key: 'music', label: '找歌', href: '/overview/music' },
   { key: 'theme', label: '主题', href: '/overview/theme' },
   { key: 'stats', label: '统计', href: '/overview/stats' },
 ] as const

@@ -1,0 +1,206 @@
+---
+import { Icon } from 'astro-icon/components'
+import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import StatsPageHead from '~/components/StatsPageHead.astro'
+import HowPanel from '~/components/music/HowPanel.astro'
+import LyricsPanel from '~/components/music/LyricsPanel.astro'
+import SourcePanel from '~/components/music/SourcePanel.astro'
+import Stage from '~/components/music/Stage.astro'
+import TrackList from '~/components/music/TrackList.astro'
+import { nowPlaying } from '~/config'
+import { useI18n } from '~/i18n'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+import { playerScriptText } from '~/utils/player-text'
+
+const { t, c } = useI18n(Astro)
+
+/*
+ * 听歌页 —— 首页「正在听」那张卡的最大化展示。
+ *
+ * 播放器不是新写的：scripts/player.ts 是模块级单例（Audio 不进 DOM），
+ * 首页 ↔ 这里来回走同一首歌不断播、进度不丢。这页只是把同一套钩子摆大：
+ * 播放台 + 歌单（可搜）+ 整篇歌词。
+ *
+ * 一个 [data-np] 外壳把三块都圈进去 —— 引擎按卡 querySelector 划范围，
+ * 歌单行与歌词区必须在同一张「卡」里。外壳自己不发光也不点播：
+ *   data-np-no-toggle  整卡点击不切播放（点歌词、点搜索框都会误触）
+ *   微光落在里面的播放台上（Stage 的 data-np-glow）
+ *   group/np 让里面的播放/暂停图标能按外壳的 data-playing 切换
+ *
+ * 响应式：桌面歌单与歌词并排（左栏另有玩法与曲目说明面板）；
+ * 移动端一屏放不下两块，改成两格切换（见下方 data-music-panes 的脚本），
+ * 玩法与曲目说明搬到页尾。
+ */
+const tracks = nowPlaying.playlist
+const withLyrics = tracks.filter((track) => track.lrc).length
+const scriptText = playerScriptText(t)
+
+const panes = [
+  { key: 'list', icon: 'list-music', label: t('music.tabList') },
+  { key: 'lyrics', icon: 'mic-vocal', label: t('music.tabLyrics') },
+] as const
+---
+
+<BaseLayout
+  title={t('music.title')}
+  description={t('music.description', { n: tracks.length })}
+>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
+
+  <div class="flex w-full flex-col items-start gap-[24px] xl:relative xl:flex-row xl:gap-[48px]">
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+      <div class="hidden w-full classic:block"><Sidebar /></div>
+      <div
+        data-pin-group
+        class="flex w-full flex-col items-start gap-[24px] compact:xl:sticky compact:xl:top-[84px]"
+      >
+        <HowPanel />
+        <SourcePanel />
+      </div>
+    </div>
+
+    {/* 原版布局：右栏绝对定位铺满两栏容器 —— 容器高度只由左栏（侧栏+玩法+曲目说明）
+        决定，右栏底边与左栏内容严格平齐，歌单/歌词多出来的在各自面板里内滚。
+        left-[328px] = 左栏 280px + 栏距 48px。紧凑模式左栏没有侧栏、很矮，不适用
+        这套 —— 走原来的常规文档流（歌单 max-h 封顶）。 */}
+    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:h-auto xl:flex-1 classic:xl:absolute classic:xl:inset-y-0 classic:xl:right-0 classic:xl:left-[328px] classic:xl:w-auto">
+      <StatsPageHead
+        title={t('music.title')}
+        subtitle={t('music.subtitle')}
+        stats={[
+          { value: String(tracks.length), label: t('music.statTracks') },
+          { value: String(withLyrics), label: t('music.statLyrics') },
+        ]}
+      />
+
+      {
+        tracks.length === 0 ? (
+          <p class="glass box-border w-full rounded-[30px] px-[30px] py-[26px] text-[13.5px]/[22px] font-normal text-ink-soft">
+            {t('music.noTracks')}
+          </p>
+        ) : (
+          <div data-np data-np-no-toggle {...scriptText} class="group/np flex w-full flex-col gap-[24px] xl:min-h-0 xl:flex-1">
+            <Stage />
+
+            {/* 移动端的两格切换（桌面并排，不渲染） */}
+            <div class="flex w-full shrink-0 flex-row items-center gap-[8px] xl:hidden">
+              {panes.map((pane) => (
+                <button
+                  type="button"
+                  data-pane-set={pane.key}
+                  aria-pressed={pane.key === 'list'}
+                  class="group/mt flex h-[38px] flex-1 cursor-pointer flex-row items-center justify-center gap-[7px] rounded-[14px] bg-chip outline-1 -outline-offset-[0.5px] outline-hairline transition-colors aria-pressed:bg-fire-tint aria-pressed:outline-brand"
+                >
+                  <Icon
+                    name={`lucide:${pane.icon}`}
+                    class="size-[15px] shrink-0 text-ink-muted transition-colors group-aria-pressed/mt:text-brand-ink"
+                  />
+                  <span class="text-[12.5px] font-medium text-ink-soft transition-colors group-aria-pressed/mt:text-brand-ink">
+                    {pane.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div
+              data-music-panes
+              data-pane="list"
+              class="group/panes flex w-full flex-col gap-[24px] xl:min-h-0 xl:flex-1 xl:flex-row"
+            >
+              <div class="flex w-full flex-col max-xl:group-data-[pane=lyrics]/panes:hidden xl:flex-1">
+                <TrackList />
+              </div>
+              <div class="flex w-full flex-col max-xl:group-data-[pane=list]/panes:hidden xl:relative xl:w-[352px] xl:shrink-0">
+                <LyricsPanel />
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* 左栏那两块在移动端没有栏可待，搬到页尾（内容相同，纯静态） */}
+      <div class="flex w-full flex-col items-start gap-[24px] xl:hidden">
+        <HowPanel />
+        <SourcePanel />
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block">
+    <Footer license={t('footer.licenseMusic', { title: c.site.title })} />
+  </div>
+</BaseLayout>
+
+<script>
+  import { fill } from '~/scripts/i18n'
+
+  /*
+   * 这页自己的两件事：歌单搜索、移动端的歌单/歌词切换。
+   * 播放本身全在 scripts/player.ts（Stage 的 <script> 引它，模块只求值一次）。
+   *
+   * 搜索只隐藏不匹配的行 —— 引擎按 [data-np-item] 的下标点歌，
+   * 重排或重建都会让下标和曲目错位。
+   */
+  document.addEventListener('astro:page-load', () => {
+    const input = document.querySelector<HTMLInputElement>('[data-track-search]')
+    const rows = [...document.querySelectorAll<HTMLElement>('[data-track-row]')]
+    const count = document.querySelector<HTMLElement>('[data-track-count]')
+    const empty = document.querySelector<HTMLElement>('[data-track-empty]')
+    const clear = document.querySelector<HTMLElement>('[data-track-clear]')
+
+    if (input && rows.length) {
+      const apply = () => {
+        const q = input.value.trim().toLowerCase()
+        let shown = 0
+        for (const row of rows) {
+          const hit = q === '' || (row.dataset.search ?? '').includes(q)
+          row.hidden = !hit
+          if (hit) shown += 1
+        }
+        if (count) count.textContent = fill(count.dataset.tpl, { n: shown, total: rows.length })
+        if (empty) {
+          empty.hidden = shown > 0
+          if (shown === 0) empty.textContent = fill(empty.dataset.tpl, { q: input.value.trim() })
+        }
+        if (clear) clear.hidden = q === ''
+      }
+
+      input.addEventListener('input', apply)
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          input.value = ''
+          apply()
+          return
+        }
+        // 回车播第一条结果：row.click() 走的是引擎自己的点歌路径，
+        // 而且发生在真实手势里 —— AudioContext 才允许起来
+        if (e.key !== 'Enter') return
+        e.preventDefault()
+        rows.find((row) => !row.hidden)?.click()
+      })
+      clear?.addEventListener('click', () => {
+        input.value = ''
+        apply()
+        input.focus()
+      })
+      // 换页回来时输入框可能被浏览器恢复了旧值，按当前值对一次
+      apply()
+    }
+
+    const panes = document.querySelector<HTMLElement>('[data-music-panes]')
+    const tabs = [...document.querySelectorAll<HTMLElement>('[data-pane-set]')]
+    for (const tab of tabs) {
+      tab.addEventListener('click', () => {
+        const want = tab.dataset.paneSet!
+        if (panes) panes.dataset.pane = want
+        for (const other of tabs)
+          other.setAttribute('aria-pressed', String(other.dataset.paneSet === want))
+      })
+    }
+  })
+</script>

@@ -48,6 +48,8 @@ type adminState struct {
 	blogDir       string // 仓库根目录（绝对路径）
 	buildCmd      string // 可选：重新构建站点的命令
 	musicOverride string // -music 目录；非空时传歌落这里而不是仓库的 public/music
+	musicAPI      string // 在线找歌的聚合音源基址（-music-api）；空或 "off" 则该功能关闭（music.go）
+	musicAPIKind  string // 音源形状（-music-api-kind）：unified 统一封装层 | gdstudio GD 音乐台
 
 	mu       sync.Mutex
 	sessions map[string]time.Time // token → 过期时刻
@@ -140,6 +142,10 @@ func registerAdminRoutes(mux *http.ServeMux, s *server) {
 	mux.HandleFunc("/api/overview/stats", s.cors(s.adminAuth(s.adminStats)))
 	mux.HandleFunc("/api/overview/linkcheck", s.cors(s.adminAuth(s.handleLinkCheck)))
 	mux.HandleFunc("/api/overview/asset/site/{name}", s.cors(s.adminAuth(s.adminSiteAsset)))
+	// 在线找歌（music.go）：搜索 + 入库下载。未配 -music-api 时处理器自身答 501，
+	// 所以路由照常注册 —— 前端能拿到「未启用」的明确提示，而不是 404
+	mux.HandleFunc("/api/overview/music/search", s.cors(s.adminAuth(s.adminMusicSearch)))
+	mux.HandleFunc("/api/overview/music/fetch", s.cors(s.adminAuth(s.adminMusicFetch)))
 }
 
 // adminSiteAsset：站点图片的预览供给 —— 它们存在 Astro 资产目录（不是 public/），

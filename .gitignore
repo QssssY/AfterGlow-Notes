@@ -49,6 +49,9 @@ design-export/
 .verify-shots/
 .verify-*.mjs
 
+# 对外宣传图（小红书等平台的成图，属于运营物料，不是仓库内容）
+promo-out/
+
 # 部署脚本产的交叉编译二进制
 server/afterglow-server-linux
 

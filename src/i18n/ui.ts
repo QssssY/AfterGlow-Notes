@@ -38,6 +38,8 @@ const zh = {
   'nav.posts.short': '文章',
   'nav.projects': '我的项目',
   'nav.projects.short': '项目',
+  'nav.music': '我的音乐',
+  'nav.music.short': '音乐',
   'nav.about': '关于网站',
   'nav.about.short': '关于',
   'nav.share': '推荐分享',
@@ -104,6 +106,36 @@ const zh = {
   'player.playlistCount': '播放列表（{n} 首）',
   'player.volume': '音量',
   'player.instrumental': '纯音乐，请欣赏',
+
+  /* ── 听歌页（/music）─────────────────────────────────────
+     首页那张卡的最大化版本。播放器是同一个（scripts/player.ts 的单例），
+     所以这里只有页面自己的文案，播放相关的一律复用上面 player.* */
+  'music.title': '听歌',
+  'music.subtitle':
+    '首页那张「正在听」摊开的样子 —— 同一个播放器、同一份进度，换页不断播。歌单、歌词、音量都在这儿。',
+  'music.note': '曲目是版权物，只在本地与服务器上留存、不随仓库发布；增删到管理台的「正在听」页签。',
+  'music.description': '在线听歌 —— 歌单共 {n} 首，带逐句滚动的歌词',
+  'music.statTracks': '首曲目',
+  'music.statLyrics': '首有词',
+  'music.keepPlaying': '换页不断播',
+  'music.listCaption': '歌 单 PLAYLIST',
+  'music.lyricsCaption': '歌 词 LYRICS',
+  /* 移动端一屏放不下歌单 + 歌词，改成两格切换（桌面并排，不出现这两个短标） */
+  'music.tabList': '歌单',
+  'music.tabLyrics': '歌词',
+  'music.sourceCaption': '曲 目 SOURCE',
+  'music.lyricsEmpty': '这首是纯音乐，没有歌词',
+  'music.lyricsTip': '点任意一行，跳到那一句',
+  'music.searchAria': '搜索歌曲',
+  'music.searchPlaceholder': '搜索曲名或歌手…',
+  'music.searchCount': '{n} / {total} 首',
+  'music.searchEmpty': '没有匹配「{q}」的曲目',
+  'music.searchClear': '清空搜索',
+  'music.howCaption': '玩 法 HOW',
+  'music.how1': '点歌词的任意一行，跳到那一句',
+  'music.how2': '搜完按回车，直接播第一条结果',
+  'music.how3': '音量和播放模式记在本机，跨页跨会话都在',
+  'music.noTracks': '歌单还是空的 —— 把音频放进 public/music/，再到管理台「正在听」里添加曲目。',
 
   /* ── 移动端 ───────────────────────────────────────────── */
   'mobile.now': '现 在 NOW',
@@ -257,6 +289,7 @@ const zh = {
   'footer.licenseProjects': '项目代码以 MIT 授权开源 · {title}',
   'footer.licenseShare': '外链内容版权归原作者所有 · {title}',
   'footer.licenseBlogroll': '友链长期开放，欢迎自荐 · {title}',
+  'footer.licenseMusic': '曲目版权归原作者与出品方所有 · {title}',
   'footer.licenseAbout': '本站由 Astro 构建 · 托管平台待定 · {title}',
 
   /* ── uptime ───────────────────────────────────────────── */
@@ -288,6 +321,8 @@ const en: Record<UIKey, string> = {
   'nav.posts.short': 'Posts',
   'nav.projects': 'Projects',
   'nav.projects.short': 'Work',
+  'nav.music': 'My Music',
+  'nav.music.short': 'Music',
   'nav.about': 'About',
   'nav.about.short': 'About',
   'nav.share': 'Picks',
@@ -344,6 +379,34 @@ const en: Record<UIKey, string> = {
   'player.playlistCount': 'Playlist ({n} tracks)',
   'player.volume': 'Volume',
   'player.instrumental': 'Instrumental — enjoy',
+
+  'music.title': 'Music',
+  'music.subtitle':
+    'The home “now playing” card, opened up — same player, same progress, and it keeps playing as you move between pages. Playlist, lyrics and volume all live here.',
+  'music.note':
+    'The tracks are copyrighted, so they stay on my machine and server and never ship with the repo; add or remove them from the “Now playing” tab in the console.',
+  'music.description': 'Listening — {n} tracks with line-by-line scrolling lyrics',
+  'music.statTracks': 'tracks',
+  'music.statLyrics': 'with lyrics',
+  'music.keepPlaying': 'Plays across pages',
+  'music.listCaption': 'PLAYLIST',
+  'music.lyricsCaption': 'LYRICS',
+  'music.tabList': 'Playlist',
+  'music.tabLyrics': 'Lyrics',
+  'music.sourceCaption': 'THE TRACKS',
+  'music.lyricsEmpty': 'This one is instrumental — no lyrics',
+  'music.lyricsTip': 'Click any line to jump to it',
+  'music.searchAria': 'Search tracks',
+  'music.searchPlaceholder': 'Search title or artist…',
+  'music.searchCount': '{n} / {total}',
+  'music.searchEmpty': 'Nothing matches “{q}”',
+  'music.searchClear': 'Clear search',
+  'music.howCaption': 'HOW IT WORKS',
+  'music.how1': 'Click any lyric line to jump straight to it',
+  'music.how2': 'Press Enter after searching to play the first result',
+  'music.how3': 'Volume and playback mode are remembered on this device',
+  'music.noTracks':
+    'The playlist is empty — drop audio into public/music/, then add the tracks in the console.',
 
   'mobile.now': 'NOW',
   'mobile.latest': 'Latest posts',
@@ -488,6 +551,7 @@ const en: Record<UIKey, string> = {
   'footer.licenseProjects': 'Project code open-sourced under MIT · {title}',
   'footer.licenseShare': 'Linked content belongs to its authors · {title}',
   'footer.licenseBlogroll': 'The blogroll is always open — feel free to apply · {title}',
+  'footer.licenseMusic': 'Tracks belong to their artists and labels · {title}',
   'footer.licenseAbout': 'Built with Astro · hosting to be decided · {title}',
 
   'uptime.since': 'since the first commit on {date}',
@@ -515,6 +579,8 @@ const ja: Record<UIKey, string> = {
   'nav.posts.short': '記事',
   'nav.projects': 'プロジェクト',
   'nav.projects.short': '制作',
+  'nav.music': '音楽',
+  'nav.music.short': '音楽',
   'nav.about': 'このサイト',
   'nav.about.short': '概要',
   'nav.share': 'おすすめ',
@@ -576,6 +642,34 @@ const ja: Record<UIKey, string> = {
   'player.playlistCount': 'プレイリスト（{n} 曲）',
   'player.volume': '音量',
   'player.instrumental': 'インストゥルメンタルです',
+
+  'music.title': '音楽',
+  'music.subtitle':
+    'ホームの「再生中」カードを広げたページ。プレイヤーは同じ一つで、ページを移動しても再生は途切れません。プレイリスト・歌詞・音量はすべてここに。',
+  'music.note':
+    '楽曲は著作物のため手元とサーバーにのみ置き、リポジトリには含めていません。追加・削除は管理画面の「再生中」タブから。',
+  'music.description': '音楽を聴く —— 全 {n} 曲、歌詞は 1 行ずつスクロール',
+  'music.statTracks': '曲',
+  'music.statLyrics': '歌詞あり',
+  'music.keepPlaying': 'ページ移動でも継続',
+  'music.listCaption': 'プレイリスト PLAYLIST',
+  'music.lyricsCaption': '歌 詞 LYRICS',
+  'music.tabList': 'プレイリスト',
+  'music.tabLyrics': '歌詞',
+  'music.sourceCaption': '楽 曲 SOURCE',
+  'music.lyricsEmpty': 'この曲はインストゥルメンタルで、歌詞はありません',
+  'music.lyricsTip': '好きな行をクリックするとそこへ飛びます',
+  'music.searchAria': '曲を検索',
+  'music.searchPlaceholder': '曲名かアーティストで検索…',
+  'music.searchCount': '{n} / {total} 曲',
+  'music.searchEmpty': '「{q}」に一致する曲はありません',
+  'music.searchClear': '検索をクリア',
+  'music.howCaption': '使 い 方 HOW',
+  'music.how1': '歌詞の行をクリックすると、その一節へジャンプ',
+  'music.how2': '検索後に Enter で、最初の結果をそのまま再生',
+  'music.how3': '音量と再生モードはこの端末に記憶されます',
+  'music.noTracks':
+    'プレイリストが空です —— public/music/ に音源を置き、管理画面の「再生中」タブで曲を追加してください。',
 
   'mobile.now': 'い ま NOW',
   'mobile.latest': '最新の記事',
@@ -719,6 +813,7 @@ const ja: Record<UIKey, string> = {
   'footer.licenseProjects': 'プロジェクトのコードは MIT で公開 · {title}',
   'footer.licenseShare': 'リンク先の内容の権利は各著者に帰属します · {title}',
   'footer.licenseBlogroll': '相互リンクは常時受付中 · {title}',
+  'footer.licenseMusic': '楽曲の権利は各権利者に帰属します · {title}',
   'footer.licenseAbout': 'Astro で構築 · ホスティング先は未定 · {title}',
 
   'uptime.since': '{date} の最初のコミットから',

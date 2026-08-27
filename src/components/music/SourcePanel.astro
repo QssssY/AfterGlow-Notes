@@ -1,0 +1,24 @@
+---
+import { Icon } from 'astro-icon/components'
+import Panel from '~/components/Panel.astro'
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
+
+/*
+ * 曲 目 SOURCE —— 「换页不断播」这一条说明这页和首页共用同一个播放器，
+ * 下面那段是曲目的版权与增删口径（音频不进仓库，见 .gitignore 与 README）。
+ * 桌面在左栏，移动端搬到页面末尾（两处各渲一次，纯静态内容，无脚本钩子）。
+ */
+---
+
+<Panel caption={t('music.sourceCaption')}>
+  <div class="flex h-fit w-full shrink-0 flex-row items-center gap-[8px]">
+    <Icon name="lucide:audio-lines" class="size-[14px] shrink-0 text-brand" />
+    <span class="min-w-0 flex-1 text-[12.5px] font-medium text-ink">{t('music.keepPlaying')}</span>
+  </div>
+
+  <span class="h-[1px] w-full shrink-0 bg-hairline"></span>
+
+  <p class="w-full text-[12px]/[1.55] font-normal text-ink-soft">{t('music.note')}</p>
+</Panel>

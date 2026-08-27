@@ -640,9 +640,12 @@
     animation: eq var(--eq-dur, 1s) ease-in-out var(--eq-delay, 0s) infinite alternate;
   }
   /* 播放中：JS 用实时频谱逐帧写 scaleY，假律动必须让位
-     （animation 在层叠里压过内联 style，不关掉的话 JS 写了也白写） */
+     （animation 在层叠里压过内联 style，不关掉的话 JS 写了也白写）。
+     will-change 让每根条独立成合成层：JS 逐帧写 transform 就只走属性树更新，
+     不再整卡重绘 —— 没有它，播放 5 秒的 Paint 实测 ~280ms/s */
   [data-eq][data-live] > * {
     animation: none;
+    will-change: transform;
   }
 
   /* 侧栏导航的滑动高亮（YYsuni nav-hover 胶囊的 CSS 版，位置由脚本摆） */
@@ -782,11 +785,13 @@ html.theme-vt::view-transition-old(root) {
 html.theme-vt::view-transition-new(root) {
   animation: theme-reveal-in 480ms both;
 }
-/* 揭示进行中按停无限循环动画：它们动一帧，新页实时快照就要整层重栅格化 */
-html.theme-vt :is([data-eq] > span, .site-dot, [data-np-icon] path, [data-clock-colon]) {
+/* 揭示进行中按停无限循环动画：它们动一帧，新页实时快照就要整层重栅格化
+   （唱盘不在列 —— 它已改由播放循环驱动，theme-vt 期间 tick 自己跳写） */
+html.theme-vt
+  :is([data-eq] > span, .site-dot, [data-np-icon] > span, [data-clock-colon]) {
   animation-play-state: paused !important;
 }
-html.theme-vt .skeleton::after {
+html.theme-vt :is(.skeleton, .site-dot)::after {
   animation-play-state: paused !important;
 }
 
@@ -822,11 +827,17 @@ html.theme-vt .skeleton::after {
 /* （原 .theme-anim 全站颜色短过渡已随圆形揭示一并移除：
      每个元素 0.35s 的颜色过渡 = 逐帧全页重绘，负载下就是另一种卡顿。） */
 
-/* 正在听 —— 播放态给卡一圈品牌微光，呼吸感由阴影过渡给 */
-[data-np] {
+/* 正在听 —— 播放态给卡一圈品牌微光，呼吸感由阴影过渡给。
+   门闩用 data-playing（脚本给每张卡都挂）：首页那张卡整卡就是播放按钮、
+   带 aria-pressed，听歌页那张是普通区块不该有它，两处共用这一个属性。
+   发光落在哪儿另用 data-np-glow 标记：首页就是卡自己；听歌页的 [data-np]
+   是包住播放台 + 歌单 + 歌词的透明外壳（脚本靠它 querySelector 划范围），
+   给外壳打光会在空气里浮出一圈方影 —— 所以只标里面那张播放台 */
+[data-np-glow] {
   transition: box-shadow 0.6s ease;
 }
-[data-np][aria-pressed='true'] {
+[data-np][data-playing][data-np-glow],
+[data-np][data-playing] [data-np-glow] {
   box-shadow:
     0 14px 28px -12px var(--shadow-soft),
     0 0 26px 2px var(--fire-tint),
@@ -849,6 +860,10 @@ html.theme-vt .skeleton::after {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  /* 唱歌态的 span 独立成合成层：跑马的逐帧 translateX 只走属性树更新，
+     渐变推进的重绘也被圈在这个小层里 —— 不提层的话每帧重绘的是整张
+     玻璃卡的绘制块，实测播放态 Paint ~300ms/s 全是它（4× 节流） */
+  will-change: transform;
 }
 
 /* 长歌词跑马（QQ 音乐式）：句子超出卡宽时挂 data-scroll ——
@@ -903,26 +918,151 @@ html.theme-vt .skeleton::after {
   background: var(--brand);
 }
 
+/* ─── 听歌页（/music）专属 ─── */
+
+/* 整篇歌词：行由脚本现渲（歌词是运行时 fetch 的），所以行的样子只能写在这儿。
+   当前句品牌色放大、前后句退成浅墨 —— 竖排焦点跟着人声走。
+   字族同上唱歌态：歌词用字杂，插 subset-cjk 的歌词专用子集 */
+[data-np-lyricbox] {
+  /* 滚动条整个藏掉（用户点名太丑）：能滚，只是不显示 ——
+     上下羽化遮罩本身就在暗示「还有内容」，条是多余的 */
+  scrollbar-width: none;
+  /* 上下羽化，句子从雾里进出，不是被硬生生切断 */
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 42px,
+    #000 calc(100% - 42px),
+    transparent 100%
+  );
+}
+/* 歌单列表同款藏条（不然走系统默认那根粗的）；::-webkit-scrollbar 兜住老 Chromium */
+[data-track-list] {
+  scrollbar-width: none;
+}
+[data-track-list]::-webkit-scrollbar,
+[data-np-lyricbox]::-webkit-scrollbar {
+  display: none;
+}
+[data-np-lyricbox] > p {
+  font-family: 'Noto Sans SC Lyrics', var(--font-body);
+  padding: 7px 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  cursor: pointer;
+  opacity: 0.5;
+  transition:
+    color 0.3s ease,
+    opacity 0.3s ease,
+    font-size 0.3s ease;
+}
+[data-np-lyricbox] > p:hover {
+  opacity: 0.85;
+}
+[data-np-lyricbox] > p[data-current] {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--brand-ink);
+  opacity: 1;
+}
+/* 纯音乐时的那句说明：不是歌词，别让它长得像可点的行 */
+[data-np-lyricbox] > p[data-lyric-empty] {
+  cursor: default;
+  text-align: center;
+  opacity: 0.6;
+}
+[data-np-lyricbox] > p[data-lyric-empty]:hover {
+  opacity: 0.6;
+}
+
+/* 歌单搜索框是 type=search，WebKit 会自带一个小叉 —— 我们自己那颗
+   [data-track-clear] 已经在管清空（还要跟着 hidden 走），两颗叉挨着丑 */
+[data-track-search]::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* 唱盘：播放时匀速转（由播放循环 rAF 写 rotate，不用 CSS 动画 —— 见下方
+   动效军规第 ④ 条），暂停自然停在原角度（引擎记着角度，不是回零硬跳）。
+   盘面全用现成 token 画：avatar-bg 打底、hairline 的重复径向渐变做纹路、
+   sheen 一道偏光、brand 的中心标签、cream 的轴孔 —— 圆点尺寸用百分比给，
+   所以移动端小盘和桌面大盘是同一套比例 */
+[data-np-disc] {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, var(--cream) 0 4.5%, transparent 5%),
+    radial-gradient(circle at 50% 50%, var(--brand) 0 27%, transparent 27.5%),
+    radial-gradient(circle at 32% 26%, var(--sheen) 0, transparent 58%),
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      var(--hairline) 0 1px,
+      transparent 1px 5px
+    ),
+    var(--avatar-bg);
+}
+[data-np][data-playing] [data-np-disc] {
+  will-change: transform;
+}
+
+/* 放歌期间的动画交接（动效军规第 ④ 条的落地）：播放循环在产主帧，
+   CSS 循环动画这时每帧都被重录进玻璃卡的视口级背景块（实测 Paint
+   ~260ms/s 全是这三件装饰）。音波线与唱盘改由播放循环亲自驱动 ——
+   节奏一模一样，只是写在 will-change 独立层上；橙点归于静息（scale 1、
+   无光晕 = 关键帧的 0% 形态），停歌 np-live 摘掉，一切自动复原 */
+[data-np][data-playing] [data-np-icon] > span {
+  animation: none;
+  will-change: transform;
+}
+html.np-live .site-dot,
+html.np-live .site-dot::after {
+  animation: none;
+}
+
 /* ─── 图标微动效（用户点名「动起来」）─── */
 
-/* 站名徽标的橙点呼吸：亮度和光晕缓慢起伏，像站点的心跳 */
+/* 站名徽标的橙点呼吸：亮度和光晕缓慢起伏，像站点的心跳。
+   ⚠️ 无限动画只许动 transform/opacity（合成器规则，见文件尾的动效军规）：
+   box-shadow 上不了合成器，原版把光晕写进关键帧 = 主线程每帧重绘，
+   还会连带把全页其他本可合成的动画（等化条 48 根）一起拖回主线程逐帧重算。
+   现在拆两层：点本体只动 scale；光晕的涨落交给伪元素动 opacity ——
+   底光是元素自带的静态 shadow（组件里的 0 0 10px），峰值再叠这层 16px 的。 */
 @keyframes site-dot-breathe {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 9px 0 var(--glow-fire);
   }
   50% {
     transform: scale(1.28);
-    box-shadow: 0 0 16px 2px var(--glow-fire);
+  }
+}
+@keyframes site-dot-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
   }
 }
 .site-dot {
+  position: relative;
   animation: site-dot-breathe 2.6s ease-in-out infinite;
 }
+.site-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 16px 2px var(--glow-fire);
+  opacity: 0;
+  animation: site-dot-glow 2.6s ease-in-out infinite;
+}
 
-/* 「正在听」的音波 icon：几根线各自起伏（lucide 的 audio-lines 是一组 path，
-   transform-box: fill-box 让每根以自身为轴缩放），错开相位像在律动 */
+/* 「正在听」的音波 icon：几根线各自起伏，错开相位像在律动。
+   ⚠️ 线是 HTML span 不是 SVG path（原版是手拆的 lucide audio-lines）：
+   SVG 内部元素的 transform 属于布局，动画每帧都触发布局失效 ——
+   实测这 6 条 path 就是把整页（含等化条）拖回主线程逐帧重排的元凶之一。
+   span 版视觉等同（圆帽=rounded-full），且能整体上合成器，主线程零负担。 */
 @keyframes np-icon-dance {
   0%,
   100% {
@@ -932,15 +1072,13 @@ html.theme-vt .skeleton::after {
     transform: scaleY(1);
   }
 }
-[data-np-icon] path {
-  transform-box: fill-box;
-  transform-origin: center;
+[data-np-icon] > span {
   animation: np-icon-dance 1.15s ease-in-out infinite;
 }
-[data-np-icon] path:nth-child(2n) {
+[data-np-icon] > span:nth-child(2n) {
   animation-delay: -0.4s;
 }
-[data-np-icon] path:nth-child(3n) {
+[data-np-icon] > span:nth-child(3n) {
   animation-delay: -0.75s;
 }
 
@@ -974,8 +1112,28 @@ html.theme-vt .skeleton::after {
 
 @media (prefers-reduced-motion: reduce) {
   .site-dot,
-  [data-np-icon] path,
+  .site-dot::after,
+  [data-np-icon] > span,
   .img-sheen::before {
     animation: none;
   }
+  /* 唱盘由播放循环驱动（JS 里同样看这个偏好跳写），这里兜底钉死 */
+  [data-np-disc] {
+    transform: none !important;
+  }
 }
+
+/* ─── 动效军规（2026-08 掉帧排查的结论，新加动画前先读）───
+   无限循环动画只许动 transform / opacity，且必须真的能上合成器：
+   ① SVG 内部元素（path/rect/g）的 transform 动画在 Blink 里走布局，
+      每帧触发全页布局失效 —— 要律动就用 HTML span 拼形状；
+   ② box-shadow / fill / width 这类属性上不了合成器 —— 光晕呼吸拆成
+      伪元素动 opacity（见 .site-dot）；
+   ③ 只要有一个动画掉回主线程，页面每帧都产主帧，其余所有动画
+      （哪怕本可合成）都会跟着在主线程逐帧重算+重绘 —— 实测首页
+      光是静置就烧掉主线程 ~870ms/s（4× 节流），元凶正是 ①+②。
+   ④ 主线程本来就在产帧的场景（放歌时播放循环的 rAF），连「已合成」的
+      CSS 循环动画都会每主帧被重录进玻璃卡的视口级背景块（will-change
+      也救不了，实测 Paint ~260ms/s）—— 这种场景里的动效改由那个 rAF
+      亲自驱动、写在 will-change 独立层上（见「放歌期间的动画交接」）。
+   验证方法见记忆 viewtransition-perf-notes：CDP 节流 + trace 归因。 */

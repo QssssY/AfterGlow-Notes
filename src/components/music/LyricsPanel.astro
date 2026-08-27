@@ -1,0 +1,42 @@
+---
+import { useI18n } from '~/i18n'
+
+const { t } = useI18n(Astro)
+
+/*
+ * 整篇歌词
+ *
+ * 行由引擎按当前曲现渲（歌词是运行时 fetch 的，服务端渲不出来），
+ * 这里只提供容器和两个约定：
+ *   data-np-lyricbox  引擎找它铺行、跟句滚动
+ *   data-empty        纯音乐时显示的那句说明（引擎读 dataset.empty）
+ * 行的样式在 global.css 的 [data-np-lyricbox] > p —— 类名串不进脚本。
+ *
+ * relative 是必需的：引擎用 row.offsetTop 算居中位置，容器得是行的
+ * offsetParent，否则 offsetTop 相对更外层，滚动会跑偏。
+ */
+---
+
+<!--
+  桌面：绝对填充所在列（列高由左侧歌单撑起，见 MusicView 的 xl:relative 包裹），
+  这样歌词多也不会把整栏拉长 —— 与歌单严格平齐，超出部分在 lyricbox 里滚动。
+-->
+<section
+  class="glass-panel box-border flex w-full shrink-0 flex-col items-start gap-[10px] rounded-[28px] p-[16px] xl:absolute xl:inset-0"
+>
+  <div class="flex w-full shrink-0 flex-row items-center gap-[10px]">
+    <span class="shrink-0 text-[11.5px] font-bold tracking-[1.8px] whitespace-nowrap text-ink-muted">
+      {t('music.lyricsCaption')}
+    </span>
+    <span class="min-w-0 flex-1 truncate text-right text-[11px] font-normal text-ink-muted">
+      {t('music.lyricsTip')}
+    </span>
+  </div>
+
+  <div
+    data-np-lyricbox
+    data-empty={t('music.lyricsEmpty')}
+    class="relative h-[320px] w-full overflow-y-auto px-[12px] py-[36px] xl:h-auto xl:min-h-0 xl:flex-1"
+  >
+  </div>
+</section>

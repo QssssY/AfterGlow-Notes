@@ -83,6 +83,21 @@ func main() {
 	buildCmd := flag.String("build-cmd", os.Getenv("BLOG_BUILD_CMD"), "可选：重新构建站点的命令（如 pnpm build），/api/overview/build 用")
 	siteDir := flag.String("site", "", "静态站点目录（Astro 构建产物 dist）；设了就由本服务直接托管整个站点")
 	musicDir := flag.String("music", "", "音乐目录；设了就在 /music/* 供给（音乐是版权物不进仓库，分体部署的歌从这里走）")
+	// 在线找歌的聚合音源（music.go）。仅管理台（策展）用，访客碰不到 —— 已入库的
+	// 歌都是本地文件，播放不打这个。设成 off 则整功能关闭。
+	//   -music-api-kind unified（默认）：接自建统一封装层（F:\practice\music-api，:9000），
+	//                   一套聚合 网易云(解灰)/QQ/咪咕/酷我/酷狗 + 多源自动兜底
+	//   -music-api-kind gdstudio：接 GD 音乐台公共接口（零部署兜底），base 换成其 api.php
+	musicAPIDefault := os.Getenv("MUSIC_API_BASE")
+	if musicAPIDefault == "" {
+		musicAPIDefault = "http://127.0.0.1:9000"
+	}
+	musicAPI := flag.String("music-api", musicAPIDefault, "在线找歌的聚合音源基址；off 关闭")
+	musicKindDefault := os.Getenv("MUSIC_API_KIND")
+	if musicKindDefault == "" {
+		musicKindDefault = "unified"
+	}
+	musicKind := flag.String("music-api-kind", musicKindDefault, "音源形状：unified 统一封装层（默认）| gdstudio GD 音乐台")
 	flag.Parse()
 
 	db, err := sql.Open("sqlite", *dbPath+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)")
@@ -177,6 +192,8 @@ func main() {
 			// 配了 -music 时管理台传歌落它（服务器目录）；没配才落仓库的
 			// public/music（本地开发；该目录 gitignored，不会被提交）
 			musicOverride: musicAbs,
+			musicAPI:      strings.TrimSpace(*musicAPI),
+			musicAPIKind:  strings.TrimSpace(*musicKind),
 			sessions:      map[string]time.Time{},
 			tries:         map[string]int{},
 		}
@@ -185,6 +202,11 @@ func main() {
 		s.links.start()
 		registerAdminRoutes(mux, s)
 		log.Printf("admin enabled (blog-dir=%s, build-cmd=%q)", abs, *buildCmd)
+		if s.admin.musicEnabled() {
+			log.Printf("music search enabled (kind=%s, api=%s)", s.admin.musicAPIKind, s.admin.musicAPI)
+		} else {
+			log.Printf("music search disabled (-music-api off)")
+		}
 	}
 
 	// Read 60s：管理后台要传封面/音乐（最大 30MB），10s 会掐断慢网上传
