@@ -154,12 +154,21 @@ const secondary =
            大橙钮才能落在正中（四钮一排它永远偏着，用户点名不协调）。
            桌面 xl:contents 把这层壳溶解掉，孩子们回到主排原来的位置 -->
       <div class="flex w-full shrink-0 flex-row items-center justify-center gap-[12px] xl:contents">
+        {/* 模式钮：移动端在这条「次操作带」里做成与音量图标同重量的幽灵钮
+            （42px 点击区不变，只有图标）—— 描边圆片压在小图标旁边太抢
+            （用户点名不合眼）；桌面回到主排，穿回 hairline 圆钮皮肤 */}
         {
           multi && (
-            <button type="button" data-np-mode aria-label={t('player.mode')} title={t('player.mode')} class={secondary}>
-              <Icon name="lucide:repeat" data-np-mode-order class="size-[17px] shrink-0" />
-              <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[17px] shrink-0" />
-              <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[17px] shrink-0" />
+            <button
+              type="button"
+              data-np-mode
+              aria-label={t('player.mode')}
+              title={t('player.mode')}
+              class="flex size-[42px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-full text-ink-muted transition-colors hover:text-brand-ink xl:hairline-box xl:size-[36px] xl:text-ink-soft"
+            >
+              <Icon name="lucide:repeat" data-np-mode-order class="size-[16px] shrink-0 xl:size-[17px]" />
+              <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[16px] shrink-0 xl:size-[17px]" />
+              <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[16px] shrink-0 xl:size-[17px]" />
             </button>
           )
         }
