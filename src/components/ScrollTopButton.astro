@@ -29,15 +29,21 @@ const { t } = useI18n(Astro)
 <script>
   // 模块级监听只挂一次；换页由 astro:page-load 刷新元素引用（ReadingProgress 同款模式）
   let btn: HTMLElement | null = null
+  let shown = ''
 
-  // 阈值沿用 YYsuni 的 200：滚出一点头部就出现，回到顶部自然收起
+  // 阈值沿用 YYsuni 的 200：滚出一点头部就出现，回到顶部自然收起。
+  // 值没翻转就不写属性 —— 每个滚动事件都 setAttribute 会白白触发样式失效
   const update = () => {
-    btn?.setAttribute('data-show', String(window.scrollY > 200))
+    const v = String(window.scrollY > 200)
+    if (v === shown) return
+    shown = v
+    btn?.setAttribute('data-show', v)
   }
   addEventListener('scroll', update, { passive: true })
 
   document.addEventListener('astro:page-load', () => {
     btn = document.querySelector<HTMLElement>('[data-top-btn]')
+    shown = '' // 新文档的按钮是新元素，强制按当前滚动位置写一次
     update()
     btn?.addEventListener('click', () => {
       window.scrollTo({
