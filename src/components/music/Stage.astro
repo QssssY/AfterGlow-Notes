@@ -29,7 +29,7 @@ const bars = Array.from({ length: 64 }, (_, i) =>
 )
 
 const secondary =
-  'flex size-[34px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-full hairline-box text-ink-soft transition-colors hover:text-brand-ink'
+  'flex size-[42px] shrink-0 xl:size-[36px] cursor-pointer flex-row items-center justify-center rounded-full hairline-box text-ink-soft transition-colors hover:text-brand-ink'
 ---
 
 <section
@@ -41,12 +41,12 @@ const secondary =
        定光 glint 与轴帽 spindle 钉着不转 —— 光扫过彩瓣就是「碟在读」的动感；
        拾音臂 arm 落针/抬针跟 data-playing 走（一次性 transform 过渡，非循环），
        右下的读碟灯同步亮灭。暂停停在原角度，跨页接着转 -->
-  <div data-np-cd class="relative size-[128px] shrink-0 xl:size-[164px]">
-    <div data-np-disc class="absolute inset-[10px] xl:inset-[12px]"></div>
-    <div data-np-glint aria-hidden="true" class="absolute inset-[10px] xl:inset-[12px]"></div>
+  <div data-np-cd class="relative size-[216px] shrink-0 xl:size-[252px]">
+    <div data-np-disc class="absolute inset-[14px] xl:inset-[16px]"></div>
+    <div data-np-glint aria-hidden="true" class="absolute inset-[14px] xl:inset-[16px]"></div>
     <div
       data-np-spindle
-      class="absolute top-1/2 left-1/2 size-[16px] -translate-x-1/2 -translate-y-1/2 xl:size-[20px]"
+      class="absolute top-1/2 left-1/2 size-[24px] -translate-x-1/2 -translate-y-1/2 xl:size-[28px]"
     >
     </div>
     <div data-np-arm aria-hidden="true" class="absolute inset-0">
@@ -57,7 +57,7 @@ const secondary =
       </span>
       <span data-np-arm-base></span>
     </div>
-    <span data-np-led class="absolute right-[9px] bottom-[9px] size-[5px] xl:right-[11px] xl:bottom-[11px]"></span>
+    <span data-np-led class="absolute right-[12px] bottom-[12px] size-[6px] xl:right-[14px] xl:bottom-[14px]"></span>
   </div>
 
   <div
@@ -120,12 +120,12 @@ const secondary =
 
     <!-- 控制排：移动端居中换行（音量自己占一行），桌面一行到底、音量靠右 -->
     <div
-      class="flex w-full shrink-0 flex-row flex-wrap items-center justify-center gap-[10px] xl:flex-nowrap xl:justify-start"
+      class="flex w-full shrink-0 flex-row flex-wrap items-center justify-center gap-[12px] xl:gap-[10px] xl:flex-nowrap xl:justify-start"
     >
       {
         multi && (
           <button type="button" data-np-prev aria-label={t('player.prev')} title={t('player.prev')} class={secondary}>
-            <Icon name="lucide:skip-back" class="size-[15px] shrink-0" />
+            <Icon name="lucide:skip-back" class="size-[17px] shrink-0" />
           </button>
         )
       }
@@ -134,24 +134,24 @@ const secondary =
         data-np-play
         aria-label={t('player.toggle')}
         title={t('player.toggle')}
-        class="group/play flex size-[52px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-full bg-brand text-on-brand shadow-[0_10px_22px_-8px_var(--glow-fire)] transition-transform hover:scale-[1.06]"
+        class="group/play flex size-[60px] shrink-0 xl:size-[54px] cursor-pointer flex-row items-center justify-center rounded-full bg-brand text-on-brand shadow-[0_10px_22px_-8px_var(--glow-fire)] transition-transform hover:scale-[1.06]"
       >
         <Icon
           name="lucide:play"
-          class="size-[20px] shrink-0 translate-x-[1px] group-data-[playing]/np:hidden"
+          class="size-[22px] shrink-0 translate-x-[1px] group-data-[playing]/np:hidden"
         />
-        <Icon name="lucide:pause" class="hidden size-[20px] shrink-0 group-data-[playing]/np:block" />
+        <Icon name="lucide:pause" class="hidden size-[22px] shrink-0 group-data-[playing]/np:block" />
       </button>
       {
         multi && (
           <>
             <button type="button" data-np-next aria-label={t('player.next')} title={t('player.next')} class={secondary}>
-              <Icon name="lucide:skip-forward" class="size-[15px] shrink-0" />
+              <Icon name="lucide:skip-forward" class="size-[17px] shrink-0" />
             </button>
             <button type="button" data-np-mode aria-label={t('player.mode')} title={t('player.mode')} class={secondary}>
-              <Icon name="lucide:repeat" data-np-mode-order class="size-[15px] shrink-0" />
-              <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[15px] shrink-0" />
-              <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[15px] shrink-0" />
+              <Icon name="lucide:repeat" data-np-mode-order class="size-[17px] shrink-0" />
+              <Icon name="lucide:shuffle" data-np-mode-shuffle class="hidden size-[17px] shrink-0" />
+              <Icon name="lucide:repeat-1" data-np-mode-one class="hidden size-[17px] shrink-0" />
             </button>
           </>
         )
@@ -175,7 +175,7 @@ const secondary =
           max="100"
           step="1"
           aria-label={t('player.volume')}
-          class="w-[132px] shrink-0 cursor-pointer xl:w-[96px]"
+          class="w-[172px] shrink-0 cursor-pointer xl:w-[110px]"
         />
         <span
           data-np-vol-pct
