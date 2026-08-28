@@ -33,12 +33,17 @@ if [ -d public/music ]; then
 fi
 
 echo "==> 上传 dist 并原子替换（歌不随 dist 走，由 -music 目录供给）"
-# 只排除音频与歌词文件，不能排除整个 ./music —— 那里还躺着「我的音乐」页面
+# 排除音频/歌词/封面，但**不能**排除整个 ./music —— 那里还躺着「我的音乐」页面
 # （dist/music/index.html，本地构建时会和 public/music 的歌混在同一目录）。
 # 曾经整目录排除，上线后 /music/ 页面 404（歌反而都在）。
+# 歌与封面为什么也不进 dist：/music/* 整个前缀归 Go 的供歌处理器（ServeMux
+# 最长前缀），一律从服务器的 -music 目录取 —— 打进 dist 的副本永远读不到，
+# 白占上传带宽和服务端内存缓存（整站是全量进内存的）。
 tar -C dist --exclude='./music/*.mp3' --exclude='./music/*.lrc' \
   --exclude='./music/*.flac' --exclude='./music/*.m4a' --exclude='./music/*.ogg' \
-  --exclude='./music/*.wav' --exclude='./music/*.aac' -czf - . | ssh "$HOST" "
+  --exclude='./music/*.wav' --exclude='./music/*.aac' \
+  --exclude='./music/*.jpg' --exclude='./music/*.jpeg' --exclude='./music/*.png' \
+  --exclude='./music/*.webp' --exclude='./music/*.avif' -czf - . | ssh "$HOST" "
   set -e
   rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
   tar -xzf - -C $ROOT/dist.new

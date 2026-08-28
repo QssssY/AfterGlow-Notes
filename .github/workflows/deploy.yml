@@ -70,7 +70,9 @@ jobs:
           # 音频/封面本就不进仓库，CI 的 dist 里根本没有，这些 --exclude 只是护栏。
           tar -C dist --exclude='./music/*.mp3' --exclude='./music/*.lrc' \
             --exclude='./music/*.flac' --exclude='./music/*.m4a' --exclude='./music/*.ogg' \
-            --exclude='./music/*.wav' --exclude='./music/*.aac' -czf /tmp/dist.tgz .
+            --exclude='./music/*.wav' --exclude='./music/*.aac' \
+            --exclude='./music/*.jpg' --exclude='./music/*.jpeg' --exclude='./music/*.png' \
+            --exclude='./music/*.webp' --exclude='./music/*.avif' -czf /tmp/dist.tgz .
           git ls-files -z | tar --null -T - -czf /tmp/blog.tgz
 
       - name: 发布到 Release（tag 固定 deploy，产物覆盖）
