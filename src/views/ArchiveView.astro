@@ -57,21 +57,22 @@ const hasOriginLang = all.some((post) => post.fallback)
     <div class="pointer-events-auto w-fit"><NavBar /></div>
   </div>
 
-  <div class="flex w-full flex-row items-start gap-[48px] compact:xl:mx-auto compact:xl:max-w-[1016px] compact:xl:flex-col compact:xl:gap-[24px]">
+  <div class="flex w-full flex-row items-start gap-[48px] compact:xl:mx-auto compact:xl:max-w-[1016px]">
     {/* 左栏双模式：原版 = 完整 Sidebar + 面板全静态（原样）；
-        紧凑 = 只剩 年表+订阅 短栏，钉在图标条下方（84 = 16 + 条高 52 + 16） */}
-    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex compact:xl:order-last compact:xl:w-full">
+        紧凑 = 不要短栏，内容居中单列 —— 年表/订阅与移动端一样不显示，
+        订阅走图标条里的 RSS */}
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[16px] xl:flex compact:xl:hidden">
       <div class="hidden w-full classic:block"><Sidebar /></div>
       <div
         data-pin-group
-        class="flex w-full flex-col items-start gap-[16px] compact:xl:w-full compact:xl:flex-row compact:xl:[&>*]:min-w-0 compact:xl:[&>*]:flex-1"
+        class="flex w-full flex-col items-start gap-[16px]"
       >
         <ArchivePanel years={yearBars(all)} />
         <SubscribePanel />
       </div>
     </div>
 
-    <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px] compact:xl:w-full compact:xl:flex-none">
+    <div class="flex h-fit min-w-0 flex-1 flex-col items-center gap-[24px]">
       <StatsPageHead
         title={t('blog.title')}
         subtitle={t('blog.subtitle')}
