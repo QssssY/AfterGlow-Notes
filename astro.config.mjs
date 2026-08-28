@@ -48,6 +48,23 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
 
+  /*
+   * 旧地址永久跳转。「我的音乐」原本挂在 /music，与 Go 供歌处理器的
+   * /music/<文件名> 前缀撞在同一命名空间 —— 打包 dist 时一个目录级的
+   * --exclude 就能把页面文件整个抹掉，这坑以三种形态犯过三次
+   * （见 scripts/deploy.sh、.github/workflows/deploy.yml、server/static.go）。
+   * 页面搬到 /my-music 后，那个前缀就纯粹是音频与封面了。
+   * 三个语种各留一条跳转：地址上线过、可能已被收录或分享出去。
+   * 中文那条产出的 dist/music/index.html 仍落在撞名前缀里，靠
+   * musicHandler 的 page 兜底送达 —— 但它只是一张跳转页，
+   * 万一哪天又被漏排，损失也只是旧链接失效，不再是整页 404。
+   */
+  redirects: {
+    '/music': '/my-music',
+    '/en/music': '/en/my-music',
+    '/ja/music': '/ja/my-music',
+  },
+
   // 站内链接进入视口就预取整页 HTML：静态页都很小（首页 ~30KB），
   // 换页时 ClientRouter 直接命中缓存，点击 → 渲染几乎零等待。
   // 默认只在 hover 时预取，首跳仍要等一个往返，故改 viewport 策略。

@@ -58,7 +58,11 @@ export const navConfig = [
   { key: 'home', icon: 'house', href: '/', match: ['/'] },
   { key: 'posts', icon: 'notebook-text', href: '/archive', match: ['/archive', '/posts', '/tags'] },
   { key: 'projects', icon: 'layout-grid', href: '/projects', match: ['/projects'] },
-  { key: 'music', icon: 'disc-3', href: '/music', match: ['/music'] },
+  /* 路径特意不叫 /music：那个前缀归 Go 的供歌处理器（/music/<文件名>），
+     页面和音频挤在同一命名空间上，打包时一个目录级的 --exclude 就能把页面
+     整个抹掉 —— 这坑犯过三次（详见 scripts/deploy.sh 与 server/static.go 的注释）。
+     旧地址 /music 由 astro.config 的 redirects 永久跳到这里 */
+  { key: 'music', icon: 'disc-3', href: '/my-music', match: ['/my-music'] },
   { key: 'about', icon: 'circle-user', href: '/about', match: ['/about'] },
   { key: 'share', icon: 'share-2', href: '/share', match: ['/share'] },
   { key: 'blogroll', icon: 'bookmark', href: '/blogroll', match: ['/blogroll'] },
