@@ -63,7 +63,14 @@ jobs:
 
       - name: 打包 dist 与仓库快照
         run: |
-          tar -C dist --exclude='./music' -czf /tmp/dist.tgz .
+          # 只排除音频与歌词，不能排除整个 ./music —— 那里还躺着「我的音乐」
+          # 页面（dist/music/index.html）与专辑封面。曾经整目录排除，结果这条
+          # 自取链路每次都把 /music/ 页面从服务器上抹掉（scripts/deploy.sh 同款坑，
+          # 那边先修了、这边漏了 —— 本机部署完好好的，5 分钟后被 CI 产物盖成 404）。
+          # 音频/封面本就不进仓库，CI 的 dist 里根本没有，这些 --exclude 只是护栏。
+          tar -C dist --exclude='./music/*.mp3' --exclude='./music/*.lrc' \
+            --exclude='./music/*.flac' --exclude='./music/*.m4a' --exclude='./music/*.ogg' \
+            --exclude='./music/*.wav' --exclude='./music/*.aac' -czf /tmp/dist.tgz .
           git ls-files -z | tar --null -T - -czf /tmp/blog.tgz
 
       - name: 发布到 Release（tag 固定 deploy，产物覆盖）
