@@ -59,9 +59,13 @@ const tracks = nowPlaying.playlist
     </button>
   </label>
 
+  {/* 高度三档：移动端 300 封顶；原版模式不封顶（列高由左栏撑，与歌词严格平齐，
+      见 MusicView）；紧凑模式没有左栏可撑，就自己定高 —— 740 = 20 行 × 37
+      （实测单行 37px，用户点名要「一屏 20 首」），歌词面板绝对填充同一行高，
+      于是左边歌词也跟着长到同样高度 */}
   <div
     data-track-list
-    class="flex max-h-[300px] w-full shrink-0 flex-col items-start overflow-y-auto xl:min-h-0 xl:flex-1 xl:shrink compact:xl:max-h-[372px] classic:xl:max-h-none"
+    class="flex max-h-[300px] w-full shrink-0 flex-col items-start overflow-y-auto xl:min-h-0 xl:flex-1 xl:shrink compact:xl:max-h-[740px] classic:xl:max-h-none"
   >
     {
       tracks.map((track, i) => (
