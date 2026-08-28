@@ -44,20 +44,20 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
     <div class="pointer-events-auto w-fit"><NavBar /></div>
   </div>
 
-  <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px]">
+  <div class="flex w-full flex-col items-start gap-[24px] xl:flex-row xl:gap-[48px] compact:xl:mx-auto compact:xl:max-w-[1016px] compact:xl:flex-col compact:xl:gap-[24px]">
     {/* 左栏双模式：原版 = 完整 Sidebar + 面板全静态；紧凑 = 面板短栏钉在图标条下 */}
-    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex">
+    <div class="hidden w-[280px] shrink-0 flex-col items-start gap-[24px] xl:flex compact:xl:order-last compact:xl:w-full">
       <div class="hidden w-full classic:block"><Sidebar /></div>
       <div
         data-pin-group
-        class="flex w-full flex-col items-start gap-[24px] compact:xl:sticky compact:xl:top-[84px]"
+        class="flex w-full flex-col items-start gap-[24px] compact:xl:w-full compact:xl:flex-row compact:xl:[&>*]:min-w-0 compact:xl:[&>*]:flex-1"
       >
         <StackPanel />
         <NowPanel />
       </div>
     </div>
 
-    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1">
+    <div class="flex h-fit w-full flex-col items-start gap-[24px] xl:flex-1 compact:xl:w-full compact:xl:flex-none">
       <FilterBar stacks={stacks} />
       <PageHead
         title={t('projects.title')}
