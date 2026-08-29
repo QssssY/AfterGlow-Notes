@@ -4,6 +4,9 @@
 #   AFTERGLOW_HOST=root@服务器IP bash scripts/deploy-setup.sh   # 首次：编译上传二进制 + 生成口令 + systemd + 全量内容
 #   FORCE_NEW_PASS=1 AFTERGLOW_HOST=root@服务器IP bash scripts/deploy-setup.sh
 #                                                # 强制换新管理口令（默认沿用服务器上现有的）
+#   MUSIC_API_KIND=unified MUSIC_API_BASE=http://127.0.0.1:9000 AFTERGLOW_HOST=... bash scripts/deploy-setup.sh
+#                                                # 服务器上自建了统一音源层时这么覆盖
+#                                                # （缺省用公共接口，见下方 MUSIC_API 的说明）
 #
 # 前提：本机有 go / node(≥22) / git / ssh，且能免密登录 $HOST。
 # 服务端是纯 Go（modernc SQLite），Windows/macOS 上都能直接交叉编译 linux/amd64。
@@ -34,6 +37,13 @@ if [ -z "$PASS" ] || [ "${FORCE_NEW_PASS:-0}" = 1 ]; then
   NEW_PASS=1
 fi
 
+# 在线找歌的音源（管理台「正在听」页签用）。Go 的默认值是本机自建统一层
+# (127.0.0.1:9000)，那是**本地开发**的形态 —— 服务器上没有这一层，照默认跑
+# 只会得到 "connect: connection refused"（实测踩过）。所以这里默认给公共接口，
+# 服务器实测可直连；要在服务器上自建统一层时用 MUSIC_API_BASE/KIND 覆盖。
+MUSIC_KIND="${MUSIC_API_KIND:-gdstudio}"
+MUSIC_API="${MUSIC_API_BASE:-https://music-api.gdstudio.xyz/api.php}"
+
 echo "==> 写 systemd 单元（含口令，权限 600）并设为开机自启"
 ssh "$HOST" "cat > /etc/systemd/system/afterglow.service && chmod 600 /etc/systemd/system/afterglow.service && systemctl daemon-reload && systemctl enable afterglow" <<UNIT
 [Unit]
@@ -44,7 +54,7 @@ After=network-online.target
 WorkingDirectory=$ROOT
 Environment=ADMIN_PASSWORD=$PASS
 # Environment=GITHUB_TOKEN=可选：把 GitHub 代理配额从 60 提到 5000 次/时
-ExecStart=$ROOT/afterglow-server -addr :80 -site $ROOT/dist -music $ROOT/music -blog-dir $ROOT/blog -db $ROOT/afterglow.db -origin $SITE_URL
+ExecStart=$ROOT/afterglow-server -addr :80 -site $ROOT/dist -music $ROOT/music -blog-dir $ROOT/blog -db $ROOT/afterglow.db -origin $SITE_URL -music-api $MUSIC_API -music-api-kind $MUSIC_KIND
 Restart=always
 RestartSec=3
 
