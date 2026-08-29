@@ -122,7 +122,7 @@ func (s *server) adminMusicSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	hits, err := s.admin.srcSearch(source, kw, page)
 	if err != nil {
-		fail(w, http.StatusBadGateway, "找歌失败："+err.Error())
+		fail(w, http.StatusBadGateway, "找歌失败："+musicErrHint(s.admin.musicAPI, err))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": hits})
@@ -305,6 +305,29 @@ func anyToStr(v any) string {
 }
 
 // ---- 音源分派：按 -music-api-kind 走统一层或 GD ----
+
+/*
+ * 把「音源连不上」翻译成人话。裸的 dial 错误（`dial tcp 127.0.0.1:9000:
+ * connect: connection refused`）读者要自己反推是哪一层没起 —— 而自建统一层
+ * 是手动启动的三段式（Docker 的 ncm-api + lx-music + 封装层本身），
+ * 关掉终端或 Docker 就没了，隔几天回来搜歌必然撞上这条。
+ * 只在「拒绝连接」这类明确的不可达上加提示，其余错误原样透出。
+ */
+func musicErrHint(api string, err error) string {
+	msg := err.Error()
+	if !strings.Contains(msg, "connection refused") && !strings.Contains(msg, "No connection could be made") {
+		return msg
+	}
+	where := "音源服务没在跑"
+	if u, e := url.Parse(api); e == nil {
+		if host := u.Hostname(); host == "127.0.0.1" || host == "localhost" || host == "::1" {
+			where = "本机音源层（" + api + "）没启动"
+		} else {
+			where = "音源服务（" + api + "）连不上"
+		}
+	}
+	return where + " —— 先把它跑起来，或改用公共音源（-music-api-kind gdstudio）。原始错误：" + msg
+}
 
 func (a *adminState) srcSearch(source, kw string, page int) ([]musicHit, error) {
 	if a.musicKindIsGD() {
