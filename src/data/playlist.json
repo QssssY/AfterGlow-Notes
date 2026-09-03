@@ -2,6 +2,7 @@
   {
     "title": "K歌之王(国语)",
     "artist": "陈奕迅",
+    "default": true,
     "src": "/music/陈奕迅 - K歌之王(国语).mp3",
     "lrc": "/music/陈奕迅 - K歌之王(国语).lrc",
     "cover": "/music/陈奕迅 - K歌之王(国语).jpg"

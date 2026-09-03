@@ -8,7 +8,7 @@ const { t } = useI18n(Astro)
 
 const tracks = nowPlaying.playlist
 // fork 没有歌源时 playlist.json 清成 [] —— 整张卡不渲染，别让空歌单炸构建
-const first = tracks[0]
+const first = tracks[nowPlaying.defaultIndex]
 const trackLabel = (track: { title: string; artist?: string }) =>
   track.artist ? `${track.title} — ${track.artist}` : track.title
 
@@ -155,7 +155,10 @@ const scriptText = playerScriptText(t)
     class="absolute inset-x-[20px] bottom-[8px] h-[10px] cursor-pointer opacity-0 transition-opacity duration-300 group-hover/np:opacity-100 group-aria-pressed/np:opacity-100"
   >
     <div class="absolute inset-x-0 top-[4px] h-[3px] overflow-hidden rounded-[2px] bg-hairline">
-      <div data-np-progress class="h-full w-0 rounded-[2px] bg-brand"></div>
+      {/* 进度走 transform: scaleX（width 变化要布局+整卡重绘）；初始值必须
+          内联 —— Tailwind v4 的 scale-x-0 走 scale 属性，会和 JS 写的
+          transform 相乘（ReadingProgress 踩过的同一个坑） */}
+      <div data-np-progress class="h-full w-full origin-left rounded-[2px] bg-brand" style="transform:scaleX(0)"></div>
     </div>
   </div>
 

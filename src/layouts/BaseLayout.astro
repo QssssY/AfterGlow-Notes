@@ -337,6 +337,10 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
           }, 470)
         }
 
+        // 入场提层的登记簿（跨两次 stagger 存活：连点换页时先把上一批摘干净）
+        let entering = []
+        let enterTimer = 0
+
         const stagger = () => {
           // 先把布局模式补回来再量可见性：这个监听比主题脚本注册得早，换页后
           // 先跑到 —— 那一刻新文档还是初始 classic，紧凑用户的图标条 display:none，
@@ -368,6 +372,24 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
           }
           cards.sort((a, b) => a.top - b.top || a.left - b.left)
           cards.forEach(({ el }, i) => el.style.setProperty('--enter-i', String(Math.min(i, 8))))
+
+          // 入场期间给卡挂 will-change（2026-08-29 掉帧复盘）：玻璃卡自带
+          // backdrop-filter + 大投影，弹入的 scale/opacity 不提层就每帧重绘 ——
+          // 实测换页 4× 节流下掉帧 35→13、实绘帧 253→292。
+          // 但它绝不能常驻：每张卡长期独占合成层，静置时白占显存还拖累滚动。
+          // 动画窗口 = 封顶 8 档错峰(800ms) + 时长 450ms，留足余量后统一摘掉。
+          clearTimeout(enterTimer)
+          for (const el of entering) el.style.willChange = ''
+          entering = []
+          // 减少动态偏好下入场动画整个不播（CSS 在 no-preference 里），别白提层
+          if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            entering = cards.map((c) => c.el)
+            for (const el of entering) el.style.willChange = 'transform, opacity'
+            enterTimer = setTimeout(() => {
+              for (const el of entering) el.style.willChange = ''
+              entering = []
+            }, 1500)
+          }
         }
         stagger()
         document.addEventListener('astro:after-swap', stagger)

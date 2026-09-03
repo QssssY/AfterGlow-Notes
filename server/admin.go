@@ -106,7 +106,7 @@ var siteImageNames = map[string]bool{
 // 站点数据文件白名单 —— 新增一种内容 = 这里加一行 + src/data 放文件 + config.ts 引入
 var dataFiles = map[string]struct {
 	kind     string // array | object
-	minItems int    // 组件会取 [0] 的集合不许清空（repos Featured 卡、播放器）
+	minItems int    // 页面要求至少保留的条目数（如 repos Featured 卡、播放器）
 }{
 	"reading":   {"array", 0},
 	"now":       {"object", 0},
@@ -598,8 +598,14 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 			}
 			// minItems 只约束基准：译文是部分覆盖，只写翻过的条目、少几条是常态
 			if locale == "" && len(list) < spec.minItems {
-				fail(w, http.StatusBadRequest, fmt.Sprintf("至少要保留 %d 条（页面组件会取第一条）", spec.minItems))
+				fail(w, http.StatusBadRequest, fmt.Sprintf("至少要保留 %d 条", spec.minItems))
 				return
+			}
+			if locale == "" && name == "playlist" {
+				if err := validatePlaylistDefaults(list); err != nil {
+					fail(w, http.StatusBadRequest, err.Error())
+					return
+				}
 			}
 		case "object":
 			if _, ok := v.(map[string]any); !ok {
@@ -635,6 +641,33 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 	default:
 		fail(w, http.StatusMethodNotAllowed, "只支持 GET / PUT / DELETE")
 	}
+}
+
+// validatePlaylistDefaults keeps the build-time and admin-time contract aligned:
+// a non-empty playlist must identify exactly one track for the first visit.
+func validatePlaylistDefaults(list []any) error {
+	defaults := 0
+	for i, raw := range list {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			return fmt.Errorf("歌单第 %d 项必须是对象", i+1)
+		}
+		value, exists := item["default"]
+		if !exists {
+			continue
+		}
+		marked, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("歌单 default 必须是布尔值")
+		}
+		if marked {
+			defaults++
+		}
+	}
+	if len(list) > 0 && defaults != 1 {
+		return fmt.Errorf("歌单必须且只能指定一首 default: true 的默认曲目")
+	}
+	return nil
 }
 
 // ---- 上传 ----

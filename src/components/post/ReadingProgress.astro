@@ -19,10 +19,16 @@
   // 换页后由 astro:page-load 刷新 bar 的引用 —— 不在的页面上 bar 为 null，直接无操作
   let bar: HTMLElement | null = null
   let last = -1
+  // 可滚距离缓存：scrollHeight 是布局相关属性，每个滚动事件读一次就等于
+  // 逼浏览器把待处理的布局全算完（同一帧里别的脚本刚写过 DOM 时尤其贵）。
+  // 页面高度只在换页/resize/图片落位时变，那时重量即可（2026-08-29 掉帧复盘）
+  let max = 0
+  const remeasure = () => {
+    max = document.documentElement.scrollHeight - window.innerHeight
+  }
 
   const update = () => {
     if (!bar) return
-    const max = document.documentElement.scrollHeight - window.innerHeight
     // 量化到 0.1%（3px 高的细线上不足 2px 一步），没变就不写
     const ratio = max > 0 ? Math.round(Math.min(1, Math.max(0, window.scrollY / max)) * 1000) / 1000 : 0
     if (ratio === last) return
@@ -31,11 +37,22 @@
   }
 
   addEventListener('scroll', update, { passive: true })
-  addEventListener('resize', update)
+  addEventListener('resize', () => {
+    remeasure()
+    update()
+  })
+  // 图片渐显、content-visibility 的行高定稿都会改文档高度 —— 盯着文档尺寸变化重量
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => {
+      remeasure()
+      update()
+    }).observe(document.documentElement)
+  }
 
   document.addEventListener('astro:page-load', () => {
     bar = document.querySelector<HTMLElement>('[data-reading-bar]')
     last = -1 // 新文档的条是新元素，得重写一次
+    remeasure()
     update()
   })
 </script>

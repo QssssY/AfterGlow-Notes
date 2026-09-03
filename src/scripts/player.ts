@@ -1,4 +1,4 @@
-import { musicBase, nowPlaying } from '~/config'
+import { musicBase, nowPlaying, type Track } from '~/config'
 import { fill } from '~/scripts/i18n'
 
 /**
@@ -26,16 +26,6 @@ import { fill } from '~/scripts/i18n'
  */
 /** end 是这句「唱完」的时刻（见 loadLrc 里的估算），亮字渐变只跑 t→end 这段 */
 type LrcLine = { t: number; text: string; end: number; est: number }
-/** offset：这首歌词整体快/慢时的微调（秒），正值=歌词推迟出现（管理端可改） */
-type Track = {
-  title: string
-  artist?: string
-  src: string
-  lrc?: string
-  offset?: number
-  /** 专辑封面（听歌页 CD 面上转的就是它），本地文件；没有就露出纯盘面 */
-  cover?: string
-}
 
 const tracks: readonly Track[] = nowPlaying.playlist
 const trackLabel = (t: Track) => (t.artist ? `${t.title} — ${t.artist}` : t.title)
@@ -43,15 +33,15 @@ const trackLabel = (t: Track) => (t.artist ? `${t.title} — ${t.artist}` : t.ti
 // 音乐可能不与页面同源（分体部署时歌在小机子上，见 config.ts 的 musicBase）
 const musicUrl = (p: string) => musicBase + p
 
-let cur = 0
+let cur = nowPlaying.defaultIndex
 const player = new Audio()
+// 首次交互前不设置 src：preload='none' 只有在未选中音源时才能保证首屏零音频请求。
+// 用户点击播放时再补 src，曲名/封面仍由服务端 HTML 立即展示。
+player.preload = 'none'
 // 跨域音源必须挂 anonymous + 服务端 CORS：Web Audio 的频谱分析要读采样，
 // 不满足同源策略时 analyser 只会输出一排零（等化条永远躺平）。
 // 同源时不挂 —— 避免给本地/单机模式引入任何行为变化。必须在赋 src 之前设。
 if (musicBase) player.crossOrigin = 'anonymous'
-// 空歌单（fork 无歌源）时卡片整个不渲染，这里也别去摸 tracks[0]
-if (tracks.length > 0) player.src = musicUrl(tracks[0]!.src)
-player.preload = 'none'
 
 // 音量跨页跨曲记忆；没存过保持默认 1（Number(null)=0 会静音，必须判 null）
 const VOLUME_KEY = 'afterglow:volume'
@@ -128,6 +118,9 @@ interface Bind {
   over: number
   /** 跑马当前位移（量化到 0.5px）：没变就不写 DOM */
   shift: number
+  /** 这张卡当前可见吗（首页桌面/移动两张卡断点互斥）：display:none 的那张
+   *  每帧写 style 只白烧样式重算 —— 绑定与 resize 时量一次，tick 逐帧跳过 */
+  visible: boolean
 }
 let binds: Bind[] = []
 
@@ -146,6 +139,13 @@ let lastDisc = -1
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 
 const audio = () => player
+
+/** 首次点击播放时才绑定当前曲目的音源，避免首屏触发音频网络请求。 */
+const ensureSource = () => {
+  const track = tracks[cur]
+  if (!track) throw new Error('当前没有可播放的默认曲目')
+  if (!player.src) player.src = musicUrl(track.src)
+}
 
 /** 首次播放时才建立 Web Audio 链路（需要用户手势，正好在 click 里） */
 const ensureGraph = (el: HTMLAudioElement) => {
@@ -404,7 +404,7 @@ const syncLyric = (now: number) => {
   const sungChanged = sung !== lastSung
   if (sungChanged) lastSung = sung
   for (const b of binds) {
-    if (!b.lineText) continue
+    if (!b.visible || !b.lineText) continue
     if (sungChanged) b.lineText.style.setProperty('--sung', `${sung}%`)
     // 长句跑马：亮字过了卡宽 42% 就开始左移，唱完时句尾刚好贴右缘
     if (b.over > 0) {
@@ -419,9 +419,11 @@ const syncLyric = (now: number) => {
 }
 
 /** 播放循环：每帧 ① 等化条映射低中频段 ② 歌词同步。
- * 顶帧率封在 ~62fps：rAF 跟屏幕刷新率走，高刷屏（120/165Hz）上不封顶的话
- * 每秒多出一两倍的样式重算 —— 而且只要主线程在产帧，页面上其他所有
- * 动画都得跟着逐帧重算，等化条 60fps 已经比肉眼快了 */
+ * DOM 写入封在 ~33fps：2026-08-29 掉帧复盘的主结论 —— 成本大头不是哪个
+ * 元素的重绘，而是「这一帧只要有任意一个样式写入，整条 样式重算→Paint→
+ * Layerize→Commit 管线就要全量遍历一次」，页面越大每次越贵。写入帧减半、
+ * 间隔帧完全零失效（管线短路），播放态主线程直接砍半；频谱平滑 0.75 本就
+ * 迟滞、盘转纹理旋转近似不变，30fps 写入肉眼无感 */
 let lastTickAt = 0
 const tick = (now: number) => {
   const el = audio()
@@ -429,7 +431,7 @@ const tick = (now: number) => {
   // 每帧产主帧，橙点这些 CSS 动画会被逐帧重录（军规④）。回到有卡的页面时
   // astro:page-load 的 setLive 会重启循环
   if (el.paused || binds.length === 0) return
-  if (now - lastTickAt < 15) {
+  if (now - lastTickAt < 30) {
     raf = requestAnimationFrame(tick)
     return
   }
@@ -458,7 +460,7 @@ const tick = (now: number) => {
       if (lastScale[i] === scale) continue
       lastScale[i] = scale
       const transform = `scaleY(${scale})`
-      for (const b of binds) if (b.bars[i]) b.bars[i]!.style.transform = transform
+      for (const b of binds) if (b.visible && b.bars[i]) b.bars[i]!.style.transform = transform
     }
   }
 
@@ -476,13 +478,13 @@ const tick = (now: number) => {
       if (lastIcon[i] === s) continue
       lastIcon[i] = s
       const transform = `scaleY(${s})`
-      for (const b of binds) if (b.icons[i]) b.icons[i]!.style.transform = transform
+      for (const b of binds) if (b.visible && b.icons[i]) b.icons[i]!.style.transform = transform
     }
     discAngle = (discAngle + dt * 0.12) % 360 // 360° / 3s —— CD 的转速观感（黑胶时代是 9s）
     const deg = Math.round(discAngle * 2) / 2
     if (deg !== lastDisc) {
       lastDisc = deg
-      for (const b of binds) if (b.disc) b.disc.style.transform = `rotate(${deg}deg)`
+      for (const b of binds) if (b.visible && b.disc) b.disc.style.transform = `rotate(${deg}deg)`
     }
   }
 
@@ -601,11 +603,18 @@ const fmtTime = (s: number) => {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 }
 
-/** 时间读数：preload='none' 时元数据要等开播才有，没有就先摆 --:-- */
+/** 时间读数：preload='none' 时元数据要等开播才有，没有就先摆 --:--。
+ *  timeupdate 一秒来四次而文本一秒才变一次 —— textContent 重复赋同值也会
+ *  换掉文本节点、触发整卡布局重绘，跳写（换页重绑时 lastTime 清空强制全写） */
+let lastTime = ''
+let lastDur = ''
 const updateTimeUI = () => {
   const at = fmtTime(player.currentTime)
   const known = Number.isFinite(player.duration) && player.duration > 0
   const total = known ? fmtTime(player.duration) : '--:--'
+  if (at === lastTime && total === lastDur) return
+  lastTime = at
+  lastDur = total
   for (const b of binds) {
     if (b.time) b.time.textContent = at
     if (b.dur) b.dur.textContent = total
@@ -618,9 +627,10 @@ const setTrack = (i: number, autoplay: boolean) => {
   const track = tracks[cur]!
   lrcLines = []
   shownText = ''
+  lastProgress = -1 // 上一曲的进度别挡住新曲的首次写入
   player.src = musicUrl(track.src)
   for (const b of binds) {
-    if (b.progress) b.progress.style.width = '0%'
+    if (b.progress) b.progress.style.transform = 'scaleX(0)'
     b.card.setAttribute('aria-label', fill(text('npTPlay'), { title: trackLabel(track) }))
   }
   markCurrent()
@@ -636,6 +646,7 @@ const setTrack = (i: number, autoplay: boolean) => {
 const toggle = () => {
   const el = audio()
   if (el.paused) {
+    ensureSource()
     ensureGraph(el)
     el.play().catch(() => setLive(false))
   } else {
@@ -672,8 +683,12 @@ document.addEventListener('astro:page-load', () => {
     boxW: 0,
     over: 0,
     shift: 0,
+    visible: card.checkVisibility ? card.checkVisibility() : true,
   }))
   shownText = ''
+  lastTime = '' // 新页的读数是服务端渲的初始值，跳写缓存必须作废
+  lastDur = ''
+  lastProgress = -1
 
   if (binds.length === 0) return
 
@@ -815,12 +830,18 @@ player.addEventListener('pause', () => setLive(false))
 // 单曲循环由原生 loop 兜住，根本不触发 ended
 player.addEventListener('ended', () => setTrack(mode === 'shuffle' ? randIndex() : cur + 1, true))
 // 歌词句切换和渐变推进都在 tick（rAF）里做；timeupdate 只管进度条 ——
-// 它在暂停状态下拖进度时也会触发，宽度不会失同步
+// 它在暂停状态下拖进度时也会触发，进度不会失同步。
+// 进度用 transform: scaleX 而不是 width：width 变化要布局+整卡重绘，
+// scaleX 在 will-change 层上只走属性树更新（ReadingProgress 同款修复）。
+// 量化到 0.1%（几百 px 的条上一步 ~0.4px），同值跳写
+let lastProgress = -1
 player.addEventListener('timeupdate', () => {
   updateTimeUI()
   if (!Number.isFinite(player.duration) || player.duration <= 0) return
-  const width = `${(player.currentTime / player.duration) * 100}%`
-  for (const b of binds) if (b.progress) b.progress.style.width = width
+  const ratio = Math.round((player.currentTime / player.duration) * 1000) / 1000
+  if (ratio === lastProgress) return
+  lastProgress = ratio
+  for (const b of binds) if (b.progress) b.progress.style.transform = `scaleX(${ratio})`
 })
 // preload='none' 下总时长要等真正加载才知道 —— 拿到就补上读数
 player.addEventListener('loadedmetadata', updateTimeUI)
@@ -844,12 +865,14 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closePanels()
 })
 
-// 窗口宽度变了重量跑马溢出（防抖 150ms），不溢出的把位移清干净
+// 窗口宽度变了重量跑马溢出（防抖 150ms），不溢出的把位移清干净；
+// 桌面/移动两张卡断点互斥，顺手重量谁可见（tick 的逐帧写入按它跳过）
 let resizeTimer = 0
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer)
   resizeTimer = window.setTimeout(() => {
     for (const b of binds) {
+      b.visible = b.card.checkVisibility ? b.card.checkVisibility() : true
       if (!b.line || !b.lineText) continue
       b.textW = b.lineText.offsetWidth
       b.boxW = b.line.clientWidth

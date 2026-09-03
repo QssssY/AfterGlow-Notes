@@ -51,6 +51,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
 <script>
   import { $, api, esc, ghMode, report, toast } from '~/scripts/admin'
+  import type { Track } from '~/i18n/content'
 
   interface MusicHit {
     source: string
@@ -60,14 +61,6 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     album: string
     vip?: boolean
   }
-  interface Track {
-    title: string
-    artist?: string
-    src: string
-    lrc?: string
-    offset?: number
-  }
-
   const MS_PAGE = 5 // 必须与后端 musicPageSize 一致
   const msResults = $('[data-ms-results]')
   const msMore = $('[data-ms-more]')
@@ -115,7 +108,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         return `
         <div class="flex items-center gap-[10px] rounded-[10px] px-[10px] py-[7px] hover:bg-chip">
           <span class="w-[22px] shrink-0 text-[11px] tabular-nums text-ink-muted">${String(i + 1).padStart(2, '0')}</span>
-          <span class="min-w-0 flex-1 truncate text-[13px] text-ink">${esc(t.title)}${t.artist ? `<span class="text-ink-muted"> — ${esc(t.artist)}</span>` : ''}${t.lrc ? '' : ' <span class="ad-hint">· 无词</span>'}</span>
+          <span class="min-w-0 flex-1 truncate text-[13px] text-ink">${esc(t.title)}${t.artist ? `<span class="text-ink-muted"> — ${esc(t.artist)}</span>` : ''}${t.default ? ' <span class="text-brand-ink">· 首次默认</span>' : ''}${t.lrc ? '' : ' <span class="ad-hint">· 无词</span>'}</span>
           <button type="button" class="ad-btn-ghost" data-pl-del="${i}">移除</button>
         </div>`
       })
@@ -211,7 +204,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
           method: 'POST',
           body: { source: hit.source, id: hit.id, title: hit.title, artist: hit.artist },
         })
-        const entry: Track = { title: track.title, artist: track.artist, src: track.src }
+        const entry: Track = {
+          title: track.title,
+          artist: track.artist,
+          src: track.src,
+          default: playlist.length === 0,
+        }
         if (track.lrc) entry.lrc = track.lrc
         playlist.unshift(entry) // 加到最上面
         await savePlaylist() // 立即落 playlist.json（这页没有单独的「保存」步骤）
@@ -226,7 +224,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       }
     })
 
-    // 移除：从歌单删掉 → 立即保存（至少留一首，播放器要取第一条）；翻页条也委托在这
+    // 移除：从歌单删掉 → 立即保存（默认曲目不能被删）；翻页条也委托在这
     plList.addEventListener('click', async (e) => {
       const pageBtn = (e.target as HTMLElement).closest<HTMLElement>('[data-plpage]')
       if (pageBtn) {
@@ -241,7 +239,11 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       const i = Number(btn.dataset.plDel)
       if (!playlist[i]) return
       if (playlist.length <= 1) {
-        toast('至少留一首 —— 播放器要取第一条', false)
+        toast('至少留一首 —— 播放器需要一首默认曲目', false)
+        return
+      }
+      if (playlist[i].default === true) {
+        toast('请先在「正在听」里指定另一首默认曲目，再移除这首', false)
         return
       }
       const removed = playlist[i]!

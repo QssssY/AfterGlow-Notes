@@ -639,29 +639,31 @@
     will-change: transform;
   }
 
-  /* 侧栏导航的滑动高亮（YYsuni nav-hover 胶囊的 CSS 版，位置由脚本摆） */
+  /* 侧栏导航的滑动高亮（YYsuni nav-hover 胶囊的 CSS 版，位置由脚本摆
+     translateY —— top/left 过渡是布局动画，弹簧每帧都拖整页管线；
+     will-change 让弹簧全程在合成器跑，尺寸变化不过渡（条目等高） */
   [data-nav-glow] {
+    will-change: transform;
     transition:
-      top 0.35s var(--spring),
-      height 0.35s var(--spring),
+      transform 0.35s var(--spring),
       opacity 0.2s ease;
   }
 
   /* 侧栏导航的激活胶囊：换页时从上一页的位置弹簧滑到新激活项（果冻感）。
      位置由 Sidebar 脚本摆；无 JS 时条目自带的 glass-solid 兜底 */
   [data-nav-active] {
+    will-change: transform;
     transition:
-      top 0.4s var(--spring),
-      height 0.4s var(--spring),
+      transform 0.4s var(--spring),
       opacity 0.25s ease;
   }
 
   /* 紧凑图标条的跟手胶囊（照搬 YYsuni nav-card：spring 跟随 hover 的那颗，
      位置由 NavBar 脚本写；离手 1.5s 后弹回当前激活项） */
   [data-nav-pill] {
+    will-change: transform;
     transition:
-      left 0.35s var(--spring),
-      width 0.35s var(--spring),
+      transform 0.35s var(--spring),
       opacity 0.2s ease;
   }
 }
@@ -1088,6 +1090,12 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
     inset 0 0 0 1px rgb(255 255 255 / 0.25),
     0 1px 5px -1px rgb(0 0 0 / 0.55);
 }
+/* 进度条：JS 写 transform: scaleX 推进（timeupdate，秒 4 次）。
+   提前上合成层，写入只走属性树更新 —— 不提层的话每次都重绘所在的整张玻璃卡 */
+[data-np-progress] {
+  will-change: transform;
+}
+
 /* 读碟灯：待机灰、读碟亮橙带一圈微光；只在状态翻转时过渡，没有循环动画 */
 [data-np-led] {
   border-radius: 50%;

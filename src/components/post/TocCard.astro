@@ -80,7 +80,21 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3)
     if (current) setActive(current)
   }
 
-  addEventListener('scroll', update, { passive: true })
+  // rAF 节流（2026-08-29 掉帧复盘）：滚动事件一帧内能来好几次，而这里每次都要
+  // 对每个标题读 getBoundingClientRect —— 中间又夹着 setActive 的属性写与
+  // 盒内 scrollTop 写，读写交替把布局反复打回作废（layout thrashing）。
+  // 收敛到「每帧至多算一次」，长文的标题越多省得越多；位置仍是实时量的，
+  // 不缓存偏移量 —— 正文挂着 content-visibility，行高要滚到才定得下来
+  let ticking = false
+  const onScroll = () => {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
+      ticking = false
+      update()
+    })
+  }
+  addEventListener('scroll', onScroll, { passive: true })
 
   document.addEventListener('astro:page-load', () => {
     links = [...document.querySelectorAll<HTMLElement>('[data-toc-link]')]

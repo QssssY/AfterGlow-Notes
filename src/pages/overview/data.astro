@@ -286,13 +286,14 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     },
     playlist: {
       label: '正在听',
-      desc: '首页播放器与听歌页（/music）共用的歌单，按顺序播、到底循环。音频先用下方工具上传，再把地址填进来。至少留一首。',
+      desc: '首页播放器与听歌页（/music）共用的歌单，按顺序播、到底循环。勾选一首「首次加载默认播放」，用户第一次点击播放时就从它开始（浏览器不会无手势自动播放）。音频先用下方工具上传，再把地址填进来。至少留一首。',
       kind: 'array',
       minItems: 1,
       upload: 'music',
       item: [
         { key: 'title', label: '曲名' },
         { key: 'artist', label: '歌手' },
+        { key: 'default', label: '首次加载默认播放', input: 'checkbox' },
         { key: 'src', label: '音频地址', hint: '/music/xxx.mp3' },
         { key: 'lrc', label: '歌词地址（可空）', optional: true, hint: '/music/xxx.lrc，没有就不显示歌词' },
         {
@@ -732,6 +733,18 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     // 项目的 GitHub 链接：粘贴完整网址自动收敛成 作者/仓库名
     if (current === 'repos' && key === 'repo' && typeof v === 'string') v = normalizeRepo(v)
     target[key] = v
+    // 默认曲目是单选语义：勾上一首时，连同未渲染分页里的旧默认项一起取消。
+    if (current === 'playlist' && key === 'default' && v === true) {
+      const selected = Number(scope)
+      list().forEach((item, index) => {
+        if (index === selected || item.default !== true) return
+        item.default = false
+        const checkbox = editor.querySelector<HTMLInputElement>(
+          `[data-k="default"][data-scope="${index}"]`,
+        )
+        if (checkbox) checkbox.checked = false
+      })
+    }
     dirty = true
   })
 
@@ -961,7 +974,16 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         dirty = false
         return
       }
-      await api(`/api/overview/data/${current}`, { method: 'PUT', body: cleaned() })
+      const next = cleaned()
+      if (current === 'playlist') {
+        const items = next as Item[]
+        const defaults = items.filter((item) => item.default === true).length
+        if (items.length > 0 && defaults !== 1) {
+          toast('请为歌单勾选且仅勾选一首「首次加载默认播放」', false)
+          return
+        }
+      }
+      await api(`/api/overview/data/${current}`, { method: 'PUT', body: next })
       dirty = false
       toast('已保存 —— dev 站会热更新，正式站要重新构建')
     } catch (err) {
@@ -1062,7 +1084,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         const key = isLrc ? 'lrc' : 'src'
         let target = list().find((it) => !String(it[key] ?? '').trim())
         if (!target && !isLrc) {
-          target = { title: '', artist: '', src: '', lrc: '' }
+          target = { title: '', artist: '', src: '', lrc: '', default: list().length === 0 }
           list().push(target)
         }
         if (target) {

@@ -63,7 +63,7 @@
 | 此刻 / 在读 / 在用 / 构成 | `data/now·reading·tools·stack.json` | 首页与关于页的活数据 |
 | 友链 / 关于页友链 | `data/blogroll·friends.json` | 没有就清空 |
 | 推荐分享 / 更新日志 / 关于页 | `data/share·changelog·about.json` | 分享可清 `[]`；日志留一条「博客上线」 |
-| 正在听 | `data/playlist.json` | 没有歌源就清成 `[]`，播放卡自动隐藏 |
+| 正在听 | `data/playlist.json` | 没有歌源就清成 `[]`；有歌时给恰好一首加 `"default": true`，它是用户首次加载时的默认播放曲目 |
 | （仅文件）`config.ts` 的 `uptime` | — | 「本站已运行 X 天」的起算日期 |
 
 嫌一个个点麻烦？用下面的 **AI 指令 1**，让 AI 一口气全改完。

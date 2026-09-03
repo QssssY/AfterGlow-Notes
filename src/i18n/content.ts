@@ -56,7 +56,11 @@ export interface Track {
   title: string
   artist: string
   src: string
+  /** 首次加载时播放的曲目；非空歌单必须且只能有一首标记为 true */
+  default?: boolean
   lrc?: string
+  /** 歌词整体快慢微调，单位为秒 */
+  offset?: number
   /** 专辑封面（听歌页 CD 面上转的就是它）：本地文件，由 scripts/fetch-covers.mjs 入库；没有就显示纯盘面 */
   cover?: string
 }

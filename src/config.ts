@@ -96,12 +96,24 @@ export const uptime = {
  */
 export const snapshots = [{ alt: '' }, { alt: '' }, { alt: '' }] as const
 
+const playlist = playlistData as Track[]
+const defaultIndexes = playlist.reduce<number[]>((indexes, track, index) => {
+  if (track.default === true) indexes.push(index)
+  return indexes
+}, [])
+
+if (playlist.length > 0 && defaultIndexes.length !== 1) {
+  throw new Error('src/data/playlist.json 必须且只能把一首歌标记为 default: true')
+}
+
 /**
  * Now Playing 的播放列表 —— 曲名与歌手是专有名词，各语种听的是同一首歌，
  * 所以不进译文表，直接读 JSON（客户端 <script> 也 import 这个）。
+ * defaultIndex 是首次加载时的曲目下标，由管理台的 default 勾选项决定；
  * bars 是未播放时等化条的「定格假谱」高度，设计常量。
  */
 export const nowPlaying = {
-  playlist: playlistData as Track[],
+  playlist,
+  defaultIndex: defaultIndexes[0] ?? -1,
   bars: [8, 14, 6, 18, 11, 20, 9, 15, 7, 12, 17, 5],
 } as const

@@ -16,10 +16,10 @@ const { t } = useI18n(Astro)
  *   data-np-line/text     单行歌词（卡拉OK渐变 + 长句跑马，与首页同款）
  *   data-eq / data-np-seek / data-np-prev|next|mode / data-np-vol-*
  *
- * 空歌单时整页不渲染播放台（MusicView 先判），所以这里可以直接取 tracks[0]。
+ * 空歌单时整页不渲染播放台（MusicView 先判），所以这里可以直接取配置的默认曲目。
  */
 const tracks = nowPlaying.playlist
-const first = tracks[0]!
+const first = tracks[nowPlaying.defaultIndex]!
 const multi = tracks.length > 1
 const label = first.artist ? `${first.title} — ${first.artist}` : first.title
 
@@ -123,7 +123,10 @@ const secondary =
     <!-- 进度条：常驻（首页那条是 hover 才出现的细线，这里是页面主角） -->
     <div data-np-seek class="relative h-[14px] w-full shrink-0 cursor-pointer">
       <div class="absolute inset-x-0 top-[5px] h-[4px] overflow-hidden rounded-[2px] bg-hairline">
-        <div data-np-progress class="h-full w-0 rounded-[2px] bg-brand"></div>
+        {/* 进度走 transform: scaleX（width 变化要布局+整卡重绘）；初始值必须
+            内联 —— Tailwind v4 的 scale-x-0 走 scale 属性，会和 JS 写的
+            transform 相乘（ReadingProgress 踩过的同一个坑） */}
+        <div data-np-progress class="h-full w-full origin-left rounded-[2px] bg-brand" style="transform:scaleX(0)"></div>
       </div>
     </div>
 
