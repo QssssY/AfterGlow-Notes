@@ -59,6 +59,17 @@
   --sheen: #ffffff3d;
   /* 玻璃顶缘高光（毛玻璃质感升级）：模拟光从上方打进玻璃的那道内侧反光 */
   --glass-edge: #ffffff96;
+  /* 玻璃卡的描边：Pencil 语义是 1.5px 内描边，用 inset shadow 精确复刻。
+     原先写的是 outline 1.5px / offset -0.75px —— 但 Blink 会把 outline 的
+     宽度和偏移取整，实际画出来一直是 1px 全在盒内；换成 shadow 后才真正是
+     1.5px（1× 屏上第二个像素半透明、略柔；2× 屏上 3 个物理像素、更接近稿）。
+     改走 box-shadow 的原因是性能：outline 在 Blink 里由父层在描边阶段绘制、
+     压在 backdrop-filter 合成层之上，滚动时这段绘制被逐帧重录 + 重新分层
+     （2026-09-04 复盘：首页滚动 Paint ~250ms/s@4× 全是它，换掉后归零）。
+     ⚠️ 凡是整条覆盖 .glass* box-shadow 的规则（hover 上浮、播放微光、
+     弹层的 shadow-[…]）都必须把 var(--glass-ring) 写回去，否则描边消失 */
+  --glass-ring-stroke: inset 0 0 0 1.5px var(--card-border);
+  --glass-ring: var(--glass-ring-stroke);
   --btn-dark: #070707;
   --like-fill: #f5c0cb;
   --like-ink: #e08a9c;
@@ -154,7 +165,9 @@
 
 /* ─────────────────────────────────────────────────────────────
  * 复用配方 —— 设计里高频重复的阴影/模糊组合
- * 描边用 outline + 负 offset 复刻设计的「内描边」：不占布局、不改内容盒尺寸。
+ * 描边复刻设计的「内描边」：不占布局、不改内容盒尺寸。玻璃卡（带
+ * backdrop-filter 的四个）走 box-shadow 的 --glass-ring；不合成的小件
+ * （glass-solid / hairline-box）仍用 outline + 负 offset，两者几何一致。
  * backdrop blur 是 4px：设计里的模糊半径 8 对应 CSS blur(4px)。
  * ───────────────────────────────────────────────────────────── */
 
@@ -167,10 +180,9 @@
  * 第一轮只动滤镜时用户反馈"没区别"——玻璃要透，先得让背后有东西可透。 */
 @utility glass {
   background-color: var(--card);
-  outline: 1.5px solid var(--card-border);
-  outline-offset: -0.75px;
   backdrop-filter: blur(30px) saturate(170%);
   box-shadow:
+    var(--glass-ring),
     inset 0 1px 0 0 var(--glass-edge),
     0 24px 44px -16px var(--shadow-soft),
     0 0 20px 0 var(--sheen);
@@ -179,10 +191,9 @@
 /* 玻璃行：Post Row 用，投影比 glass 浅一档 */
 @utility glass-row {
   background-color: var(--card);
-  outline: 1.5px solid var(--card-border);
-  outline-offset: -0.75px;
   backdrop-filter: blur(26px) saturate(170%);
   box-shadow:
+    var(--glass-ring),
     inset 0 1px 0 0 var(--glass-edge),
     0 14px 28px -12px var(--shadow-soft),
     0 0 18px 0 var(--sheen);
@@ -191,13 +202,31 @@
 /* 玻璃面板：Projects Section 的项目行用，投影介于 glass 和 glass-row 之间 */
 @utility glass-panel {
   background-color: var(--card);
-  outline: 1.5px solid var(--card-border);
-  outline-offset: -0.75px;
   backdrop-filter: blur(26px) saturate(170%);
   box-shadow:
+    var(--glass-ring),
     inset 0 1px 0 0 var(--glass-edge),
     0 16px 32px -14px var(--shadow-soft),
     0 0 18px 0 var(--sheen);
+}
+
+/* 有贴边不透明子元素的玻璃卡（移动端精选卡的顶部横幅）：inset 描边画在
+   子元素之下会被盖掉，改由伪元素在最上层补同一道环（outline 时代它本来就
+   压在内容上）。只给确实贴边的卡用，别全站上 —— position:relative 会改掉
+   绝对定位子元素的包含块 */
+@utility glass-ring-over {
+  position: relative;
+  /* 卡本体的环换成空影（透明零尺寸，box-shadow 列表里的合法占位）——
+     下半部分文字区是透明底，本体的环在那儿仍可见，和伪元素的叠成双倍 */
+  --glass-ring: 0 0 0 0 transparent;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: var(--glass-ring-stroke);
+    pointer-events: none;
+  }
 }
 
 /* 选中态：激活的 Nav Item —— 只有实心底 + 描边，无投影无模糊 */
@@ -487,6 +516,7 @@
     :is(a, button, [role='button']):is(.glass, .glass-row, .glass-panel):hover {
       translate: 0 -3px;
       box-shadow:
+        var(--glass-ring),
         0 30px 52px -18px var(--shadow-soft),
         0 0 24px 0 var(--sheen);
     }
@@ -831,6 +861,7 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
 [data-np][data-playing][data-np-glow],
 [data-np][data-playing] [data-np-glow] {
   box-shadow:
+    var(--glass-ring),
     0 14px 28px -12px var(--shadow-soft),
     0 0 26px 2px var(--fire-tint),
     0 0 18px 0 var(--sheen);
@@ -1376,4 +1407,10 @@ html.np-live .site-dot::after {
       CSS 循环动画都会每主帧被重录进玻璃卡的视口级背景块（will-change
       也救不了，实测 Paint ~260ms/s）—— 这种场景里的动效改由那个 rAF
       亲自驱动、写在 will-change 独立层上（见「放歌期间的动画交接」）。
+   ⑤ 合成层（backdrop-filter 卡）上别用 outline：它由父层在描边阶段绘制、
+      压在合成层之上，滚动/入场时被逐帧重录 + 重新分层 —— 首页滚动的
+      Paint ~250ms/s 全是它（2026-09-04）。描边走 box-shadow 的 --glass-ring。
+   ⑥ 逐帧写 DOM 的循环（播放 tick）封 30fps、跳过不可见卡、同值不写：
+      成本大头不是某个元素的重绘，而是「这帧有任何样式写入」就要走一遍
+      样式→Paint→Layerize→Commit 全管线，写入帧减半主线程直接砍半。
    验证方法见记忆 viewtransition-perf-notes：CDP 节流 + trace 归因。 */

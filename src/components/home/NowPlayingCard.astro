@@ -170,7 +170,7 @@ const scriptText = playerScriptText(t)
       <div
         data-np-list
         hidden
-        class="glass absolute inset-x-[6px] top-[calc(100%+10px)] z-10 box-border max-h-[272px] cursor-default overflow-y-auto rounded-[24px] p-[8px] shadow-[0_26px_52px_-22px_var(--shadow-soft)]"
+        class="glass absolute inset-x-[6px] top-[calc(100%+10px)] z-10 box-border max-h-[272px] cursor-default overflow-y-auto rounded-[24px] p-[8px] shadow-[var(--glass-ring),0_26px_52px_-22px_var(--shadow-soft)]"
       >
         {/* 循环变量原先叫 t，会遮蔽 i18n 的取词函数 —— 改名 track，别让下次加一句
             译文时踩到「t 是歌还是翻译函数」的坑 */}
@@ -200,7 +200,7 @@ const scriptText = playerScriptText(t)
   <div
     data-np-vol
     hidden
-    class="glass absolute inset-x-[6px] top-[calc(100%+10px)] z-10 box-border cursor-default rounded-[20px] px-[16px] py-[13px] shadow-[0_26px_52px_-22px_var(--shadow-soft)]"
+    class="glass absolute inset-x-[6px] top-[calc(100%+10px)] z-10 box-border cursor-default rounded-[20px] px-[16px] py-[13px] shadow-[var(--glass-ring),0_26px_52px_-22px_var(--shadow-soft)]"
   >
     <div class="flex w-full flex-row items-center gap-[12px]">
       <Icon name="lucide:volume-1" class="size-[14px] shrink-0 text-ink-muted" />
