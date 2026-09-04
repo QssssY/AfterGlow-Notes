@@ -1126,6 +1126,11 @@ html.theme-vt :is(.skeleton, .site-dot)::after {
 [data-np-progress] {
   will-change: transform;
 }
+/* 进度条的拖动区：触屏上手势一开始就归它，别被浏览器判成页面滚动 ——
+   否则拖到一半就 pointercancel，进度停在半路、页面还跟着滚（player.ts 的 seek 逻辑） */
+[data-np-seek] {
+  touch-action: none;
+}
 
 /* 读碟灯：待机灰、读碟亮橙带一圈微光；只在状态翻转时过渡，没有循环动画 */
 [data-np-led] {

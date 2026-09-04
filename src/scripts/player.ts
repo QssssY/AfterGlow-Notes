@@ -2,7 +2,7 @@ import { musicBase, nowPlaying, type Track } from '~/config'
 import { fill } from '~/scripts/i18n'
 
 /**
- * 播放器控制层 —— 首页那张 Now Playing 卡和听歌页（/music）的最大化播放台
+ * 播放器控制层 —— 首页那张 Now Playing 卡和听歌页（/my-music）的最大化播放台
  * 共用这一份。两处组件的 <script> 都只写 `import '~/scripts/player'`：
  * 模块只求值一次，于是整站只有一个 Audio、一份曲目/歌词/音量状态，
  * 首页 ↔ 听歌页来回走不断播。
@@ -43,9 +43,28 @@ player.preload = 'none'
 // 同源时不挂 —— 避免给本地/单机模式引入任何行为变化。必须在赋 src 之前设。
 if (musicBase) player.crossOrigin = 'anonymous'
 
+// localStorage 在 Safari「阻止所有 Cookie」/ 沙箱 iframe 里一碰就抛 SecurityError ——
+// 这里是模块顶层，抛了整个播放器模块求值失败，卡片从此没反应。包一层，存不了就当没存
+const store = {
+  get: (k: string) => {
+    try {
+      return localStorage.getItem(k)
+    } catch {
+      return null
+    }
+  },
+  set: (k: string, v: string) => {
+    try {
+      localStorage.setItem(k, v)
+    } catch {
+      // 不可用就本次会话内记在内存里（player.volume / mode 变量本身）
+    }
+  },
+}
+
 // 音量跨页跨曲记忆；没存过保持默认 1（Number(null)=0 会静音，必须判 null）
 const VOLUME_KEY = 'afterglow:volume'
-const savedVol = localStorage.getItem(VOLUME_KEY)
+const savedVol = store.get(VOLUME_KEY)
 if (savedVol !== null) {
   const v = Number(savedVol)
   if (Number.isFinite(v)) player.volume = Math.min(1, Math.max(0, v))
@@ -67,7 +86,7 @@ const modeLabel = (m: PlayMode) =>
   text(m === 'order' ? 'npTOrder' : m === 'shuffle' ? 'npTShuffle' : 'npTOne')
 
 let mode: PlayMode = 'order'
-const savedMode = localStorage.getItem(MODE_KEY)
+const savedMode = store.get(MODE_KEY)
 if ((MODES as readonly string[]).includes(savedMode ?? '')) mode = savedMode as PlayMode
 player.loop = mode === 'one'
 
@@ -150,7 +169,7 @@ const ensureSource = () => {
 /** 首次播放时才建立 Web Audio 链路（需要用户手势，正好在 click 里） */
 const ensureGraph = (el: HTMLAudioElement) => {
   if (audioCtx) {
-    audioCtx.resume()
+    audioCtx.resume().catch(() => {})
     return
   }
   audioCtx = new AudioContext()
@@ -196,16 +215,32 @@ const loadLrc = (track: Track) => {
     return Promise.resolve([] as LrcLine[])
   }
   if (!lrcCache.has(track.lrc)) {
+    const lrcPath = track.lrc
     lrcCache.set(
-      track.lrc,
-      fetch(musicUrl(track.lrc))
-        .then((res) => (res.ok ? res.text() : ''))
+      lrcPath,
+      fetch(musicUrl(lrcPath))
+        .then((res) => {
+          // 404 = 歌词文件真没有，记成空免得每次切歌都白问一遍；
+          // 其它失败（服务重启那几秒 / 断网）抛出去，下面从缓存里摘掉，下次切回来再试
+          if (res.status === 404) return ''
+          if (!res.ok) throw new Error(`lrc HTTP ${res.status}`)
+          return res.text()
+        })
         .then((text) => {
           const raw: LrcLine[] = []
           for (const row of text.split('\n')) {
-            const m = /^\[(\d+):(\d+(?:\.\d+)?)\](.*)$/.exec(row.trim())
-            if (m && m[3]!.trim())
-              raw.push({ t: Number(m[1]) * 60 + Number(m[2]), text: m[3]!.trim(), end: 0, est: 0 })
+            // 行首可以连着多枚时间戳（压缩 LRC：副歌只写一遍，每次出现各给一枚 ——
+            // 网易/QQ 的老歌常见），每枚各成一行；分秒分隔既有 . 也有 :（[00:12:50] 老写法）。
+            // 早先只认一枚：第二枚以文本身份混进歌词、副歌第二遍无词
+            const stamps: number[] = []
+            let rest = row.trim()
+            let m: RegExpExecArray | null
+            while ((m = /^\[(\d+):(\d+)(?:[.:](\d+))?\]/.exec(rest))) {
+              stamps.push(Number(m[1]) * 60 + Number(m[2]) + (m[3] ? Number(`0.${m[3]}`) : 0))
+              rest = rest.slice(m[0].length)
+            }
+            const lyric = rest.trim()
+            if (lyric) for (const t of stamps) raw.push({ t, text: lyric, end: 0, est: 0 })
           }
           raw.sort((a, b) => a.t - b.t)
           // QQ/网易导出的 lrc 尾部常挂人员表滚屏（Engineered by…/乐手名单），
@@ -244,7 +279,12 @@ const loadLrc = (track: Track) => {
           }
           return lines
         })
-        .catch(() => []),
+        .catch(() => {
+          // 失败结果不能留在缓存里：早先 .catch(() => []) 会把「空」永久缓存，
+          // 服务重启那几秒切到某首歌，本次会话内它的歌词区就再也不出字了
+          lrcCache.delete(lrcPath)
+          return [] as LrcLine[]
+        }),
     )
   }
   return lrcCache.get(track.lrc)!.then((lines) => {
@@ -262,8 +302,9 @@ const loadLrc = (track: Track) => {
 }
 
 /**
- * 整篇歌词（听歌页专属）：行由脚本按当前曲现渲 —— 一是歌词是运行时 fetch 的，
- * 服务端渲不出来；二是每行要挂点击跳转，索引正好在这儿。
+ * 整篇歌词（听歌页专属）：行由脚本按当前曲现渲 —— 歌词是运行时 fetch 的，
+ * 服务端渲不出来。点句跳转走容器上的一个委托监听（绑定时挂，见 page-load），
+ * 行下标 = lrcLines 下标；这里不再给每行各挂一个闭包。
  * 行的样式在 global.css（[data-np-lyricbox] > p），别把类名串写进脚本。
  * 首页没有这个容器，整段是空转。
  */
@@ -272,9 +313,11 @@ const renderLyrics = () => {
   const track = tracks[cur]
   if (!track) return
   const key = `${track.lrc ?? ''}:${lrcLines.length}`
+  let rebuilt = false
   for (const b of binds) {
     if (!b.lyricBox) continue
     if (b.lyricKey === key && b.lyricRows.length === lrcLines.length) continue
+    rebuilt = true
     b.lyricKey = key
     b.lyricRows = []
     b.lyricBox.textContent = ''
@@ -291,28 +334,33 @@ const renderLyrics = () => {
     for (const line of lrcLines) {
       const row = document.createElement('p')
       row.textContent = line.text
-      row.addEventListener('click', () => {
-        ensureGraph(player)
-        player.currentTime = Math.max(0, line.t)
-        if (player.paused) player.play().catch(() => setLive(false))
-      })
       b.lyricBox.append(row)
       b.lyricRows.push(row)
     }
   }
-  lyricIdx = -1
+  // 有卡重建了行（换曲）：高亮游标归零，没重建的卡上旧高亮也一并摘掉，
+  // 让「lyricIdx 指的行 = 唯一带 data-current 的行」这条不变量成立（markLyricRow 只改两行）。
+  // 谁都没重建（同曲的歌词二次到达）就什么都不动 —— 暂停中的高亮别被清掉
+  if (rebuilt) {
+    for (const b of binds) b.lyricRows[lyricIdx]?.removeAttribute('data-current')
+    lyricIdx = -1
+  }
 }
 
-/** 当前句高亮 + 滚到容器正中（只动容器的 scrollTop，绝不惊动页面滚动） */
+/** 当前句高亮 + 滚到容器正中（只动容器的 scrollTop，绝不惊动页面滚动）。
+ *  只碰上一句和这一句两行：原先每换一句对全部行 toggleAttribute，两张卡 × 百来行就是
+ *  几百次属性写，每句一回 */
 const markLyricRow = (idx: number) => {
   if (idx === lyricIdx) return
+  const prev = lyricIdx
   lyricIdx = idx
   for (const b of binds) {
     if (b.lyricRows.length === 0) continue
-    for (let i = 0; i < b.lyricRows.length; i += 1)
-      b.lyricRows[i]!.toggleAttribute('data-current', i === idx)
+    b.lyricRows[prev]?.removeAttribute('data-current')
     const row = b.lyricRows[idx]
-    if (row && b.lyricBox)
+    if (!row) continue
+    row.setAttribute('data-current', '')
+    if (b.lyricBox)
       b.lyricBox.scrollTo({
         top: row.offsetTop - b.lyricBox.clientHeight / 2 + row.offsetHeight / 2,
         behavior: 'smooth',
@@ -726,6 +774,22 @@ document.addEventListener('astro:page-load', () => {
       toggle()
     })
 
+    // 整篇歌词点句跳转（委托到容器，行由 renderLyrics 按曲重建）。
+    // 必须先 ensureSource：直达听歌页时 preload='none' 还没给 <audio> 挂 src，
+    // 只设 currentTime 再 play() 会以 NotSupportedError 被拒 —— 早先没这一步，
+    // 「整篇歌词铺好了、点哪句都没反应」就是它。HAVE_NOTHING 下赋的 currentTime
+    // 会记成默认起播位置，随后 play() 正好从那句开始
+    b.lyricBox?.addEventListener('click', (e) => {
+      const row = (e.target as HTMLElement).closest('p')
+      const idx = row ? b.lyricRows.indexOf(row) : -1
+      const line = lrcLines[idx]
+      if (!line) return
+      ensureSource()
+      ensureGraph(player)
+      player.currentTime = Math.max(0, line.t)
+      if (player.paused) player.play().catch(() => setLive(false))
+    })
+
     card.querySelector<HTMLElement>('[data-np-prev]')?.addEventListener('click', (e) => {
       e.stopPropagation()
       ensureGraph(player)
@@ -742,7 +806,7 @@ document.addEventListener('astro:page-load', () => {
     b.modeBtn?.addEventListener('click', (e) => {
       e.stopPropagation()
       mode = MODES[(MODES.indexOf(mode) + 1) % MODES.length]!
-      localStorage.setItem(MODE_KEY, mode)
+      store.set(MODE_KEY, mode)
       player.loop = mode === 'one'
       updateModeUI()
     })
@@ -757,7 +821,15 @@ document.addEventListener('astro:page-load', () => {
       if (opening) {
         b.list.hidden = false
         card.style.zIndex = '40'
-        b.items[cur]?.scrollIntoView({ block: 'nearest' })
+        // 把当前曲滚进弹层可视区 —— 只动弹层自己的 scrollTop。scrollIntoView 会
+        // 连祖先一起滚：卡在视口下缘时点开列表，整个页面会往下跳一段
+        const item = b.items[cur]
+        if (item) {
+          const lr = b.list.getBoundingClientRect()
+          const ir = item.getBoundingClientRect()
+          if (ir.top < lr.top) b.list.scrollTop += ir.top - lr.top
+          else if (ir.bottom > lr.bottom) b.list.scrollTop += ir.bottom - lr.bottom
+        }
       }
     })
 
@@ -785,7 +857,7 @@ document.addEventListener('astro:page-load', () => {
     b.vol?.addEventListener('click', (e) => e.stopPropagation())
     b.volRange?.addEventListener('input', () => {
       player.volume = Number(b.volRange!.value) / 100
-      localStorage.setItem(VOLUME_KEY, String(player.volume))
+      store.set(VOLUME_KEY, String(player.volume))
       updateVolUI()
     })
 
@@ -809,12 +881,20 @@ document.addEventListener('astro:page-load', () => {
         }
         seekTo(e.clientX)
         const move = (ev: PointerEvent) => seekTo(ev.clientX)
+        // 收尾要同时挂在 pointerup / pointercancel / lostpointercapture 上：触屏上手势
+        // 一旦被判成滚动，浏览器只发 pointercancel 并释放捕获，pointerup 永远不来 ——
+        // 只解 up 的话 move 会留在元素上，拖几次就叠几份，每次真拖都触发 N 次 seekTo
+        //（[data-np-seek] 的 touch-action:none 在 global.css，让手势一开始就归进度条）
         const up = () => {
           seek.removeEventListener('pointermove', move)
           seek.removeEventListener('pointerup', up)
+          seek.removeEventListener('pointercancel', up)
+          seek.removeEventListener('lostpointercapture', up)
         }
         seek.addEventListener('pointermove', move)
         seek.addEventListener('pointerup', up)
+        seek.addEventListener('pointercancel', up)
+        seek.addEventListener('lostpointercapture', up)
       })
     }
   }
@@ -822,10 +902,19 @@ document.addEventListener('astro:page-load', () => {
 
 // 音频实体是模块级常驻对象，事件只在模块层挂一次
 player.addEventListener('play', () => {
+  // 来电 / Siri 打断后 iOS 会把 AudioContext 挂起：<audio> 自己恢复了，声音却全过
+  // 一个 suspended 的 context —— 自动接歌那条路不经过 ensureGraph，在这里统一唤醒
+  audioCtx?.resume().catch(() => {})
   setLive(true)
   loadLrc(tracks[cur]!)
 })
-player.addEventListener('pause', () => setLive(false))
+// 自然播完时规范规定先 fire pause 再 fire ended：这一拍里 ended 已经是 true。
+// 此时别 setLive(false) —— 接歌马上 play 又 setLive(true)，中间那一帧等化条会闪回
+// 定格假谱、唱针抬起又落下（[data-np-arm] 靠 data-playing 做一次性过渡）
+player.addEventListener('pause', () => {
+  if (player.ended) return
+  setLive(false)
+})
 // 放完接歌按模式分流：随机抽签 / 顺序接下一首（到底回头）；
 // 单曲循环由原生 loop 兜住，根本不触发 ended
 player.addEventListener('ended', () => setTrack(mode === 'shuffle' ? randIndex() : cur + 1, true))
@@ -841,7 +930,9 @@ player.addEventListener('timeupdate', () => {
   const ratio = Math.round((player.currentTime / player.duration) * 1000) / 1000
   if (ratio === lastProgress) return
   lastProgress = ratio
-  for (const b of binds) if (b.progress) b.progress.style.transform = `scaleX(${ratio})`
+  // display:none 的那张卡（断点互斥）跳过，与 tick 同规矩；切回可见时下一次 timeupdate
+  //（每秒 4 次）就补上
+  for (const b of binds) if (b.visible && b.progress) b.progress.style.transform = `scaleX(${ratio})`
 })
 // preload='none' 下总时长要等真正加载才知道 —— 拿到就补上读数
 player.addEventListener('loadedmetadata', updateTimeUI)
@@ -872,7 +963,11 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer)
   resizeTimer = window.setTimeout(() => {
     for (const b of binds) {
+      const wasVisible = b.visible
       b.visible = b.card.checkVisibility ? b.card.checkVisibility() : true
+      // 刚从隐藏切成可见的卡：进度条在隐藏期间被跳写了，暂停中又没有 timeupdate 来补，这里补一笔
+      if (b.visible && !wasVisible && b.progress && lastProgress >= 0)
+        b.progress.style.transform = `scaleX(${lastProgress})`
       if (!b.line || !b.lineText) continue
       b.textW = b.lineText.offsetWidth
       b.boxW = b.line.clientWidth
