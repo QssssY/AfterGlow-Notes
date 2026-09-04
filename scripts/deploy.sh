@@ -20,7 +20,22 @@ echo "==> 构建（PUBLIC_API_BASE=same-origin，同源自托管形态）"
 PUBLIC_API_BASE=same-origin npm run build
 
 echo "==> 同步仓库快照到 $ROOT/blog（管理台数据页签 / 友链巡检要读；git 跟踪的文件 = 无音乐无秘密）"
-git ls-files -z | tar --null -T - -czf - | ssh "$HOST" "mkdir -p $ROOT/blog && tar -xzf - -C $ROOT/blog"
+# 服务器上用管理台改过的内容（src/data、src/content）会被这一步盖掉 —— 那些改动没回流 git
+# 就等于丢了。覆盖前把比上次部署更新的文件备份到 blog.local/<时间>/ 并大声提醒，
+# 回来后拿它们回流仓库再重发。上次部署时间以 .deploy-stamp 文件的 mtime 为准
+ssh "$HOST" "mkdir -p $ROOT/blog
+  if [ -f $ROOT/blog/.deploy-stamp ]; then
+    changed=\$(find $ROOT/blog/src -type f -newer $ROOT/blog/.deploy-stamp 2>/dev/null)
+    if [ -n \"\$changed\" ]; then
+      keep=$ROOT/blog.local/\$(date +%Y%m%d-%H%M%S)
+      echo \"  ⚠ 服务器上有管理台改过、尚未回流 git 的文件，覆盖前已备份到 \$keep：\"
+      echo \"\$changed\" | while read -r f; do
+        echo \"    \$f\"
+        mkdir -p \"\$keep/\$(dirname \"\${f#$ROOT/blog/}\")\" && cp -p \"\$f\" \"\$keep/\${f#$ROOT/blog/}\"
+      done
+    fi
+  fi"
+git ls-files -z | tar --null -T - -czf - | ssh "$HOST" "tar -xzf - -C $ROOT/blog && touch $ROOT/blog/.deploy-stamp"
 
 echo "==> 同步新增歌曲（只补服务器没有的；服务器上删除请手动）"
 if [ -d public/music ]; then
@@ -53,7 +68,10 @@ tar -C dist --exclude='./music/*.mp3' --exclude='./music/*.lrc' \
 "
 
 echo "==> 重启服务（启动时重载内存缓存）"
-ssh "$HOST" "systemctl restart afterglow"
+# 上面一切都是 root 传上去的；服务以 afterglow 账号跑（deploy-setup.sh 建的），
+# 管理台要写 blog/、music/ —— 整棵交回给它。老机器上还没建这个账号就跳过
+ssh "$HOST" "id -u afterglow >/dev/null 2>&1 && chown -R afterglow:afterglow $ROOT || true
+  systemctl restart afterglow"
 
 echo "==> 公网体检"
 sleep 8   # 服务重启要预载全部静态进内存（5~7s），等不及会误报「首页不通」

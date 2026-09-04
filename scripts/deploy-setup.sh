@@ -44,6 +44,12 @@ fi
 MUSIC_KIND="${MUSIC_API_KIND:-gdstudio}"
 MUSIC_API="${MUSIC_API_BASE:-https://music-api.gdstudio.xyz/api.php}"
 
+echo "==> 专用运行账号 afterglow（不用 root 跑网络服务；:80 由能力位放行）"
+# 管理接口会写文件、可执行 -build-cmd —— 万一被打穿，root 与普通账号是两种后果。
+# 数据目录整棵归它（含已有的 afterglow.db），deploy.sh / pull-deploy.sh 每次传完也会 chown
+ssh "$HOST" "id -u afterglow >/dev/null 2>&1 || useradd --system --home-dir $ROOT --shell /usr/sbin/nologin afterglow
+  chown -R afterglow:afterglow $ROOT"
+
 echo "==> 写 systemd 单元（含口令，权限 600）并设为开机自启"
 ssh "$HOST" "cat > /etc/systemd/system/afterglow.service && chmod 600 /etc/systemd/system/afterglow.service && systemctl daemon-reload && systemctl enable afterglow" <<UNIT
 [Unit]
@@ -51,16 +57,53 @@ Description=AfterGlow Notes (static site + API, same-origin)
 After=network-online.target
 
 [Service]
+User=afterglow
+Group=afterglow
 WorkingDirectory=$ROOT
 Environment=ADMIN_PASSWORD=$PASS
 # Environment=GITHUB_TOKEN=可选：把 GitHub 代理配额从 60 提到 5000 次/时
 ExecStart=$ROOT/afterglow-server -addr :80 -site $ROOT/dist -music $ROOT/music -blog-dir $ROOT/blog -db $ROOT/afterglow.db -origin $SITE_URL -music-api $MUSIC_API -music-api-kind $MUSIC_KIND
 Restart=always
 RestartSec=3
+# 非 root 绑 :80 只要这一个能力位；其余全部收紧：文件系统只读、只放行数据目录，
+# 私有 /tmp（上传的临时分片落这儿），禁止提权
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=$ROOT
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
 UNIT
+
+echo "==> 自取部署脚本 + 5 分钟定时器（CI 发 Release、服务器自己来拿，见 .github/workflows/deploy.yml）"
+# 脚本以 root 跑（要 restart 服务、chown 数据目录）；每次执行 setup 都会把仓库里的最新版推上去
+scp -q scripts/pull-deploy.sh "$HOST:$ROOT/pull-deploy.sh"
+ssh "$HOST" "chmod +x $ROOT/pull-deploy.sh && cat > /etc/systemd/system/afterglow-pull.service <<'SVC'
+[Unit]
+Description=AfterGlow pull-deploy (fetch latest Release and swap in)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=$ROOT/pull-deploy.sh
+SVC
+cat > /etc/systemd/system/afterglow-pull.timer <<'TMR'
+[Unit]
+Description=AfterGlow pull-deploy every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target
+TMR
+systemctl daemon-reload && systemctl enable --now afterglow-pull.timer"
 
 echo "==> SSH 加固 + 防火墙（幂等；前提是本机密钥已能免密登录，否则会把自己锁外面）"
 ssh "$HOST" 'set -e
