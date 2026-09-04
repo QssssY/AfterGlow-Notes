@@ -74,6 +74,7 @@ func (a *adminState) dataDir() string   { return filepath.Join(a.blogDir, "src",
 func (a *adminState) uploadsDir() string {
 	return filepath.Join(a.blogDir, "public", "images", "uploads")
 }
+
 // 音乐目录：音乐是版权物不进仓库 —— 配了 -music 就落服务器目录（分体部署），
 // 没配才落仓库的 public/music（本地开发用，该目录 gitignored）
 func (a *adminState) musicDir() string {
@@ -624,9 +625,11 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		// json.Indent 保留客户端的键序 —— 重新 Unmarshal/Marshal 会把键排成字典序，git diff 会乱
+		// json.Indent 保留客户端的键序 —— 重新 Unmarshal/Marshal 会把键排成字典序，git diff 会乱。
+		// 它同时会把 src 末尾的空白原样抄过去（文档明说的），所以先剪掉再补唯一那个换行 ——
+		// 否则请求体自带尾换行时会写出 "]\n\n"，同一份内容存两次得到两种字节
 		var out bytes.Buffer
-		if err := json.Indent(&out, raw, "", "  "); err != nil {
+		if err := json.Indent(&out, bytes.TrimRight(raw, " \t\r\n"), "", "  "); err != nil {
 			fail(w, http.StatusBadRequest, "格式化失败")
 			return
 		}
