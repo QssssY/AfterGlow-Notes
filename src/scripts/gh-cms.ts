@@ -19,6 +19,8 @@
 const REPO_KEY = 'afterglow:gh:repo'
 const BRANCH_KEY = 'afterglow:gh:branch'
 const TOKEN_KEY = 'afterglow:gh:token'
+/** 文章清单的 front-matter 缓存（键是 blob sha，见下面的 listPosts） */
+const FM_CACHE_KEY = 'afterglow:gh:fmcache'
 const API_KEY = 'afterglow:gh:api' // 测试与 GHES 可覆写接口根地址
 
 export const ghRepo = () => localStorage.getItem(REPO_KEY) ?? ''
@@ -46,6 +48,7 @@ export function ghSaveAuth(repo: string, token: string, branch = 'main') {
 export function ghClearAuth() {
   try {
     sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(FM_CACHE_KEY) // 文章的 front-matter 缓存也是后台数据，别留给下一个人
   } catch {
     // 没存过
   }
@@ -101,7 +104,15 @@ async function ghJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await gh(path, init)
   const data = (await res.json().catch(() => null)) as ({ message?: string } & T) | null
   if (!res.ok) {
-    if (res.status === 409) throw new Error('远端已被别处修改（提交冲突）——刷新页面重试')
+    // 409 = 带的 sha 不是最新（有人在你读到之后改过）；422 = 没带 sha 但文件已存在。
+    // 两者都是「远端和你以为的不一样」，抛成 ApiError(409) 让页面统一按冲突处理
+    if (res.status === 409 || res.status === 422) {
+      throw new ApiError(
+        '远端已被别处改过（另一个页签 / 另一台设备 / 直接改的仓库）——' +
+          '你这次的修改没有保存。刷新页面拿到最新内容后重新改一遍，免得把别人的改动盖掉',
+        409,
+      )
+    }
     throw new Error(data?.message ?? `GitHub 请求失败（HTTP ${res.status}）`)
   }
   return data as T
@@ -154,11 +165,18 @@ async function listDir(path: string): Promise<GhEntry[]> {
   return data
 }
 
-async function putFile(path: string, contentB64: string, message: string, sha?: string) {
-  await ghJson(`/contents/${encodePath(path)}`, {
+/** 写文件；返回新 blob 的 sha（当作版本号回给调用方，连续保存不必重新读一次） */
+async function putFile(
+  path: string,
+  contentB64: string,
+  message: string,
+  sha?: string,
+): Promise<string | null> {
+  const out = await ghJson<{ content?: { sha?: string } }>(`/contents/${encodePath(path)}`, {
     method: 'PUT',
     body: JSON.stringify({ message, content: contentB64, branch: ghBranch(), ...(sha ? { sha } : {}) }),
   })
+  return out?.content?.sha ?? null
 }
 
 async function deleteFile(path: string, message: string, sha: string) {
@@ -173,6 +191,7 @@ const encodePath = (p: string) => p.split('/').map(encodeURIComponent).join('/')
 
 // ---- front-matter：与 server/admin.go 的 parsePost / renderPost 对齐 ----
 
+import { ApiError, ETAG_ABSENT, type ApiInit, type ApiResult } from './admin-contract'
 import type { PostMeta } from './admin'
 
 const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
@@ -290,14 +309,45 @@ const ext = (name: string) => {
   return i < 0 ? '' : name.slice(i).toLowerCase()
 }
 
+/**
+ * 文章清单的 front-matter 缓存：blob sha → 解出来的 meta。
+ *
+ * 列目录只给出每篇的 sha，要 meta 就得逐篇取内容 —— 一篇一个请求。GitHub 对突发并发
+ * 有二级限流，几十篇的站每次进「文章」页签就是几十个请求打过去，很容易被掐。
+ * sha 是内容哈希：文件没改过，sha 就没变，上次解好的 meta 直接复用 —— 于是只有真正
+ * 改过的文章才回源。存 sessionStorage（关浏览器即清，和管理台其它缓存同一处；
+ * 键 FM_CACHE_KEY 在文件顶部与 token 一起声明，登出时一并清掉）。
+ */
+function loadFmCache(): Record<string, PostMeta> {
+  try {
+    return JSON.parse(sessionStorage.getItem(FM_CACHE_KEY) ?? '{}') as Record<string, PostMeta>
+  } catch {
+    return {}
+  }
+}
+
+function saveFmCache(cache: Record<string, PostMeta>) {
+  try {
+    sessionStorage.setItem(FM_CACHE_KEY, JSON.stringify(cache))
+  } catch {
+    // 存不了（隐私模式 / 满了）就每次现解，只是慢一点
+  }
+}
+
 async function listPosts() {
   const entries = (await listDir(POSTS_DIR)).filter(
     (e) => e.type === 'file' && (e.name.endsWith('.md') || e.name.endsWith('.mdx')),
   )
+  const cache = loadFmCache()
+  const next: Record<string, PostMeta> = {}
   const posts = await Promise.all(
     entries.map(async (e) => {
-      const file = await getFile(e.path)
-      const { meta } = parsePost(decodeText(file!.content))
+      let meta = cache[e.sha]
+      if (!meta) {
+        const file = await getFile(e.path)
+        meta = parsePost(decodeText(file!.content)).meta
+      }
+      next[e.sha] = meta // 只留这一轮还在的 sha：改过 / 删掉的自然掉出，缓存不会无限长
       return {
         slug: e.name.replace(/\.(md|mdx)$/, ''),
         modified: meta.updated ?? meta.date,
@@ -305,6 +355,7 @@ async function listPosts() {
       }
     }),
   )
+  saveFmCache(next)
   // 同日文章按 slug 定序：比较器要满足对称性，`a.date < b.date ? 1 : -1` 在相等时两边都答 -1，
   // 同一天两篇的先后每次刷新都可能对调
   posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug)))
@@ -453,12 +504,26 @@ export async function ghSiteAssetUrl(name: string): Promise<string | null> {
   return null
 }
 
-/** /api/overview/* 的 GitHub 版实现 —— admin.ts 的 api() 在 GitHub 模式下走这里 */
-export async function ghRoute<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+/**
+ * /api/overview/* 的 GitHub 版实现 —— admin.ts 的 apiRead() 在 GitHub 模式下走这里。
+ *
+ * 版本号（etag）用 GitHub 的 blob sha：读时给出去，写时原样带回来当 contents API 的 `sha`
+ * 参数 —— 这正是 GitHub 自己的乐观并发，读到之后被别人改过就答 409。不带 etag 时沿用
+ * 老行为（写前重新取 sha = 无条件覆盖），curl 和旧页面都还能用。
+ */
+export async function ghRoute<T>(path: string, init: ApiInit = {}): Promise<ApiResult<T>> {
   const method = init.method ?? 'GET'
   const route = path.replace(/^\/api\/overview\//, '')
+  // 调用方给了 etag：直接拿它当 sha（ETAG_ABSENT = 「我以为这文件还不存在」→ 不带 sha，
+  // GitHub 遇到已存在的文件会答 422，被 ghJson 归成冲突）
+  const wantSha = (): string | undefined => {
+    if (!init.etag) return undefined
+    return init.etag === ETAG_ABSENT ? undefined : init.etag
+  }
+  const pinned = init.etag != null
+  const ok = <R>(data: R, etag: string | null = null): ApiResult<R> => ({ data, etag })
 
-  if (route === 'posts' && method === 'GET') return (await listPosts()) as T
+  if (route === 'posts' && method === 'GET') return ok(await listPosts()) as ApiResult<T>
 
   const postMatch = /^posts\/([^/]+)$/.exec(route)
   if (postMatch) {
@@ -467,33 +532,38 @@ export async function ghRoute<T>(path: string, init: { method?: string; body?: u
       const found = await findPost(slug)
       if (!found) throw new Error('没有这篇文章')
       const { meta, body } = parsePost(decodeText(found.file.content))
-      return { slug, meta, body } as T
+      return ok({ slug, meta, body }, found.file.sha) as ApiResult<T>
     }
     if (method === 'PUT') {
       const { meta, body } = init.body as { meta: PostMeta; body: string }
       if (!meta?.title?.trim()) throw new Error('标题不能为空')
       if (!meta.date) throw new Error('日期不能为空')
+      // 路径照旧要问一次远端：同一 slug 可能是 .md 也可能是 .mdx，钉着 sha 往错的扩展名上写
+      // 只会得到一个莫名其妙的 GitHub 报错。冲突判定用调用方钉的 sha，不用这次读到的
       const found = await findPost(slug)
-      const target = found?.path ?? `${POSTS_DIR}/${slug}.md`
-      await putFile(
-        target,
+      if (pinned && init.etag !== ETAG_ABSENT && !found) {
+        throw new ApiError('这篇文章已经被别处删掉了 —— 刷新页面看看现在的样子', 409)
+      }
+      const sha = pinned ? wantSha() : found?.file.sha
+      const newSha = await putFile(
+        found?.path ?? `${POSTS_DIR}/${slug}.md`,
         encodeText(renderPost(meta, body)),
-        `overview: ${found ? '更新' : '新增'}文章 ${slug}`,
-        found?.file.sha,
+        `overview: ${sha ? '更新' : '新增'}文章 ${slug}`,
+        sha,
       )
-      return {} as T
+      return ok({}, newSha) as ApiResult<T>
     }
     if (method === 'DELETE') {
       const found = await findPost(slug)
       if (!found) throw new Error('没有这篇文章')
-      await deleteFile(found.path, `overview: 删除文章 ${slug}`, found.file.sha)
+      await deleteFile(found.path, `overview: 删除文章 ${slug}`, wantSha() ?? found.file.sha)
       // 顺手清封面（可能是任意图片扩展名）
       for (const e of await listDir(`${POSTS_DIR}/_covers`)) {
         if (e.type === 'file' && IMAGE_EXTS.includes(ext(e.name)) && e.name === slug + ext(e.name)) {
           await deleteFile(e.path, `overview: 删除封面 ${slug}`, e.sha).catch(() => {})
         }
       }
-      return {} as T
+      return ok({}) as ApiResult<T>
     }
   }
 
@@ -508,36 +578,36 @@ export async function ghRoute<T>(path: string, init: { method?: string; body?: u
     if (method === 'GET') {
       const file = await getFile(path)
       if (!file) {
-        if (locale) return null as T
+        if (locale) return ok(null, ETAG_ABSENT) as ApiResult<T>
         throw new Error(`没有这份数据（${name}）`)
       }
-      return JSON.parse(decodeText(file.content)) as T
+      return ok(JSON.parse(decodeText(file.content)), file.sha) as ApiResult<T>
     }
     if (method === 'PUT') {
-      const file = await getFile(path)
-      await putFile(
+      const sha = pinned ? wantSha() : (await getFile(path))?.sha
+      const newSha = await putFile(
         path,
         encodeText(JSON.stringify(init.body, null, 2) + '\n'),
         `overview: 更新${locale ? `译文 ${name}.${locale}` : `数据 ${name}`}`,
-        file?.sha,
+        sha,
       )
-      return {} as T
+      return ok({}, newSha) as ApiResult<T>
     }
     if (method === 'DELETE' && locale) {
-      const file = await getFile(path)
-      if (file) await deleteFile(path, `overview: 删除译文 ${name}.${locale}`, file.sha)
-      return {} as T
+      const sha = pinned ? wantSha() : (await getFile(path))?.sha
+      if (sha) await deleteFile(path, `overview: 删除译文 ${name}.${locale}`, sha)
+      return ok({}) as ApiResult<T>
     }
   }
 
   if (route === 'upload' && method === 'POST') {
     if (!(init.body instanceof FormData)) throw new Error('上传要用 FormData')
-    return (await handleUpload(init.body)) as T
+    return ok(await handleUpload(init.body)) as ApiResult<T>
   }
 
   if (route === 'summary' && method === 'GET') {
     const posts = await listPosts()
-    return {
+    return ok({
       posts: posts.length,
       drafts: posts.filter((p) => p.draft).length,
       siteLikes: 0,
@@ -546,11 +616,11 @@ export async function ghRoute<T>(path: string, init: { method?: string; body?: u
       topViews: null,
       topLikes: null,
       buildCmd: false,
-    } as T
+    }) as ApiResult<T>
   }
 
   if (route === 'build') {
-    if (method === 'GET') return { running: false, last: null } as T
+    if (method === 'GET') return ok({ running: false, last: null }) as ApiResult<T>
     throw new Error('GitHub 直连模式不用手动构建：每次保存就是一次提交，托管平台会自动重建（1~3 分钟）')
   }
 

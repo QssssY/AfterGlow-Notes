@@ -44,10 +44,24 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, api, ApiError, esc, ghMode, report, siteAssetUrl, toast, today } from '~/scripts/admin'
+  import {
+    $,
+    api,
+    ApiError,
+    apiRead,
+    esc,
+    ETAG_ABSENT,
+    ghMode,
+    isConflict,
+    report,
+    siteAssetUrl,
+    toast,
+    today,
+  } from '~/scripts/admin'
   import { copyText } from '~/scripts/clipboard'
   // 语种清单与自称：单一真源在 locales.ts —— fork 加一门语言，这里自动多一颗切换钮
   import { localeMeta, prefixedLocales, type Locale } from '~/i18n/locales'
+  import { identityKey } from '~/i18n/merge'
 
   // ---- 字段规格：新增一种可编辑内容 = 这里加一段 + server/admin.go 白名单加一行 ----
 
@@ -375,13 +389,13 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     return !NO_TR_SPECS.has(name) && trFields(sp.fields).length + trFields(sp.item).length > 0
   }
 
-  /** 数组译文的配对主键 —— 与 src/i18n/merge.ts 的 IDENTITY_KEYS 同一份约定 */
-  const IDENTITY = ['repo', 'href', 'domain'] as const
-  const identKeyOf = (items: Item[]): string | null => {
-    if (items.length === 0) return null
-    for (const k of IDENTITY) if (items.every((it) => typeof it[k] === 'string')) return k
-    return null
-  }
+  /**
+   * 数组译文的配对主键：直接用构建期那支（i18n/merge.ts 的 identityKey），别在这儿重写一份 ——
+   * 两处口径差一点就会显示到错行。它要求基准与译文两边都带这个键，所以读译文时喂真实的
+   * 译文数组；写译文时喂基准自己（我们会把主键一并写进每条，回读时必然存在）
+   */
+  const identKeyOf = (base: Item[], patch: readonly unknown[] = base): string | null =>
+    base.length === 0 ? null : identityKey(base, patch)
 
   /** JSON 值 ⇄ 输入框字符串（译文视图里 lines 用换行、csv 用逗号，与基准表单同款） */
   const toInput = (f: Field, v: unknown): string =>
@@ -580,8 +594,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
           : undefined
     if (!Array.isArray(patchList)) return
     const base = list()
-    const ik = identKeyOf(base)
-    if (ik && patchList.every((p) => p && typeof p[ik] === 'string')) {
+    const ik = identKeyOf(base, patchList)
+    if (ik) {
       const byId = new Map(base.map((b, i) => [String(b[ik]), i]))
       for (const p of patchList) {
         const i = byId.get(String(p[ik]))
@@ -818,8 +832,26 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       ;[items[i], items[j]] = [items[j]!, items[i]!]
     }
     dirty = true
+    warnIndexPaired()
     render()
   })
+
+  /*
+   * 没有 repo/href/domain 这类不可翻字段的组（更新日志 / 在用 / 在读 / 构成 / 此刻条目）
+   * 的译文是**按位置**对应的（merge.ts 的回退口径）。在这里增删或重排之后，位置变了、
+   * 译文却还在老位置上 —— 英日站会整段错行，而构建照样成功，是最难发现的一类失败。
+   * 管理台是唯一的重排入口，所以在这儿提醒一句；每组每次会话只说一遍，别成噪音。
+   */
+  const pairWarned = new Set<string>()
+  function warnIndexPaired() {
+    if (curLocale !== '' || pairWarned.has(current)) return
+    if (!specTranslatable(current) || identKeyOf(list()) !== null) return
+    pairWarned.add(current)
+    toast(
+      `「${spec().label}」的译文按位置对应 —— 这组条目挪了位，配了英/日译文的话要去「内容语言」同步挪一下（pnpm i18n 可核对）`,
+      false,
+    )
+  }
 
   $('[data-add]').addEventListener('click', () => {
     const item: Item = {}
@@ -835,6 +867,9 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     }
     list().push(item)
     dirty = true
+    // 追加在末尾不动已有条目的位置，本来不会让译文错位；但「更新日志」这类要求
+    // 新条目在最上面，用户接着会连点几次「上移」—— 那才是错位的时刻，提前说一声
+    warnIndexPaired()
     itemPage = Math.max(1, Math.ceil(list().length / ITEMS_PER_PAGE)) // 跳到最后一页看新增那条
     render()
     editor.querySelector('.ad-item:last-of-type')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -968,6 +1003,13 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   // 应答回来先核对代际，不是最新那次就整个丢掉
   let loadGen = 0
 
+  /**
+   * 当前编辑对象的版本号（读到手时的 ETag / blob sha），保存时原样带回去做乐观并发。
+   * 中文视图钉基准文件，译文视图钉该语种的覆盖文件（还没有就是 ETAG_ABSENT）——
+   * 保存的正是被钉的那一份，两者不会串。
+   */
+  let etag: string | null = null
+
   async function load(name: string) {
     const gen = ++loadGen
     current = name
@@ -975,20 +1017,22 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     // 这一组没有可翻字段时把语种拨回中文（theme/playlist 页签不该停在译文态）
     if (curLocale && !specTranslatable(name)) curLocale = ''
     if (curLocale === '') {
-      const next = await api(`/api/overview/data/${name}`)
+      const next = await apiRead(`/api/overview/data/${name}`)
       if (gen !== loadGen) return
-      value = next
+      value = next.data
+      etag = next.etag
       dirty = false
       render()
     } else {
       // 译文视图要基准 + 覆盖两份：基准当对照原文，覆盖是编辑对象（没有时是 null）
       const [base, patch] = await Promise.all([
         api(`/api/overview/data/${name}`),
-        api(`/api/overview/data/${name}?locale=${curLocale}`),
+        apiRead(`/api/overview/data/${name}?locale=${curLocale}`),
       ])
       if (gen !== loadGen) return
       value = base
-      distributeTr(patch)
+      etag = patch.etag
+      distributeTr(patch.data)
       dirty = false
       renderTr()
     }
@@ -1004,10 +1048,16 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
           // 整组全空 = 这门语言不再覆盖任何字段，文件留着只会误导，删掉
           if (!confirm(`「${spec().label}」的 ${lang} 译文全为空 —— 保存将删除译文文件，该组整体回落中文。继续？`))
             return
-          await api(`/api/overview/data/${current}?locale=${curLocale}`, { method: 'DELETE' })
+          await api(`/api/overview/data/${current}?locale=${curLocale}`, { method: 'DELETE', etag })
+          etag = ETAG_ABSENT // 文件没了：下次保存就是「新建」
           toast(`${lang} 译文文件已删除，该组回落中文 —— 正式站要重新构建`)
         } else {
-          await api(`/api/overview/data/${current}?locale=${curLocale}`, { method: 'PUT', body: patch })
+          const saved = await apiRead(`/api/overview/data/${current}?locale=${curLocale}`, {
+            method: 'PUT',
+            body: patch,
+            etag,
+          })
+          etag = saved.etag ?? etag
           toast(`${lang} 译文已保存 —— dev 站会热更新，正式站要重新构建`)
         }
         dirty = false
@@ -1022,10 +1072,17 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
           return
         }
       }
-      await api(`/api/overview/data/${current}`, { method: 'PUT', body: next })
+      // 带上读到手时的版本号：远端在这期间被别处改过（另一个页签、找歌页加了歌、
+      // 直接改的文件）就答 409，本次修改不落盘 —— 提示重新加载，而不是把别人的改动盖掉
+      const saved = await apiRead(`/api/overview/data/${current}`, { method: 'PUT', body: next, etag })
+      etag = saved.etag ?? etag
       dirty = false
       toast('已保存 —— dev 站会热更新，正式站要重新构建')
     } catch (err) {
+      if (isConflict(err) && confirm(`${(err as Error).message}\n\n现在就重新加载这一组吗？（你刚才的修改会丢）`)) {
+        load(current).catch(report)
+        return
+      }
       report(err)
     }
   })

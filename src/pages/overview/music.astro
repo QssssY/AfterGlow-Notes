@@ -50,7 +50,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, api, esc, ghMode, report, toast } from '~/scripts/admin'
+  import { $, api, apiRead, esc, ghMode, isConflict, report, toast } from '~/scripts/admin'
   import type { Track } from '~/i18n/content'
 
   interface MusicHit {
@@ -123,13 +123,25 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     plList.innerHTML = html
   }
 
+  // 歌单读到手时的版本号：这一页每加/删一首都立即落盘，带上它才不会把数据页签
+  // 同时改的东西盖掉（PUT 的应答回一个新版本号，连续操作不用重新 GET）
+  let etag: string | null = null
+
   async function loadPlaylist() {
-    playlist = ((await api<Track[]>('/api/overview/data/playlist')) ?? []) as Track[]
+    const res = await apiRead<Track[] | null>('/api/overview/data/playlist')
+    playlist = res.data ?? []
+    etag = res.etag
     renderPlaylist()
   }
 
-  const savePlaylist = () =>
-    api('/api/overview/data/playlist', { method: 'PUT', body: playlist })
+  async function savePlaylist() {
+    const saved = await apiRead('/api/overview/data/playlist', {
+      method: 'PUT',
+      body: playlist,
+      etag,
+    })
+    etag = saved.etag ?? etag
+  }
 
   // ---- 搜索（分页）----
 
@@ -237,7 +249,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         btn.textContent = '已加入 ✓'
       } catch (err) {
         if (added) playlist.shift()
-        report(err)
+        // 冲突（歌单被数据页签改过）：歌已经下载入库了，只是没进歌单 —— 说清楚下一步
+        if (isConflict(err)) {
+          toast('歌单已被别处改过，这首没能加进去 —— 音频已入库，重新加载本页再加一次即可', false)
+        } else {
+          report(err)
+        }
         btn.textContent = original
         btn.removeAttribute('disabled')
       }
@@ -276,7 +293,11 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       } catch (err) {
         playlist.splice(Math.min(i, playlist.length), 0, removed) // 保存失败回滚
         renderPlaylist()
-        report(err)
+        if (isConflict(err)) {
+          toast('歌单已被别处改过，这次移除没有生效 —— 重新加载本页看看现在的歌单', false)
+        } else {
+          report(err)
+        }
       }
     })
   }

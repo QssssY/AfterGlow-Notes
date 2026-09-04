@@ -29,8 +29,13 @@ const IDENTITY_KEYS = ['repo', 'href', 'domain'] as const
 const isPlainObject = (v: unknown): v is JsonObject =>
   typeof v === 'object' && v !== null && !Array.isArray(v)
 
-/** 两边都是对象数组、且共有同一个身份字段时，返回该字段名 */
-function identityKey(base: Json[], patch: Json[]): string | null {
+/**
+ * 两边都是对象数组、且共有同一个身份字段时，返回该字段名。
+ * 导出给管理台的译文视图用（src/pages/overview/data.astro）：那边要按同一口径决定
+ * 「这一组是按主键配对还是按下标配对」，两处判法不一致就会显示到错行 —— 基准同时有
+ * repo 与 href、而手写的译文只带 href 时，只看基准会选 repo、退回下标，构建期却按 href 配对。
+ */
+export function identityKey(base: readonly unknown[], patch: readonly unknown[]): string | null {
   if (!base.every(isPlainObject) || !patch.every(isPlainObject)) return null
   for (const key of IDENTITY_KEYS) {
     const inBase = base.every((item) => typeof (item as JsonObject)[key] === 'string')

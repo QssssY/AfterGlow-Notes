@@ -257,7 +257,11 @@ func (s *server) cors(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", s.origin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// If-Match：管理台的乐观并发（admin.go 的 checkIfMatch）；
+		// Expose-Headers 少了 ETag，跨域部署时浏览器只是不给 JS 看这个头 ——
+		// 读不到 ETag 就带不上 If-Match，整套版本校验静默退化成「后写的赢」
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, If-Match")
+		w.Header().Set("Access-Control-Expose-Headers", "ETag")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)

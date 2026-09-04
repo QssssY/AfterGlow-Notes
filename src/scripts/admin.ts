@@ -5,7 +5,12 @@
  * 「在自己电脑上对着本地服务用」的工具，这个默认值让 pnpm dev 免配置可用。
  */
 import { apiBase } from '~/config'
+import { ApiError, type ApiInit, type ApiResult } from './admin-contract'
 import { ghClearAuth, ghRepo, ghRoute, ghSiteAssetUrl, ghToken } from './gh-cms'
+
+// 页面统一从 '~/scripts/admin' 取这些，不必知道合同层在哪个文件
+export { ApiError, ETAG_ABSENT, isConflict } from './admin-contract'
+export type { ApiInit, ApiResult } from './admin-contract'
 
 /**
  * 双后端：配了 PUBLIC_API_BASE 走 Go 数据服务（'' = 同源）；
@@ -102,26 +107,20 @@ export async function swrAdmin<T>(
   apply(fresh)
 }
 
-/** 服务明确拒绝（4xx/5xx）时抛的错，带状态码 —— 调用方能区分「服务说不行」
- *  和「根本连不上」：前者是可以下结论的应答，后者什么都说明不了 */
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message)
-    this.name = 'ApiError'
-  }
-}
-
 /** 带 token 的请求；401 一律送回登录页。body 传对象自动 JSON 化，传 FormData 原样发。
  *  GitHub 直连模式下不发 HTTP 给自己人，整个转给 gh-cms 的合同复刻层 */
-export async function api<T>(
-  path: string,
-  init: { method?: string; body?: unknown } = {},
-): Promise<T> {
+export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
+  return (await apiRead<T>(path, init)).data
+}
+
+/**
+ * 同 api()，但连版本号一起给出来 —— 读一份数据打算改回去时用它，把 etag 收好，
+ * 保存时原样带上（见 ApiInit.etag）。写操作的应答也带新版本号，连续保存不必重新 GET。
+ */
+export async function apiRead<T>(path: string, init: ApiInit = {}): Promise<ApiResult<T>> {
   if (ghMode) return ghRoute<T>(path, init)
   const headers: Record<string, string> = { Authorization: `Bearer ${getToken() ?? ''}` }
+  if (init.etag) headers['If-Match'] = init.etag
   let body: BodyInit | undefined
   if (init.body instanceof FormData) {
     body = init.body
@@ -143,7 +142,7 @@ export async function api<T>(
   }
   const data = (await res.json().catch(() => null)) as { error?: string } | null
   if (!res.ok) throw new ApiError(data?.error ?? `请求失败（HTTP ${res.status}）`, res.status)
-  return data as T
+  return { data: data as T, etag: res.headers.get('ETag') }
 }
 
 /** 站点图预览地址（blob URL）：服务器模式走资产端点，GitHub 模式直读仓库 */

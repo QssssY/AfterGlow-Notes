@@ -130,6 +130,66 @@ var (
 	coverRe = regexp.MustCompile(`^\./_covers/[a-z0-9-]+\.(png|jpe?g|webp|gif|avif)$`)
 )
 
+// ---- 乐观并发（ETag / If-Match）----
+//
+// 所有「改内容」都是整文件 PUT：读到浏览器、改几个字、整份写回。没有版本校验的话，
+// 两处同时开着就是后写的赢 —— 数据页签调歌词偏移的同时在找歌页加了三首歌，回去一按
+// 保存，三首歌无声无息地消失（同一份 playlist.json 的两个消费方）。两个浏览器标签
+// 编辑同一篇文章同理。
+//
+// 于是：GET 带 ETag（文件内容哈希，不存在的文件给空串对应的哨兵），PUT 带 If-Match ——
+// 不匹配答 409，前端提示重新加载。PUT 成功也回一个新 ETag，连续保存不必重新 GET。
+// 不带 If-Match 的请求照原样放行：旧产物、以及 curl 手动改数据都还能用。
+const etagAbsent = `"absent"` // 「这个文件还不存在」的 ETag —— 新建译文文件时前端拿它做 If-Match
+
+// fileETag 读文件算内容哈希；文件不存在返回 etagAbsent
+func fileETag(path string) (string, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return etagAbsent, nil
+		}
+		return "", err
+	}
+	sum := sha256.Sum256(raw)
+	return `"` + hex.EncodeToString(sum[:12]) + `"`, nil
+}
+
+// checkIfMatch 校验 If-Match；返回 false 时响应已写好，调用方直接 return。
+// 头缺失 = 不校验（放行）
+func checkIfMatch(w http.ResponseWriter, r *http.Request, path string) bool {
+	want := strings.TrimSpace(r.Header.Get("If-Match"))
+	if want == "" {
+		return true
+	}
+	have, err := fileETag(path)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "读取当前版本失败: "+err.Error())
+		return false
+	}
+	if want != have {
+		if have == etagAbsent {
+			fail(w, http.StatusConflict, "这个文件已经被别处删掉了 —— 刷新页面看看现在的样子")
+			return false
+		}
+		fail(w, http.StatusConflict,
+			"远端已被别处改过（另一个页签 / 另一台设备 / 直接改的文件）——"+
+				"你这次的修改没有保存。刷新页面拿到最新内容后重新改一遍，免得把别人的改动盖掉")
+		return false
+	}
+	return true
+}
+
+// writeAndTag 写文件并把新内容的 ETag 放进响应头：连续保存（如找歌页加歌）不用再 GET 一次
+func writeAndTag(w http.ResponseWriter, path string, data []byte) error {
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return err
+	}
+	sum := sha256.Sum256(data)
+	w.Header().Set("ETag", `"`+hex.EncodeToString(sum[:12])+`"`)
+	return nil
+}
+
 func registerAdminRoutes(mux *http.ServeMux, s *server) {
 	// 路由只写路径不写方法：方法在处理器里 switch —— 这样 OPTIONS 预检
 	// 也能进到 cors 包装层拿到放行头（带方法的 pattern 会把预检打成 405）
@@ -505,9 +565,16 @@ func (s *server) adminPost(w http.ResponseWriter, r *http.Request) {
 			fail(w, http.StatusUnprocessableEntity, err.Error())
 			return
 		}
+		sum := sha256.Sum256(raw)
+		w.Header().Set("ETag", `"`+hex.EncodeToString(sum[:12])+`"`)
 		writeJSON(w, http.StatusOK, map[string]any{"slug": slug, "meta": meta, "body": body})
 
 	case http.MethodPut:
+		// If-Match 同时兼作「新建时别撞已有文章」的护栏：前端新建时带 etagAbsent，
+		// 文件已存在就 409，不会静默盖掉别人（前端另有一次 confirm，这是服务端这一道）
+		if !checkIfMatch(w, r, path) {
+			return
+		}
 		var payload struct {
 			Meta postMeta `json:"meta"`
 			Body string   `json:"body"`
@@ -524,7 +591,7 @@ func (s *server) adminPost(w http.ResponseWriter, r *http.Request) {
 			fail(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		if err := os.WriteFile(path, renderPost(payload.Meta, payload.Body), 0o644); err != nil {
+		if err := writeAndTag(w, path, renderPost(payload.Meta, payload.Body)); err != nil {
 			fail(w, http.StatusInternalServerError, "写入失败: "+err.Error())
 			return
 		}
@@ -533,6 +600,9 @@ func (s *server) adminPost(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		if !exists {
 			fail(w, http.StatusNotFound, "没有这篇文章")
+			return
+		}
+		if !checkIfMatch(w, r, path) {
 			return
 		}
 		if err := os.Remove(path); err != nil {
@@ -581,6 +651,7 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 			if locale != "" && os.IsNotExist(err) {
 				// 这个语种还没有译文文件：给 null，前端从空表开始
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
+				w.Header().Set("ETag", etagAbsent)
 				w.Write([]byte("null"))
 				return
 			}
@@ -588,9 +659,14 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		sum := sha256.Sum256(raw)
+		w.Header().Set("ETag", `"`+hex.EncodeToString(sum[:12])+`"`)
 		w.Write(raw)
 
 	case http.MethodPut:
+		if !checkIfMatch(w, r, path) {
+			return
+		}
 		raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
 		if err != nil {
 			fail(w, http.StatusBadRequest, "读取请求体失败")
@@ -634,7 +710,7 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		out.WriteByte('\n')
-		if err := os.WriteFile(path, out.Bytes(), 0o644); err != nil {
+		if err := writeAndTag(w, path, out.Bytes()); err != nil {
 			fail(w, http.StatusInternalServerError, "写入失败: "+err.Error())
 			return
 		}
@@ -644,6 +720,9 @@ func (s *server) adminData(w http.ResponseWriter, r *http.Request) {
 		// 只有译文文件可删（删 = 该语种整组回落中文基准）；基准是页面的数据源，不许删
 		if locale == "" {
 			fail(w, http.StatusBadRequest, "基准数据不能删，只有译文文件可以")
+			return
+		}
+		if !checkIfMatch(w, r, path) {
 			return
 		}
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
