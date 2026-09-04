@@ -63,6 +63,53 @@ const CJK_MATCH =
 /** 兜底字符：常用标点与全角符号，避免文章里偶发用到却没被扫到 */
 const BASELINE = '，。、；：？！“”‘’（）〈〉《》【】—…·　～％＃＠＆＊＋－＝／＼｜'
 
+/**
+ * src/data/*.json 里**只以 400 渲染**的字段 —— 它们的字不进 500 瘦身集。
+ *
+ * 500（font-medium）出现在界面标签、卡片标题、域名戳这些短文字上；JSON 里的大头
+ * 恰恰是散文（friends/blogroll/share/repos/changelog 的 desc 一项就 7300 字），
+ * 整份 JSON 都并进 500 的话「瘦身」名不副实（实测 1297 vs 全量 1523 字）。
+ *
+ * 用「排除清单」而不是「白名单」：漏了一个键，代价只是 500 子集大一点点；
+ * 而白名单漏一个真以 medium 渲染的键，那个字会逐字回退系统字体 —— 一行两种字形，
+ * 是这个脚本最该避免的失败。清单里每一项都逐个核过渲染字重（全是 font-normal）。
+ */
+const PROSE_KEYS = new Set([
+  'desc', // 友链 / 分享 / 项目 / 更新日志 / 关于页友链，六处全是 font-normal
+  'description', // 站点描述（SEO 与 RSS，不上屏）
+  'paragraphs', // 关于页自我介绍
+  'listAItems',
+  'listBItems', // 关于页两个小清单
+  'note', // 此刻卡 / 友链面板的小字
+  'detail', // 此刻卡的条目内容
+  'aside', // 分享条目的补充
+  'bio', // 首页问候卡
+  'role', // 关于页的一句话身份
+  'repoNote', // 项目页「状态」面板末行
+  'finePrintBlurb',
+  'finePrintPoints',
+  'finePrintReply', // 关于页细则
+])
+
+/** 从 JSON 里挑出会以 500 渲染的文字（丢掉 PROSE_KEYS 那些散文字段） */
+function chromeTextFromJson(text) {
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    return text // 解析不了（半截文件）就按老样子整份收，宁可大一点
+  }
+  const out = []
+  const walk = (v, key) => {
+    if (PROSE_KEYS.has(key)) return
+    if (typeof v === 'string') out.push(v)
+    else if (Array.isArray(v)) for (const x of v) walk(x, key)
+    else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, k)
+  }
+  walk(data, '')
+  return out.join('\n')
+}
+
 async function* walk(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
@@ -148,8 +195,12 @@ async function collectCharsets() {
       // 分类/标签）和文内标题行（目录卡引用）；正文只以 400/700 出现
       add(chrome, /^---\r?\n[\s\S]*?\r?\n---/.exec(text)?.[0] ?? '')
       add(chrome, (text.match(/^ {0,3}#{1,6}\s.*$/gm) ?? []).join(''))
+    } else if (ext === '.json') {
+      // 数据文件：全量收（正文散文以 400/700 出现），500 只收会以 medium 渲染的字段
+      add(full, text)
+      add(chrome, chromeTextFromJson(text))
     } else {
-      const code = ext === '.json' ? text : stripComments(text)
+      const code = stripComments(text)
       add(full, code)
       add(chrome, code)
     }
