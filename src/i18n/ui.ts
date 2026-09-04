@@ -29,6 +29,12 @@ const zh = {
   'common.postsCount': '{n} 篇文章',
   'common.skipToContent': '跳到正文',
 
+  /* ── 404 ─────────────────────────────────────────────── */
+  'notFound.title': '页面不存在',
+  'notFound.body': '这个地址没有对应的页面 —— 可能是链接写错了，或者文章已经搬家。',
+  'notFound.home': '回首页',
+  'notFound.posts': '看看文章',
+
   /* ── 导航 ─────────────────────────────────────────────── */
   'nav.aria': '站内导航',
   'nav.backHome': '回首页 · {title}',
@@ -313,6 +319,11 @@ const en: Record<UIKey, string> = {
   'common.postsCount': '{n} posts',
   'common.skipToContent': 'Skip to content',
 
+  'notFound.title': 'Page not found',
+  'notFound.body': 'Nothing lives at this address — the link may be mistyped, or the post has moved.',
+  'notFound.home': 'Back home',
+  'notFound.posts': 'Browse posts',
+
   'nav.aria': 'Site navigation',
   'nav.backHome': 'Home · {title}',
   'nav.home': 'Home',
@@ -570,6 +581,11 @@ const ja: Record<UIKey, string> = {
   'common.readMinutes': '{n} 分',
   'common.postsCount': '{n} 本',
   'common.skipToContent': '本文へスキップ',
+
+  'notFound.title': 'ページが見つかりません',
+  'notFound.body': 'このアドレスにページはありません。リンクの誤りか、記事が移動した可能性があります。',
+  'notFound.home': 'ホームへ戻る',
+  'notFound.posts': '記事を見る',
 
   'nav.aria': 'サイト内ナビゲーション',
   'nav.backHome': 'ホームへ · {title}',

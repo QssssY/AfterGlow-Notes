@@ -12,6 +12,9 @@ import { useI18n } from '~/i18n'
  * （alternates 已算好各语种下当前页的地址），所以停在哪页切都留在那页，
  * 禁用 JS 也能用。语种也不必记进 localStorage —— 导航链接本身就带着语种前缀，
  * 点下去自然一路留在同一种语言里。
+ *
+ * 两个形态的链接都把预取降为 hover：全站默认 viewport 预取，而这几条在每一页都在
+ * 视口里 —— 等于每进一页就白拉另两个语种的同一页（各 ~15KB br），真正切语言的人极少。
  */
 
 interface Props {
@@ -56,6 +59,7 @@ const bare = look === 'bare'
             href={alt.href}
             hreflang={alt.htmlLang}
             lang={alt.htmlLang}
+            data-astro-prefetch="hover"
             aria-current={alt.current ? 'true' : undefined}
             title={alt.current ? alt.label : t('lang.switchTo', { label: alt.label })}
             class:list={[
@@ -119,6 +123,7 @@ const bare = look === 'bare'
             href={alt.href}
             hreflang={alt.htmlLang}
             lang={alt.htmlLang}
+            data-astro-prefetch="hover"
             aria-current={alt.current ? 'true' : undefined}
             class:list={[
               'flex w-full flex-row items-center gap-[8px] rounded-[13px] px-[10px] py-[7px] text-[12.5px] transition-colors hover:bg-chip',
@@ -135,35 +140,45 @@ const bare = look === 'bare'
 }
 
 <script>
-  // 弹层开合。客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化
+  // 弹层开合。客户端路由：模块只执行一次，换页后要在新 DOM 上重新初始化。
+  // 挂在 document 上的「点外面 / Esc 收起」只在模块层挂一次，回调里现查当前页的菜单 ——
+  // 早先写在 page-load 的循环里，每换一页都给 document 再挂两个监听、永不摘，
+  // 闭包还顺着 parentNode 把整棵旧页面 DOM 钉在内存里（player.ts 是同款写法的正面例子）
+  const menus = () => document.querySelectorAll<HTMLElement>('[data-lang-menu]')
+
+  const setOpen = (box: HTMLElement, open: boolean) => {
+    const toggle = box.querySelector<HTMLElement>('[data-lang-toggle]')
+    const list = box.querySelector<HTMLElement>('[data-lang-list]')
+    if (!toggle || !list) return
+    list.hidden = !open
+    toggle.setAttribute('aria-expanded', String(open))
+    // 移动端外壳带 glass（backdrop-filter 自建层叠上下文），弹层的 z-20
+    // 被困在壳内，会被后面绘制的玻璃卡盖住 —— 看起来就是「点了没反应」。
+    // 与播放器弹层同方：展开时给壳提 z-index，收起还原
+    box.style.zIndex = open ? '40' : ''
+  }
+  const isOpen = (box: HTMLElement) =>
+    box.querySelector<HTMLElement>('[data-lang-list]')?.hidden === false
+
   document.addEventListener('astro:page-load', () => {
-    for (const box of document.querySelectorAll<HTMLElement>('[data-lang-menu]')) {
+    for (const box of menus()) {
       const toggle = box.querySelector<HTMLElement>('[data-lang-toggle]')
-      const list = box.querySelector<HTMLElement>('[data-lang-list]')
-      if (!toggle || !list) continue
-
-      const setOpen = (open: boolean) => {
-        list.hidden = !open
-        toggle.setAttribute('aria-expanded', String(open))
-        // 移动端外壳带 glass（backdrop-filter 自建层叠上下文），弹层的 z-20
-        // 被困在壳内，会被后面绘制的玻璃卡盖住 —— 看起来就是「点了没反应」。
-        // 与播放器弹层同方：展开时给壳提 z-index，收起还原
-        box.style.zIndex = open ? '40' : ''
-      }
-
+      if (!toggle) continue
       toggle.addEventListener('click', (e) => {
         // 图标条整条是可点区域（胶囊跟手），别让开合冒泡成别的动作
         e.stopPropagation()
-        setOpen(Boolean(list.hidden))
-      })
-
-      // 点外面 / Esc 收起
-      document.addEventListener('click', (e) => {
-        if (!list.hidden && !box.contains(e.target as Node)) setOpen(false)
-      })
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !list.hidden) setOpen(false)
+        setOpen(box, !isOpen(box))
       })
     }
+  })
+
+  // 点外面 / Esc 收起
+  document.addEventListener('click', (e) => {
+    for (const box of menus())
+      if (isOpen(box) && !box.contains(e.target as Node)) setOpen(box, false)
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return
+    for (const box of menus()) if (isOpen(box)) setOpen(box, false)
   })
 </script>

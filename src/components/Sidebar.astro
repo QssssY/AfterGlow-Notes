@@ -48,8 +48,10 @@ const themeChoices = [
           {site.title}
         </span>
       </a>
+      {/* RSS 是给阅读器的 XML，不是要预取的页面：全站 viewport 预取会在每页白拉它一次 */}
       <a
         href={path('/rss.xml')}
+        data-astro-prefetch="false"
         aria-label={t('common.rss')}
         title={t('common.rss')}
         class="hairline-box flex h-[28px] w-[30px] shrink-0 flex-row items-center justify-center rounded-[12px]"

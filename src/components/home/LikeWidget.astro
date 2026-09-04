@@ -92,9 +92,15 @@ const { t } = useI18n(Astro)
     }
     render()
 
+    // 点击代际：每点一次 +1。GET 的网络应答若在点击之后才到，它描述的是点击前的世界，
+    // 不能拿来盖掉乐观更新（页面秒出后 200ms 内点赞、服务器在异地时会撞上）；
+    // 连点两次的两个 POST 乱序返回同理 —— 只有最后一次点击的应答说了算
+    let gen = 0
+
     // 后端在的话，以它为准（'site' 是全站点赞的固定 slug）；
     // swr 先回放上次的总数（秒出），网络应答到了再校正
     swr('likes:site', () => getLikes('site'), (state) => {
+      if (gen !== 0) return false // 已过时：不上屏、不写缓存（swr 的约定）
       liked = state.liked
       total = state.count
       write(liked)
@@ -103,6 +109,7 @@ const { t } = useI18n(Astro)
 
     for (const button of buttons) {
       button.addEventListener('click', () => {
+        const my = ++gen
         liked = !liked
         write(liked)
         if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
@@ -110,6 +117,7 @@ const { t } = useI18n(Astro)
         if (liked) likeBurst(button)
 
         postLike('site', liked ? 'like' : 'unlike').then((state) => {
+          if (my !== gen) return
           if (!state) {
             // 服务端没应答（断网/限流）：回滚乐观更新，别让点的人以为成功了
             if (total !== null) total += liked ? -1 : 1

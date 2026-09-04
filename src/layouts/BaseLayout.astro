@@ -33,7 +33,7 @@ interface Props {
   topPad?: 48 | 72
 }
 
-const { locale, meta, c, path, alternates } = useI18n(Astro)
+const { locale, meta, c, path, alternates, t } = useI18n(Astro)
 const { site } = c
 
 const {
@@ -126,19 +126,32 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
     <!-- 首屏渲染前同步应用主题与布局模式，避免暗色/紧凑布局下闪一下默认态 -->
     <script is:inline>
       ;((d) => {
-        const stored = localStorage.getItem('theme') ?? 'light'
+        // localStorage 在 Safari「阻止所有 Cookie」/ 沙箱 iframe 里一碰就抛：抛了就按默认态走
+        let stored = 'light'
+        let layout = 'classic'
+        try {
+          stored = localStorage.getItem('theme') ?? 'light'
+          layout = localStorage.getItem('layout') ?? 'classic'
+        } catch {}
         d.classList.toggle(
           'dark',
           stored === 'dark' ||
             (stored === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches),
         )
         d.dataset.theme = stored
-        d.dataset.layout = localStorage.getItem('layout') ?? 'classic'
+        d.dataset.layout = layout
       })(document.documentElement)
     </script>
   </head>
 
   <body class="bg-cream text-ink">
+    {/* 键盘用户的「跳到正文」：平时视觉隐藏，Tab 到它才浮出来（ui.ts 的文案早就三语备好，一直没接） */}
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-[16px] focus:left-[16px] focus:z-[100] focus:rounded-full focus:bg-btn-dark focus:px-[16px] focus:py-[8px] focus:text-[13px] focus:font-medium focus:text-white"
+    >
+      {t('common.skipToContent')}
+    </a>
     <!--
       背景层铺满整个视口：内容仍收在 1440 里，但 aurora 不能只画在 1440 内 ——
       比 1440 宽的屏幕上，容器内外一个有柔光一个是纯 cream，左右两侧会看出色差接缝。
@@ -159,7 +172,9 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
         {/* 页面内边距：移动端 24/28（设计 Content 在 390 帧内 left24 top28），桌面 48 左右。
             换页动效照搬 YYsuni：瞬时切换 + 新页卡片错峰弹入（global.css 的 card-enter），
             不再挂任何 View Transitions 共享元素名 —— 玻璃卡快照会变成模糊空板 */}
-        <div
+        {/* <main> 是页面唯一的正文地标（读屏 / 跳转链接的落点）；display 与 div 相同，不改布局 */}
+        <main
+          id="main"
           class:list={[
             'relative flex flex-col px-[24px] pt-[28px]',
             tabBar ? 'pb-[110px]' : 'pb-[28px]',
@@ -168,7 +183,7 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
           ]}
         >
           <slot />
-        </div>
+        </main>
       </div>
     </div>
 
@@ -405,13 +420,30 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
       // 外观切换 —— 桌面是侧栏的三档分段控件，移动端是顶栏的明暗直切按钮
       const query = matchMedia('(prefers-color-scheme: dark)')
 
+      // localStorage 受限环境（Safari 阻止所有 Cookie / 沙箱 iframe）里 get/set 都会抛：
+      // 这段跑在 page-load 回调开头，抛了后面的主题 / 布局控件一个都绑不上
+      const storeGet = (k: string) => {
+        try {
+          return localStorage.getItem(k)
+        } catch {
+          return null
+        }
+      }
+      const storeSet = (k: string, v: string) => {
+        try {
+          localStorage.setItem(k, v)
+        } catch {
+          // 存不了就本次会话有效
+        }
+      }
+
       function apply(choice: string) {
         document.documentElement.classList.toggle(
           'dark',
           choice === 'dark' || (choice === 'auto' && query.matches),
         )
         document.documentElement.dataset.theme = choice
-        localStorage.setItem('theme', choice)
+        storeSet('theme', choice)
         // 每次现查：客户端路由换页后是全新的一批控件
         for (const chip of document.querySelectorAll<HTMLElement>('[data-theme-choice]')) {
           chip.setAttribute('aria-checked', String(chip.dataset.themeChoice === choice))
@@ -467,7 +499,7 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
         if (revealing) revealCleanup()
       })
 
-      const current = () => localStorage.getItem('theme') ?? 'light'
+      const current = () => storeGet('theme') ?? 'light'
 
       query.addEventListener('change', () => {
         if (current() === 'auto') apply('auto')
@@ -482,7 +514,7 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
           choice === 'dark' || (choice === 'auto' && query.matches),
         )
         document.documentElement.dataset.theme = choice
-        document.documentElement.dataset.layout = localStorage.getItem('layout') ?? 'classic'
+        document.documentElement.dataset.layout = storeGet('layout') ?? 'classic'
       })
 
       // 首次加载与每次换页都会触发：在当前 DOM 上重绑控件
@@ -506,11 +538,7 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
         // 布局双模式（原版 / 紧凑）——控件在首页侧栏；纯 CSS 切换，见 global.css 变体
         const applyLayout = (choice: string) => {
           document.documentElement.dataset.layout = choice
-          try {
-            localStorage.setItem('layout', choice)
-          } catch {
-            // 存不了就本次会话有效
-          }
+          storeSet('layout', choice)
           for (const chip of document.querySelectorAll<HTMLElement>('[data-layout-choice]')) {
             chip.setAttribute('aria-checked', String(chip.dataset.layoutChoice === choice))
           }
@@ -587,10 +615,16 @@ const ogImage = new URL(path(`/og/${ogSlug}.png`), base).href
 
           const t0 = performance.now()
           const DURATION = 750
+          // 有的统计位是活数据（关于页的喜欢数：SWR 先回放缓存、网络应答再改写）。
+          // 别人改过的文本就不能再由动画收尾覆盖 —— 每帧先核对上一帧写的值还在不在，
+          // 不在了说明新值已经到了，立刻退场；否则网络值会被下一帧盖掉，定格在缓存旧值
+          let written = raw
           const step = (now: number) => {
+            if (el.textContent !== written) return
             const p = Math.min(1, (now - t0) / DURATION)
             const eased = 1 - (1 - p) ** 3
-            el.textContent = p < 1 ? fmt(target * eased) : raw
+            written = p < 1 ? fmt(target * eased) : raw
+            el.textContent = written
             if (p < 1) requestAnimationFrame(step)
           }
           requestAnimationFrame(step)

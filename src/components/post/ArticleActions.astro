@@ -114,9 +114,14 @@ const { t, fmt } = useI18n(Astro)
       }
       render()
 
+      // 点击代际（与 LikeWidget 同款）：点击之后到达的 GET 应答描述的是点击前的世界，
+      // 不能盖掉乐观更新；连点两次的 POST 乱序返回也只认最后一次
+      let gen = 0
+
       // 合并接口一个往返拿齐（touch 同时记阅读，和文章页脚本共用同一次 POST）；
       // swr 先回放上次的数字 —— 换页瞬时的站上，计数不慢半拍
       swr(`touch:${slug}`, () => touch(slug), (state) => {
+        if (gen !== 0) return false // 已过时：不上屏、不写缓存（swr 的约定）
         liked = state.liked
         total = state.likes
         write(liked)
@@ -124,6 +129,7 @@ const { t, fmt } = useI18n(Astro)
       })
 
       button.addEventListener('click', () => {
+        const my = ++gen
         liked = !liked
         write(liked)
         if (total !== null) total += liked ? 1 : -1 // 乐观更新，应答后校正
@@ -131,6 +137,7 @@ const { t, fmt } = useI18n(Astro)
         if (liked) likeBurst(button)
 
         postLike(slug, liked ? 'like' : 'unlike').then((state) => {
+          if (my !== gen) return
           if (!state) {
             // 服务端没应答（断网/限流）：回滚乐观更新，别让点的人以为成功了
             if (total !== null) total += liked ? -1 : 1
@@ -158,16 +165,33 @@ const { t, fmt } = useI18n(Astro)
   document.addEventListener('astro:page-load', () => {
     for (const button of document.querySelectorAll<HTMLElement>('[data-copy-link]')) {
       const label = button.querySelector<HTMLElement>('[data-copy-label]')
+      // 只有图标的按钮（LicenseBlock 那颗）：反馈靠换图标 + aria-label
+      const idleIcon = button.querySelector<HTMLElement>('[data-copy-icon-idle]')
+      const doneIcon = button.querySelector<HTMLElement>('[data-copy-icon-done]')
+      // 原文案在绑定时取一次：早先每次点击都拿当时的文本当「原文」，1.6s 内点第二下
+      // 拿到的已是「已复制」，最后一个定时器把它写回去 —— 按钮从此卡在「已复制」
+      const original = label?.textContent ?? ''
+      const originalAria = button.getAttribute('aria-label')
+      let timer = 0
       button.addEventListener('click', async () => {
         // 纯 HTTP 下 navigator.clipboard 不存在，copyText 里有 execCommand 兜底
         const ok = await copyText(location.href)
-        if (label) {
-          const original = label.textContent
-          label.textContent = (ok ? button.dataset.tCopied : button.dataset.tFailed) ?? ''
-          setTimeout(() => {
-            label.textContent = original
-          }, 1600)
+        const feedback = (ok ? button.dataset.tCopied : button.dataset.tFailed) ?? ''
+        if (label) label.textContent = feedback
+        if (idleIcon && doneIcon) {
+          idleIcon.classList.add('hidden')
+          doneIcon.classList.remove('hidden')
+          if (originalAria) button.setAttribute('aria-label', feedback)
         }
+        clearTimeout(timer)
+        timer = window.setTimeout(() => {
+          if (label) label.textContent = original
+          if (idleIcon && doneIcon) {
+            idleIcon.classList.remove('hidden')
+            doneIcon.classList.add('hidden')
+            if (originalAria) button.setAttribute('aria-label', originalAria)
+          }
+        }, 1600)
       })
     }
   })

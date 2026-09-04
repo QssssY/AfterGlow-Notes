@@ -69,7 +69,15 @@ async function req<T>(path: string, init?: RequestInit): Promise<T | null> {
  */
 const swrKey = (key: string) => `afterglow:swr:${key}`
 
-export function swr<T>(key: string, fetcher: () => Promise<T | null>, apply: (state: T) => void) {
+/**
+ * apply 可以明确答 false：这份网络应答已经过时（比如用户在它到达前点过赞），
+ * 既不上屏也不写缓存 —— 否则点击前的世界会被存成「最新」，下次回放先闪回旧态
+ */
+export function swr<T>(
+  key: string,
+  fetcher: () => Promise<T | null>,
+  apply: (state: T) => void | boolean,
+) {
   const storeKey = swrKey(key)
   try {
     const cached = localStorage.getItem(storeKey)
@@ -77,15 +85,19 @@ export function swr<T>(key: string, fetcher: () => Promise<T | null>, apply: (st
   } catch {
     // 读不了 / 存的是坏值：跳过回放，等网络
   }
-  fetcher().then((state) => {
-    if (state === null) return
-    try {
-      localStorage.setItem(storeKey, JSON.stringify(state))
-    } catch {
-      // 存不了就每次现拉
-    }
-    apply(state)
-  })
+  fetcher()
+    .then((state) => {
+      if (state === null) return
+      if (apply(state) === false) return
+      try {
+        localStorage.setItem(storeKey, JSON.stringify(state))
+      } catch {
+        // 存不了就每次现拉
+      }
+    })
+    .catch(() => {
+      // fetcher 自己已把网络错误吞成 null；这里兜的是 apply 抛错，别变成未处理的 rejection
+    })
 }
 
 /**

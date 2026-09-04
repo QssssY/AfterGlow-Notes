@@ -19,7 +19,11 @@ const { t, path } = useI18n(Astro)
 
   设计只画了 8 个标签、正好一行放得下。真实标签数不定，所以让它折行：
   窄屏 caption 换到标签上方，宽屏还是左右并排。
+
+  预取降为 hover：全站默认 viewport 预取，这一带十几个标签页一进视口就整批下载
+  （每页 ~15KB br，归档页实测 ~450KB），1M 上行上是几秒的满速占用，和字体抢带宽。
 -->
+
 <div
   class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[16px] rounded-[28px] px-[18px] py-[14px] xl:flex-row xl:items-center"
 >
@@ -34,6 +38,7 @@ const { t, path } = useI18n(Astro)
       tags.map((tag) => (
         <a
           href={path(`/tags/${tag.name}`)}
+          data-astro-prefetch="hover"
           class="hairline-box box-border flex h-fit w-fit shrink-0 flex-row rounded-[12px] px-[10px] py-[6px]"
         >
           <span class="text-[12.5px] font-normal whitespace-nowrap text-ink-soft">{tag.label}</span>

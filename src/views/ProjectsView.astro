@@ -67,20 +67,25 @@ const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0)
           { value: String(totalStars), label: t('projects.statStars'), total: true },
         ]}
       />
-      {/* 主推卡也带 data-project，这样筛到别的技术栈时它会一起收起来 */}
-      <div data-project data-stack={featured.stack} class="w-full">
-        <FeaturedProject
-          badge={featured.badge}
-          title={featured.name}
-          desc={featured.desc}
-          stack={featured.stack}
-          stars={featured.stars}
-          updated={relative(featured.pushed)}
-          repo={featured.repo}
-          href={repoUrl(featured.repo)}
-          thumb={projectThumb(featured.repo)}
-        />
-      </div>
+      {/* 主推卡也带 data-project，这样筛到别的技术栈时它会一起收起来。
+          repos 为空（fork 者清空数据首次构建）时不渲染，别让 featured.stack 把构建打挂 */}
+      {
+        featured && (
+          <div data-project data-stack={featured.stack} class="w-full">
+            <FeaturedProject
+              badge={featured.badge}
+              title={featured.name}
+              desc={featured.desc}
+              stack={featured.stack}
+              stars={featured.stars}
+              updated={relative(featured.pushed)}
+              repo={featured.repo}
+              href={repoUrl(featured.repo)}
+              thumb={projectThumb(featured.repo)}
+            />
+          </div>
+        )
+      }
 
       {/*
         设计画的是两行定宽三列。这里用单个 flex-wrap 容器代替两个定长行：

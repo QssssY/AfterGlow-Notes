@@ -16,7 +16,6 @@ const { t, fmt } = useI18n(Astro)
 const stamp = updated ? t('post.lastModified', { date: fmt.dateDots(updated) }) : ''
 
 const shares = [
-  { icon: 'link', label: t('common.copyLink'), href: shareUrl },
   {
     icon: 'twitter',
     label: t('post.shareX'),
@@ -28,6 +27,9 @@ const shares = [
     href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`,
   },
 ]
+// 三颗钮共用一套样子；第一颗「复制链接」是按钮不是链接（见下）
+const btnClass =
+  'flex h-[34px] w-[36px] shrink-0 cursor-pointer flex-row items-center justify-center rounded-[12px] bg-chip outline-1 -outline-offset-[0.5px] outline-hairline'
 ---
 
 <!-- License Block
@@ -51,14 +53,28 @@ const shares = [
   </span>
 
   <span class="flex h-fit w-fit shrink-0 flex-row items-center gap-[8px] self-end sm:self-auto">
+    {/* 复制链接：早先是个 href 指向本页的 <a>，点了只会原地重载 —— 现在复用 ArticleActions
+        的 [data-copy-link] 脚本（同一页必然有它），成功后图标换成对勾 1.6 秒 */}
+    <button
+      type="button"
+      data-copy-link
+      data-t-copied={t('common.copied')}
+      data-t-failed={t('common.copyFailed')}
+      aria-label={t('common.copyLink')}
+      class={btnClass}
+    >
+      <Icon name="lucide:link" data-copy-icon-idle class="size-[15px] shrink-0 text-ink-soft" />
+      {/* 用 hidden 类而不是 hidden 属性：属性对 <svg> 的 UA 样式各家不一 */}
+      <Icon name="lucide:check" data-copy-icon-done class="hidden size-[15px] shrink-0 text-brand-ink" />
+    </button>
     {
       shares.map((share) => (
         <a
           href={share.href}
           aria-label={share.label}
-          target={share.icon === 'link' ? undefined : '_blank'}
-          rel={share.icon === 'link' ? undefined : 'noopener noreferrer'}
-          class="flex h-[34px] w-[36px] shrink-0 flex-row items-center justify-center rounded-[12px] bg-chip outline-1 -outline-offset-[0.5px] outline-hairline"
+          target="_blank"
+          rel="noopener noreferrer"
+          class={btnClass}
         >
           <Icon name={`lucide:${share.icon}`} class="size-[15px] shrink-0 text-ink-soft" />
         </a>

@@ -1,0 +1,53 @@
+---
+/**
+ * 404 —— 之前没有这一页：Go 托管下任何失效地址都是 http.Error 的一行纯文本
+ *（static.go 只在 dist 里有 404.html 时才用它），浏览器默认样式、没有任何回站内的路。
+ *
+ * 静态站只能有一份 404.html，所以按默认语种渲染（读屏与搜索引擎看到的 lang 也是它）；
+ * 骨架照搬其它内页：紧凑模式的图标条 + 原版模式的侧栏 + 一张玻璃卡，两颗钮复用
+ * SocialButton 的深色 / 玻璃两款皮肤 —— 设计稿里没有 404，全部用现成零件拼，不另起样式。
+ */
+import Footer from '~/components/Footer.astro'
+import NavBar from '~/components/NavBar.astro'
+import Sidebar from '~/components/Sidebar.astro'
+import SocialButton from '~/components/SocialButton.astro'
+import { useI18n } from '~/i18n'
+import BaseLayout from '~/layouts/BaseLayout.astro'
+
+const { t, c, path } = useI18n(Astro)
+---
+
+<BaseLayout title={t('notFound.title')} description={t('notFound.body')}>
+  {/* 紧凑模式的图标条：sticky 钉住不消失；原版模式不渲染 */}
+  <div class="pointer-events-none mb-[24px] hidden xl:sticky xl:top-[16px] xl:z-40 compact:xl:block">
+    <div class="pointer-events-auto w-fit"><NavBar /></div>
+  </div>
+
+  <div class="flex w-full flex-row items-start gap-[48px]">
+    {/* 原版 = 完整 Sidebar（原样）；紧凑 = 无侧栏，内容居中单列（宽 1016） */}
+    <div class="hidden w-[280px] shrink-0 classic:xl:block"><Sidebar /></div>
+
+    <div
+      class="flex h-fit w-full min-w-0 flex-col items-start gap-[24px] classic:xl:flex-1 compact:xl:mx-auto compact:xl:max-w-[1016px]"
+    >
+      <div
+        data-pagefind-ignore
+        class="glass box-border flex h-fit w-full shrink-0 flex-col items-start gap-[20px] rounded-[30px] px-[30px] py-[26px]"
+      >
+        <span class="font-display text-[64px]/[64px] font-normal text-brand-ink">404</span>
+        <div class="flex h-fit w-full flex-col items-start gap-[10px]">
+          <h1 class="font-display text-[30px]/[36px] font-normal text-ink">{t('notFound.title')}</h1>
+          <p class="w-full text-[15px]/[24px] font-normal text-ink-soft">{t('notFound.body')}</p>
+        </div>
+        <div class="flex h-fit w-full flex-row flex-wrap items-center gap-[12px]">
+          <SocialButton label={t('notFound.home')} icon="house" href={path('/')} variant="dark" />
+          <SocialButton label={t('notFound.posts')} icon="notebook-text" href={path('/archive')} />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-[30px] hidden w-full xl:block">
+    <Footer license={t('footer.licenseDefault', { title: c.site.title })} />
+  </div>
+</BaseLayout>

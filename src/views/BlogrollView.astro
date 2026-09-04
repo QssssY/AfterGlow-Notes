@@ -16,12 +16,16 @@ import { blogrollAvatar } from '~/utils/blogroll-avatars'
 const { t, c } = useI18n(Astro)
 const { blogroll } = c
 
-// 设计写的是 18 个 / 9 年；按真实数据算
+// 设计写的是 18 个 / 9 年；按真实数据算（列表为空时 Math.min() 是 Infinity，兜成 0）
 const total = blogroll.length
-const oldest = new Date().getFullYear() - Math.min(...blogroll.map((blog) => blog.since))
+const oldest = total ? new Date().getFullYear() - Math.min(...blogroll.map((blog) => blog.since)) : 0
 
-// 设计是两行定宽三列；移动端按 Home 的规则收成单列
-const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
+// 设计是三列定宽；行数按真实条数切 —— 曾写死两行（slice 0-3 / 3-6），管理台加到第 7 条
+// 头部统计涨了、卡片却永远只有 6 张。移动端按 Home 的规则收成单列
+const PER_ROW = 3
+const rows = Array.from({ length: Math.ceil(total / PER_ROW) }, (_, i) =>
+  blogroll.slice(i * PER_ROW, (i + 1) * PER_ROW),
+)
 ---
 
 <BaseLayout title={t('blogroll.title')} description={t('blogroll.subtitle')}>
@@ -61,6 +65,10 @@ const rows = [blogroll.slice(0, 3), blogroll.slice(3, 6)]
                   to={blog.to}
                   initialColor={blog.initialColor}
                 />
+              ))}
+              {/* 末行不满三张时补空位：卡是 flex-1，不补会被拉成半宽/整宽，破掉三列网格 */}
+              {Array.from({ length: PER_ROW - row.length }, () => (
+                <div class="hidden xl:block xl:flex-1" aria-hidden="true" />
               ))}
             </div>
           ))

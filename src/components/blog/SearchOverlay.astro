@@ -128,6 +128,9 @@ const { t } = useI18n(Astro)
     if (!overlay || !input || !results) return
 
     let timer: number
+    // 每次 await 之后都核对输入框里还是不是这个词：搜索与取片段都是网络往返，
+    // 「ab」的应答可能晚于「abc」的到达，不核对就会把新结果盖成旧词的
+    const stale = (query: string) => input!.value.trim() !== query
     input.addEventListener('input', () => {
       clearTimeout(timer)
       timer = window.setTimeout(async () => {
@@ -135,14 +138,15 @@ const { t } = useI18n(Astro)
         if (!query) return note(overlay?.dataset.tHint ?? '')
 
         const api = await load()
-        if (!api) return
+        if (!api || stale(query)) return
 
         const found = await api.search(query)
+        if (stale(query)) return
         if (found.results.length === 0)
           return note(fill(overlay?.dataset.tEmpty, { query }))
 
         const pages = await Promise.all(found.results.slice(0, 8).map((r) => r.data()))
-        if (!results) return
+        if (!results || stale(query)) return
         results.innerHTML = ''
         for (const page of pages) {
           const link = document.createElement('a')
@@ -169,6 +173,14 @@ const { t } = useI18n(Astro)
 
     for (const trigger of document.querySelectorAll('[data-search-open]')) {
       trigger.addEventListener('click', open)
+      // 预热：手指 / 光标刚碰到搜索钮就去拉 pagefind（wasm + 索引元数据），
+      // 首次搜索不用等这一程。dev 下没有索引，load 里的 catch 会把「没索引」
+      // 写进结果区 —— 只有 overlay 打开着才会被看见，预热时它还藏着
+      const warm = () => {
+        if (!pagefind) load()
+      }
+      trigger.addEventListener('pointerenter', warm, { once: true })
+      trigger.addEventListener('focus', warm, { once: true })
     }
     document.querySelector('[data-search-close]')?.addEventListener('click', close)
     overlay.addEventListener('click', (e) => {

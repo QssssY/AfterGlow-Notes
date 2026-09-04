@@ -91,8 +91,11 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
     const rows = [...card.querySelectorAll<HTMLAnchorElement>('[data-hot-row]')]
     if (rows.length === 0 || posts.length === 0) return
 
-    // swr 先回放上次的榜单（秒出），网络应答到了再校正；apply 是幂等的整卡重写
-    swr(`hot:${rows.length}`, () => getHot(rows.length), (res) => {
+    // swr 先回放上次的榜单（秒出），网络应答到了再校正；apply 是幂等的整卡重写。
+    // 多要几条（服务端上限 10）再在本地挑：榜单里的 slug 可能是已删文章、或被人
+    // 乱 POST 的假 slug（服务端只校验形状不认文章），只要 3 条时前 3 名全是废的，
+    // 榜就退化成「最新三篇」。多拿一截，真文章总能凑够
+    swr('hot:10', () => getHot(10), (res) => {
       if (res.items.length === 0) return // 后端不在：保持最新三篇兜底
 
       // 榜单里可能有已删除文章的 slug（构建里没有对应页），跳过；
@@ -100,6 +103,7 @@ const blob = JSON.stringify(posts).replace(/</g, '\\u003c')
       const bySlug = new Map(posts.map((p) => [p.slug, p]))
       const list: (PostRef & { count: number })[] = []
       for (const item of res.items) {
+        if (list.length >= rows.length) break
         const post = bySlug.get(item.slug)
         if (post && item.count > 0) list.push({ ...post, count: item.count })
       }

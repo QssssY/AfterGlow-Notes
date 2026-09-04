@@ -24,7 +24,8 @@ const label = 'text-[11.5px] font-bold tracking-[1.8px] text-ink-muted'
 
 <BaseLayout title="组件画廊" tabBar={false}>
   <!-- data-pagefind-ignore：组件画廊不是内容，不该出现在搜索结果里 -->
-  <main data-pagefind-ignore class="flex flex-col gap-[48px]">
+  {/* BaseLayout 已经是 <main>，这里不能再套一个（页面只许有一个正文地标） */}
+  <div data-pagefind-ignore class="flex flex-col gap-[48px]">
     <div class="flex flex-col gap-[14px]">
       <span class={label}>NAV ITEM · TQ3Oj</span>
       <NavItem label="近期文章" icon="notebook-text" active />
@@ -62,7 +63,7 @@ const label = 'text-[11.5px] font-bold tracking-[1.8px] text-ink-muted'
       <span class={label}>POST ROW · YZaZG</span>
       <PostRow
         index={7}
-        date={new Date(2026, 7, 12)}
+        date={new Date(Date.UTC(2026, 7, 12))}
         category="前端工程"
         title="用 Astro 重写博客：从 64px 圆角到一条墨线"
         excerpt="把三年积累的样式重新梳理一遍，才发现真正需要保留的只有版式与呼吸感。这篇记录了迁移过程中的取舍：为什么放弃大圆角、如何用一条竖线代替卡片嵌套。"
@@ -70,5 +71,5 @@ const label = 'text-[11.5px] font-bold tracking-[1.8px] text-ink-muted'
         words={1200}
       />
     </div>
-  </main>
+  </div>
 </BaseLayout>
