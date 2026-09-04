@@ -100,7 +100,7 @@ export async function ogRoutes(locale: Locale) {
       params: { slug: post.id },
       props: {
         title: post.title,
-        subtitle: `${post.date.getFullYear()} · ${pad(post.date.getMonth() + 1)} · ${pad(post.date.getDate())}　·　${post.category}`,
+        subtitle: `${post.date.getUTCFullYear()} · ${pad(post.date.getUTCMonth() + 1)} · ${pad(post.date.getUTCDate())}　·　${post.category}`,
         tags: [...post.tagLabels],
       },
     })),

@@ -5,7 +5,10 @@
 
 import { localeMeta, type Locale } from '~/i18n/locales'
 
-const CJK = /[㐀-䶿一-鿿豈-﫿]/g
+// 汉字（扩展 A / 基本区 / 兼容区）+ 平假名 / 片假名（぀-ヿ）+ 谚文音节。
+// 日文正文七成是假名：早先只数汉字，`ja/rewrite-blog-with-astro.md` 实际 1069 字
+// 只算出 296 字 / 1 分钟 —— locales.ts 给日文的 500 字/分是按逐字计数定的
+const CJK = /[㐀-䶿一-鿿豈-﫿぀-ヿ가-힣]/g
 const LATIN = /[a-zA-Z0-9]+/g
 
 /**

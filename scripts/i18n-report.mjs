@@ -37,6 +37,45 @@ const warn = (msg) => {
   console.log(`  ⚠ ${msg}`)
 }
 
+const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x)
+
+/**
+ * 数组配对方式与 merge.ts 同一口径：两边都是对象数组且共有身份字段 → 按它配；否则按下标。
+ * 返回一句可打印的摘要；错位（孤儿 / 条数不一致）走 warn。label 是给人看的位置，如
+ * `now.en.json` 或 `about.en.json › paragraphs`
+ */
+function checkArray(base, patch, label) {
+  const objs = base.every((x) => x && typeof x === 'object') && patch.every((x) => x && typeof x === 'object')
+  const key = objs
+    ? IDENTITY_KEYS.find(
+        (k) => base.every((i) => typeof i[k] === 'string') && patch.every((i) => typeof i[k] === 'string'),
+      )
+    : undefined
+  if (key) {
+    const ids = new Set(base.map((i) => i[key]))
+    const hit = patch.filter((i) => ids.has(i[key])).length
+    const orphan = patch.filter((i) => !ids.has(i[key])).map((i) => i[key])
+    if (orphan.length) warn(`${label} 有 ${orphan.length} 条对不上基准（会被忽略）：${orphan.slice(0, 2).join(', ')}`)
+    return `${hit}/${base.length} 按 ${key}`
+  }
+  if (patch.length !== base.length)
+    warn(`${label} 条数与基准不一致（${patch.length} vs ${base.length}）——按下标配对会错位，请逐条核对`)
+  return `${patch.length}/${base.length} 按下标`
+}
+
+/**
+ * 对象型数据（site / about / now）里也埋着按下标配对的列表：now.items、about.paragraphs /
+ * chips / listAItems、site.finePrintPoints…… 早先只报「几个字段」，基准顶部插一条
+ * 译文没跟上，报告照样说「没有发现错位」。这里递归下去，遇到两边都是数组的键就查
+ */
+function checkNested(base, patch, label) {
+  for (const [k, v] of Object.entries(patch)) {
+    if (!(k in base)) continue
+    if (Array.isArray(base[k]) && Array.isArray(v)) checkArray(base[k], v, `${label} › ${k}`)
+    else if (isObj(base[k]) && isObj(v)) checkNested(base[k], v, `${label} › ${k}`)
+  }
+}
+
 /* ── 1. 界面文案字典 ───────────────────────────────────── */
 
 console.log('\n界面文案（src/i18n/ui.ts）')
@@ -69,26 +108,12 @@ for (const name of bases) {
     }
     const patch = await readJson(join(DATA, file))
     if (Array.isArray(base) && Array.isArray(patch)) {
-      const objs = base.every((x) => x && typeof x === 'object') && patch.every((x) => x && typeof x === 'object')
-      const key = objs
-        ? IDENTITY_KEYS.find(
-            (k) => base.every((i) => typeof i[k] === 'string') && patch.every((i) => typeof i[k] === 'string'),
-          )
-        : undefined
-      if (key) {
-        const ids = new Set(base.map((i) => i[key]))
-        const hit = patch.filter((i) => ids.has(i[key])).length
-        marks.push(`${loc}:${hit}/${base.length} 按 ${key}`)
-        const orphan = patch.filter((i) => !ids.has(i[key])).map((i) => i[key])
-        if (orphan.length) warn(`${file} 有 ${orphan.length} 条对不上基准（会被忽略）：${orphan.slice(0, 2).join(', ')}`)
-      } else {
-        marks.push(`${loc}:${patch.length}/${base.length} 按下标`)
-        if (patch.length !== base.length)
-          warn(`${file} 条数与基准不一致（${patch.length} vs ${base.length}）——按下标配对会错位，请逐条核对`)
-      }
+      marks.push(`${loc}:${checkArray(base, patch, file)}`)
+    } else if (isObj(base) && isObj(patch)) {
+      marks.push(`${loc}:${Object.keys(patch).length} 字段`)
+      checkNested(base, patch, file)
     } else {
-      const keys = Object.keys(patch).length
-      marks.push(`${loc}:${keys} 字段`)
+      warn(`${file} 与基准的形状不一致（数组 vs 对象），译文会整份顶掉基准`)
     }
   }
   console.log(`  ${name.padEnd(11)} ${marks.join('   ')}`)

@@ -111,7 +111,10 @@ export async function loadPosts(locale: Locale = defaultLocale): Promise<Archive
     })
   }
 
-  return posts.sort((a, b) => b.date.valueOf() - a.date.valueOf())
+  // 同日文章（YAML 日期没有时分，一天发两篇很常见）按 id 定序：只按日期排的话平局顺序
+  // 继承 getCollection 的插入序，而 glob loader 是并发读盘、谁先读完谁先进 store ——
+  // 「精选」是哪篇、上下篇、RSS 顺序会在 Windows 本机与 CI/Linux 之间飘
+  return posts.sort((a, b) => b.date.valueOf() - a.date.valueOf() || a.id.localeCompare(b.id))
 }
 
 export interface PostRoute {
@@ -180,7 +183,7 @@ export async function tagRoutes(locale: Locale) {
 export function groupByYear(posts: ArchivePost[]) {
   const years = new Map<number, ArchivePost[]>()
   for (const post of posts) {
-    const year = post.date.getFullYear()
+    const year = post.date.getUTCFullYear()
     const bucket = years.get(year)
     if (bucket) bucket.push(post)
     else years.set(year, [post])
@@ -199,7 +202,7 @@ export function groupByYear(posts: ArchivePost[]) {
 export function yearBars(posts: ArchivePost[]) {
   const counts = new Map<number, number>()
   for (const post of posts) {
-    const year = post.date.getFullYear()
+    const year = post.date.getUTCFullYear()
     counts.set(year, (counts.get(year) ?? 0) + 1)
   }
   return [...counts.entries()]

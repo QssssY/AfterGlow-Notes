@@ -26,50 +26,60 @@ export function createFormat(locale: Locale) {
   const dtf = (key: string, options: Intl.DateTimeFormatOptions) =>
     memo(`${tag}:${key}`, () => new Intl.DateTimeFormat(tag, options))
 
+  /*
+   * 下面这组吃的都是「日历日」：文章 date / updated（frontmatter 里的 2026-08-22，
+   * z.coerce.date 解成 UTC 零点）、now.updated、uptime.since（Date.UTC 钉死）。
+   * 取年月日一律按 UTC、Intl 也钉 timeZone:'UTC' —— 用构建机本地时区取的话，
+   * UTC 以西的机器（fork 到美洲的开发者、某些托管平台）所有日期少一天，
+   * 元旦的文章会归到上一年。CI 在 UTC、本机在东八区，所以此前没露馅。
+   * weekday / clockDate 例外：它们格式化的是「现在」，按本地走
+   */
+  const utc = { timeZone: 'UTC' } as const
+
   return {
     /** 设计固定式样：2026 · 08 · 19（与语言无关，三语共用） */
     dateDots(d: Date) {
-      return `${d.getFullYear()} · ${pad(d.getMonth() + 1)} · ${pad(d.getDate())}`
+      return `${d.getUTCFullYear()} · ${pad(d.getUTCMonth() + 1)} · ${pad(d.getUTCDate())}`
     },
 
     /** 08-19（时间轴行用，与语言无关） */
     monthDayNumeric(d: Date) {
-      return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+      return `${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
     },
 
     /** 2026 年 8 月 22 日 / August 22, 2026 / 2026年8月22日 */
     dateFull(d: Date) {
-      return dtf('full', { year: 'numeric', month: 'long', day: 'numeric' }).format(d)
+      return dtf('full', { year: 'numeric', month: 'long', day: 'numeric', ...utc }).format(d)
     },
 
     /** 8 月 18 日 / Aug 18 / 8月18日 */
     monthDay(d: Date) {
-      return dtf('md', { month: 'short', day: 'numeric' }).format(d)
+      return dtf('md', { month: 'short', day: 'numeric', ...utc }).format(d)
     },
 
     /** 2026 年 8 月 / August 2026 / 2026年8月 */
     yearMonth(d: Date) {
-      return dtf('ym', { year: 'numeric', month: 'long' }).format(d)
+      return dtf('ym', { year: 'numeric', month: 'long', ...utc }).format(d)
     },
 
     /** 8 月 / Aug / 8月 —— 移动端 NOW 卡右上角那枚小戳 */
     monthShort(d: Date) {
-      return dtf('m', { month: 'short' }).format(d)
+      return dtf('m', { month: 'short', ...utc }).format(d)
     },
 
     /** 2026 / 08（相关文章那行） */
     yearSlashMonth(d: Date) {
-      return `${d.getFullYear()} / ${pad(d.getMonth() + 1)}`
+      return `${d.getUTCFullYear()} / ${pad(d.getUTCMonth() + 1)}`
     },
 
-    /** 周三 / Wed / 水 —— 大时钟底下那行 */
+    /** 周三 / Wed / 水 —— 大时钟底下那行（「现在」，按本地时区） */
     weekday(d: Date) {
       return dtf('wd', { weekday: 'short' }).format(d)
     },
 
-    /** 时钟日期行：8 月 24 日 · 周日 / Aug 24 · Sun / 8月24日 · 日 */
+    /** 时钟日期行：8 月 24 日 · 周日 / Aug 24 · Sun / 8月24日 · 日（「现在」，按本地时区） */
     clockDate(d: Date) {
-      return `${this.monthDay(d)} · ${this.weekday(d)}`
+      return `${dtf('md-local', { month: 'short', day: 'numeric' }).format(d)} · ${this.weekday(d)}`
     },
 
     /**

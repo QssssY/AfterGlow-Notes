@@ -24,7 +24,8 @@ const { t, fmt } = useI18n(Astro)
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** 设计的写法：2026 / 08 / 19（式样与语言无关，三语共用） */
-const published = `${date.getFullYear()} / ${pad(date.getMonth() + 1)} / ${pad(date.getDate())}`
+// 日历日按 UTC 取（frontmatter 日期是 UTC 零点；本地取法在 UTC 以西的构建机上会少一天）
+const published = `${date.getUTCFullYear()} / ${pad(date.getUTCMonth() + 1)} / ${pad(date.getUTCDate())}`
 
 const rows = [
   // 设计写的是 6,240，带千分位、不带「字」——「字数」已经在左边说了

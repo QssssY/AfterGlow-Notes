@@ -154,7 +154,25 @@ const pick = <T>(locale: Locale, name: string, base: T): T =>
 
 /* ─── 内容装配 ───────────────────────────────────────────────────── */
 
+/**
+ * 按语种记忆装配结果：每个 useI18n(Astro) 都会调一次 getContent，一页 20~30 个组件、
+ * 百来页就是数千次 13 份 JSON 的深合并，全是同一个答案。只在生产构建里记 ——
+ * dev 下 JSON 一改 Vite 会重求值本模块，缓存随之作废，但不记更省心。
+ * 返回值是只读约定：没有任何组件在服务端改它（sort/splice 都没有），才能共享一份
+ */
+const contentCache = new Map<Locale, ReturnType<typeof assembleContent>>()
+
 export function getContent(locale: Locale = defaultLocale) {
+  if (!import.meta.env.PROD) return assembleContent(locale)
+  let c = contentCache.get(locale)
+  if (!c) {
+    c = assembleContent(locale)
+    contentCache.set(locale, c)
+  }
+  return c
+}
+
+function assembleContent(locale: Locale) {
   const siteRaw = pick(locale, 'site', siteData)
   const aboutRaw = pick(locale, 'about', aboutData)
   const nowRaw = pick(locale, 'now', nowData)

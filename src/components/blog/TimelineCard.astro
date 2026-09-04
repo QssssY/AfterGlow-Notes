@@ -56,6 +56,7 @@ const scriptText = {
           </span>
           <a
             href={path('/rss.xml')}
+            data-astro-prefetch="false"
             class="text-[12px] font-normal whitespace-nowrap text-brand-ink"
           >
             RSS
@@ -102,9 +103,12 @@ const scriptText = {
         | undefined
 
       if (entries.length > 0 && headerTpl) {
-        // ISO 周：周四所在的周年 + 周序号
+        // 文章日期是 frontmatter 里的「日历日」（2026-08-22，没有时分），data-date 是它按
+        // UTC 零点序列化的 ISO 串 —— 客户端一律按 UTC 取年月日、Intl 也钉在 UTC：
+        // 按访客本地时区取的话，美洲读者在 UTC-5 看到的是前一天（Aug 21），日/月分组
+        // 和服务端渲的「年」视图口径对不上
         const isoWeek = (d: Date): [number, number] => {
-          const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+          const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
           const day = t.getUTCDay() || 7
           t.setUTCDate(t.getUTCDate() + 4 - day)
           const yearStart = Date.UTC(t.getUTCFullYear(), 0, 1)
@@ -118,21 +122,22 @@ const scriptText = {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
+          timeZone: 'UTC',
         })
-        const monthFmt = new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'long' })
+        const monthFmt = new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'long', timeZone: 'UTC' })
 
         const keyAndLabel = (mode: string, el: HTMLElement): [string, string] => {
           const d = new Date(el.dataset.date ?? 0)
-          const y = d.getFullYear()
+          const y = d.getUTCFullYear()
           switch (mode) {
             case 'day':
-              return [`${y}-${d.getMonth()}-${d.getDate()}`, dayFmt.format(d)]
+              return [`${y}-${d.getUTCMonth()}-${d.getUTCDate()}`, dayFmt.format(d)]
             case 'week': {
               const [wy, w] = isoWeek(d)
               return [`${wy}-w${w}`, fill(T.tWeek, { year: wy, week: w })]
             }
             case 'month':
-              return [`${y}-${d.getMonth()}`, monthFmt.format(d)]
+              return [`${y}-${d.getUTCMonth()}`, monthFmt.format(d)]
             case 'cat': {
               // data-cat 存的已经是当前语种的分类显示名（见 utils/posts.ts）
               const cat = el.dataset.cat || (T.tUncat ?? '')
