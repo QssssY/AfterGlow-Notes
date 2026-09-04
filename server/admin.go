@@ -215,11 +215,22 @@ func randomToken() string {
 }
 
 func (s *server) adminLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		fail(w, http.StatusMethodNotAllowed, "只支持 POST")
+	a := s.admin
+
+	// DELETE = 注销：把这枚 token 从会话表里抹掉。以前「退出」只是浏览器忘掉 token，
+	// 服务端那份照旧有效 30 天 —— 共用电脑上事后从 localStorage 备份里翻出来还能用
+	if r.Method == http.MethodDelete {
+		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+		a.mu.Lock()
+		delete(a.sessions, token)
+		a.mu.Unlock()
+		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}
-	a := s.admin
+	if r.Method != http.MethodPost {
+		fail(w, http.StatusMethodNotAllowed, "只支持 POST / DELETE")
+		return
+	}
 
 	// 口令尝试限流：每 IP 每天 20 次，跨天清零（和点赞限流同款、但更紧）
 	day := utcDay()
@@ -684,6 +695,10 @@ func (s *server) adminUpload(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusMethodNotAllowed, "只支持 POST")
 		return
 	}
+	// ParseMultipartForm 的参数只是「内存里最多放多少、其余落临时文件」的分界，
+	// 不限制请求体本身 —— 30MB 的上限要靠 MaxBytesReader 才是真的（多给 1MB 装表单字段）。
+	// 下面 io.ReadAll 会把文件整个读进内存，没这道闸一个超大文件就能把 2G 小机打爆
+	r.Body = http.MaxBytesReader(w, r.Body, 31<<20)
 	if err := r.ParseMultipartForm(30 << 20); err != nil {
 		fail(w, http.StatusBadRequest, "上传解析失败（单个文件最大 30MB）")
 		return
@@ -1057,6 +1072,11 @@ func (s *server) adminBuild(w http.ResponseWriter, r *http.Request) {
 				cmd = exec.CommandContext(ctx, "sh", "-c", a.buildCmd)
 			}
 			cmd.Dir = a.blogDir
+			// 超时要杀整棵进程树（proc_*.go），并给 Wait 一个收尾期限：否则残留的
+			// node 握着输出管道，CombinedOutput 永不返回，building 从此卡在 true，
+			// 之后每次点构建都是 409「已经在构建了」，只能重启进程救
+			killTree(cmd)
+			cmd.WaitDelay = 10 * time.Second
 			out, err := cmd.CombinedOutput()
 			tail := string(out)
 			if len(tail) > 4000 {

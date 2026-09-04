@@ -165,20 +165,42 @@ func (s *server) adminMusicFetch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 整个流程（取直链 ≤40s + 下载 ≤80s + 歌词 ≤40s）远超服务器全局的 30 秒 WriteTimeout ——
+	// 那个截止时间在读完请求头时就定了，下载慢一点，文件明明已落盘、应答却写不出去，
+	// 前端只看到一个网络错误。按本处理器自己的预算续期（static.go 的 progressWriter 同理）
+	http.NewResponseController(w).SetWriteDeadline(time.Now().Add(3 * time.Minute))
+
 	// 解析 + 下载：只认「精确源」。拿到的若是试听片段（VIP 未登录常给 ~30s 预览）
 	// 或空，一律不入库 —— 不做多源兜底：兜底会抓到同名翻唱冒充原曲（站长明确不要）。
 	var audio []byte
 	var ext string
 
-	if u, e := s.admin.srcResolvePrimary(req.Source, req.ID); e == nil && u != "" {
-		if d, x, trial, derr := grabFull(u); derr == nil && !trial {
+	u, err := s.admin.srcResolvePrimary(req.Source, req.ID)
+	if err != nil {
+		// 音源层本身连不上 / 应答不对：这是基础设施问题，不是这首歌的版权问题 ——
+		// 早先被吞进下面的 422，站长看到「VIP / 无版权」白白换了好几首歌
+		fail(w, http.StatusBadGateway, "取直链失败："+musicErrHint(s.admin.musicAPI, err))
+		return
+	}
+	var dlErr error
+	if u != "" {
+		d, x, trial, derr := grabFull(u)
+		switch {
+		case derr != nil:
+			dlErr = derr // 直链有、下不下来（CDN 403 / 超时）：提示里带上，别让人误以为是版权
+		case trial:
+			// 试听片段：不入库
+		default:
 			audio, ext = d, x
 		}
 	}
 	if audio == nil {
-		fail(w, http.StatusUnprocessableEntity,
-			"这首拿不到完整音源（VIP / 独家只给试听，或无版权）—— 没有入库。"+
-				"换首歌、换个音源；想要这首的正版整曲，给统一层配上你自己的登录 cookie。")
+		msg := "这首拿不到完整音源（VIP / 独家只给试听，或无版权）—— 没有入库。" +
+			"换首歌、换个音源；想要这首的正版整曲，给统一层配上你自己的登录 cookie。"
+		if dlErr != nil {
+			msg += "（下载直链时出错：" + dlErr.Error() + "）"
+		}
+		fail(w, http.StatusUnprocessableEntity, msg)
 		return
 	}
 

@@ -18,6 +18,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -31,6 +32,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -206,6 +208,8 @@ func main() {
 		// 友链巡检跟管理台一起启停：结果只有站长会看，没后台就不白跑
 		s.links = newLinkChecker(abs)
 		s.links.start()
+		// GitHub 代理只替 repos.json 里的仓库跑腿（github.go 文件头讲了为什么）
+		s.github.allowFrom(filepath.Join(abs, "src", "data", "repos.json"))
 		registerAdminRoutes(mux, s)
 		log.Printf("admin enabled (blog-dir=%s, build-cmd=%q)", abs, *buildCmd)
 		if s.admin.musicEnabled() {
@@ -232,11 +236,18 @@ func main() {
 		}
 	}()
 
+	// systemd 的 stop/restart 发的是 SIGTERM，不是 Ctrl-C 的 SIGINT：早先只监听后者，
+	// 每次部署重启进程都是被硬杀 —— 在途的点赞 / 阅读写入直接掐断。两者都接住，
+	// 用 Shutdown 等在途请求收尾（最多 5 秒），再关数据库
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 	log.Println("shutting down")
-	httpServer.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Printf("shutdown: %v（超时的连接已强制关闭）", err)
+	}
 	db.Close()
 }
 
