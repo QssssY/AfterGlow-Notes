@@ -128,9 +128,16 @@
   scale: 0.95;
   translate: 0 0;
 }
+/* 禁用态只压暗、不吞事件：disabled 本身就不触发 click，而 pointer-events:none 会把
+   hover 也吃掉 —— 概览页构建钮在 GitHub 模式下专门设了 title 解释「为何不用构建」，
+   却永远弹不出来 */
 :is(.ad-btn, .ad-btn-primary, .ad-btn-ghost, .ad-btn-danger)[disabled] {
   opacity: 0.5;
-  pointer-events: none;
+  cursor: not-allowed;
+}
+:is(.ad-btn, .ad-btn-primary, .ad-btn-ghost, .ad-btn-danger)[disabled]:hover {
+  translate: 0 0;
+  scale: 1;
 }
 
 .ad-chip {

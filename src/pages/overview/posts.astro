@@ -31,7 +31,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, api, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
+  import { $, api, cacheDrop, cachePut, esc, report, swrAdmin, toast } from '~/scripts/admin'
   import type { PostListItem } from '~/scripts/admin'
 
   const list = document.querySelector<HTMLElement>('[data-list]')!
@@ -138,6 +138,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       await api(`/api/overview/posts/${encodeURIComponent(slug)}`, { method: 'DELETE' })
       posts = posts.filter((p) => p.slug !== slug)
       cachePut('posts', posts) // 同步缓存，别让删掉的行在下次回放里诈尸
+      cacheDrop('overview') // 概览页的篇数 / 榜单标题也跟着过期了
       show() // 整页重排：删掉末页最后一条时页码自动回夹
       toast('已删除')
     } catch (err) {

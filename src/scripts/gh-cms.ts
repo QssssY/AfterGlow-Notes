@@ -33,9 +33,14 @@ export const ghToken = () => {
 const apiRoot = () => localStorage.getItem(API_KEY) || 'https://api.github.com'
 
 export function ghSaveAuth(repo: string, token: string, branch = 'main') {
-  localStorage.setItem(REPO_KEY, repo)
-  localStorage.setItem(BRANCH_KEY, branch)
-  sessionStorage.setItem(TOKEN_KEY, token)
+  // 读侧（ghToken）包了 try，写侧也得包：受限存储环境下校验都过了却在这里抛未捕获异常
+  try {
+    localStorage.setItem(REPO_KEY, repo)
+    localStorage.setItem(BRANCH_KEY, branch)
+    sessionStorage.setItem(TOKEN_KEY, token)
+  } catch {
+    throw new Error('浏览器不允许存储登录态（隐私模式 / 阻止了 Cookie）—— 换个窗口再试')
+  }
 }
 
 export function ghClearAuth() {
@@ -172,28 +177,52 @@ import type { PostMeta } from './admin'
 
 const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
 
-/** 值解码：Go %q 的双引号串与 JSON 兼容，裸值原样 */
+/**
+ * 值解码：双引号串按 JSON 解（Go %q 的转义与之兼容）；单引号串按 YAML 解（'' 是转义的 '）；
+ * 裸值剥掉行尾注释（YAML 里「空白 + #」起注释）。
+ * 这是个手写的最小 YAML 子集，只求与 Go 端 yaml.v3 在「人手写的常见写法」上不出歧义 ——
+ * 早先只认双引号：`title: 'x'` 保存后会变成 `"'x'"`，行尾注释会混进标题
+ */
 function unquote(v: string): string {
   const t = v.trim()
-  if (t.startsWith('"') && t.endsWith('"')) {
+  // 引号串后面也可能跟注释（`title: "x" # 备注`），正则一并吃掉
+  const dq = /^"((?:[^"\\]|\\.)*)"(?:\s+#.*)?$/.exec(t)
+  if (dq) {
     try {
-      return JSON.parse(t) as string
+      return JSON.parse(`"${dq[1]}"`) as string
     } catch {
-      return t.slice(1, -1)
+      return dq[1]!
     }
   }
-  return t
+  const sq = /^'((?:[^']|'')*)'(?:\s+#.*)?$/.exec(t)
+  if (sq) return sq[1]!.replaceAll("''", "'")
+  return t.replace(/\s+#.*$/, '').trim()
 }
 
 export function parsePost(raw: string): { meta: PostMeta; body: string } {
-  const m = FM_RE.exec(raw)
+  // Windows 编辑器常给文件头加 BOM，进正则前剥掉（Go 端 parsePost 同款）。
+  // 用码点比较而不是写 \uFEFF 字面量：不可见字符混进源码里，diff 与编辑器都看不出来
+  const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw
+  const m = FM_RE.exec(text)
   if (!m) throw new Error('文件缺少 front-matter')
   const meta: PostMeta = { title: '', date: '', tags: [], draft: false }
-  for (const line of m[1]!.split('\n')) {
+  const lines = m[1]!.split('\n')
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i]!
+    // 注释 / 空行 / 缩进的续行跳过（块状列表的条目由下面的 tags 分支整段吃掉）
+    if (/^\s*(#|$)/.test(line) || /^\s/.test(line)) continue
     const idx = line.indexOf(':')
     if (idx < 0) continue
     const key = line.slice(0, idx).trim()
     const val = line.slice(idx + 1).trim()
+    // 块状列表：`tags:` 独占一行，条目在后续的 `- x` 行里 —— Astro 教程里最常见的写法，
+    // 早先只认 `[a, b]` 流式写法，块状的一律解成空数组，保存一次 tags 就全没了
+    const block: string[] = []
+    if (val === '' || val.startsWith('#')) {
+      while (i + 1 < lines.length && /^\s*-\s+/.test(lines[i + 1]!)) {
+        block.push(lines[++i]!.replace(/^\s*-\s+/, ''))
+      }
+    }
     switch (key) {
       case 'title':
         meta.title = unquote(val)
@@ -214,10 +243,12 @@ export function parsePost(raw: string): { meta: PostMeta; body: string } {
         meta.cover = unquote(val)
         break
       case 'draft':
-        meta.draft = val === 'true'
+        meta.draft = unquote(val) === 'true'
         break
       case 'tags':
-        if (val.startsWith('[')) {
+        if (block.length > 0) {
+          meta.tags = block.map((t) => unquote(t)).filter(Boolean)
+        } else if (val.startsWith('[')) {
           meta.tags = val
             .replace(/^\[|\]$/g, '')
             .split(',')
@@ -274,7 +305,9 @@ async function listPosts() {
       }
     }),
   )
-  posts.sort((a, b) => (a.date < b.date ? 1 : -1))
+  // 同日文章按 slug 定序：比较器要满足对称性，`a.date < b.date ? 1 : -1` 在相等时两边都答 -1，
+  // 同一天两篇的先后每次刷新都可能对调
+  posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug)))
   return posts
 }
 

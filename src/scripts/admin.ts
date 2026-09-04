@@ -33,6 +33,20 @@ export const clearToken = () => {
   }
 }
 
+/** 退出：忘掉本地凭证，再让服务端作废这枚 token（GitHub 模式没有服务端可通知）。
+ *  先清本地再通知：反过来的话通知在途时用户已重新登录，迟到的 clearToken 会把新 token 抹掉。
+ *  服务端那步尽力而为 —— 连不上也照常登出，别把人困在里面 */
+export async function logout() {
+  const token = ghMode ? null : getToken()
+  clearToken()
+  if (token) {
+    await fetch(`${API}/api/overview/login`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {})
+  }
+}
+
 /*
  * ---- 管理数据的 sessionStorage 缓存：页签切换秒渲染 ----
  *
@@ -60,6 +74,15 @@ export function cachePut(key: string, value: unknown) {
   }
 }
 
+/** 写操作之后把会过期的缓存键作废：下一页别先回放一帧旧数据（改完标题闪旧标题） */
+export function cacheDrop(...keys: string[]) {
+  try {
+    for (const k of keys) sessionStorage.removeItem(CACHE_PREFIX + k)
+  } catch {
+    // 没存过就没得删
+  }
+}
+
 /** swrAdmin：缓存先渲染、网络再校正。返回网络那一程，调用方照旧 .catch(report) */
 export async function swrAdmin<T>(
   key: string,
@@ -77,6 +100,18 @@ export async function swrAdmin<T>(
   const fresh = await fetcher()
   cachePut(key, fresh)
   apply(fresh)
+}
+
+/** 服务明确拒绝（4xx/5xx）时抛的错，带状态码 —— 调用方能区分「服务说不行」
+ *  和「根本连不上」：前者是可以下结论的应答，后者什么都说明不了 */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
 }
 
 /** 带 token 的请求；401 一律送回登录页。body 传对象自动 JSON 化，传 FormData 原样发。
@@ -107,7 +142,7 @@ export async function api<T>(
     throw new Error('未登录')
   }
   const data = (await res.json().catch(() => null)) as { error?: string } | null
-  if (!res.ok) throw new Error(data?.error ?? `请求失败（HTTP ${res.status}）`)
+  if (!res.ok) throw new ApiError(data?.error ?? `请求失败（HTTP ${res.status}）`, res.status)
   return data as T
 }
 

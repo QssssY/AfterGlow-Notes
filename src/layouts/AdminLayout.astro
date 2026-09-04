@@ -128,10 +128,11 @@ const customTheme = themeCss()
     </script>
 
     <script>
-      import { clearToken } from '~/scripts/admin'
+      // 退出只做跳转，真正的清凭证在登录页落地时做（login.astro 认 ?logout=1）：
+      // 编辑器有未保存内容时 beforeunload 会弹「离开此页？」，用户点取消要能原地继续 ——
+      // 先清 token 再跳的话，取消之后就困在一个已登出的编辑器里，下一次保存直接 401
       document.querySelector('[data-admin-logout]')?.addEventListener('click', () => {
-        clearToken()
-        location.href = '/overview/login'
+        location.href = '/overview/login?logout=1'
       })
     </script>
   </body>

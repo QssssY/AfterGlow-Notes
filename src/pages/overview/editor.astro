@@ -99,7 +99,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 
 <script>
   import { marked } from 'marked'
-  import { $, api, report, SLUG_RE, toast, today } from '~/scripts/admin'
+  import { $, api, cacheDrop, report, SLUG_RE, toast, today } from '~/scripts/admin'
   import type { PostMeta } from '~/scripts/admin'
 
   const field = (k: string) => $(`[data-f="${k}"]`) as HTMLInputElement | HTMLTextAreaElement
@@ -454,12 +454,40 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     enterEditMode(post.slug)
     dirty = false
   }
-  load().catch(report)
+  load().catch((err) => {
+    // 拉不到这篇（删了 / 网断了）：退回「写新文章」态，别让 editing 挂着一个
+    // 没加载出来的 slug —— 否则下面 save() 会把它当编辑态，改了 slug 也进不了编辑模式
+    editing = ''
+    report(err)
+  })
+
+  /**
+   * 新建时先探一下 slug 有没有被占：服务端 PUT 是「有就覆盖」（Go 端只在应答里给个
+   * created:false，GitHub 端带 sha 直接提交），随手填个 hello-world 就能把旧文整篇顶掉。
+   * 两种后端 GET 命中都返回文章、缺失都抛错，所以探测对两边一致；探测本身出错
+   * （多半是网断了）就当不存在放行 —— 紧接着的 PUT 同样会失败并报错，不会静默覆盖
+   */
+  async function slugTaken(slug: string): Promise<boolean> {
+    try {
+      await api(`/api/overview/posts/${encodeURIComponent(slug)}`)
+      return true
+    } catch {
+      return false
+    }
+  }
 
   async function save() {
     const slug = slugInput.value.trim()
     if (!SLUG_RE.test(slug)) {
       toast('slug 只能是小写字母、数字和短横线，例如 my-first-post', false)
+      slugInput.focus()
+      return
+    }
+    if (
+      !editing &&
+      (await slugTaken(slug)) &&
+      !confirm(`已经有一篇 slug 为「${slug}」的文章，保存会把它整篇覆盖。确定？`)
+    ) {
       slugInput.focus()
       return
     }
@@ -484,6 +512,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         body: { meta, body: body.value },
       })
       dirty = false
+      // 文章列表与概览页缓存里还是旧标题/旧篇数，作废掉让它们下次现拉
+      cacheDrop('posts', 'overview')
       if (!editing) enterEditMode(slug)
       toast('已保存')
     } catch (err) {

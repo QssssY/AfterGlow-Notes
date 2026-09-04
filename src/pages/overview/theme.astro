@@ -165,11 +165,32 @@ const MODES = [
 
   each((mode, key) => picker(mode, key).addEventListener('input', applyLive))
 
+  /**
+   * <input type=color> 只认 #rrggbb：喂 #f90 / #rrggbbaa 会被静默归成 #000000，
+   * fill 后 applyLive 立刻把管理台刷成一片黑，此时点保存黑色就被持久化了。
+   * 手改 theme.json 写成 3 位或带 alpha 的（utils/theme.ts 的 HEX 放行 3~8 位）在这里
+   * 展成 6 位 / 截掉 alpha；认不出的回落默认值并提示
+   */
+  function toPickerHex(v: string | undefined, fallback: string): string {
+    const m = /^#([0-9a-f]{3,8})$/i.exec((v ?? '').trim())
+    if (!m) return fallback
+    const h = m[1]!.toLowerCase()
+    if (h.length === 6) return `#${h}`
+    if (h.length === 8) return `#${h.slice(0, 6)}`
+    if (h.length === 3 || h.length === 4) return `#${[...h.slice(0, 3)].map((c) => c + c).join('')}`
+    return fallback
+  }
+
   function fill(light: Palette, dark: Palette) {
     const sets: Record<Mode, Palette> = { light, dark }
+    let coerced = 0
     each((mode, key) => {
-      picker(mode, key).value = sets[mode][key] ?? DEFAULTS[mode][key]
+      const raw = sets[mode][key]
+      const hex = toPickerHex(raw, DEFAULTS[mode][key])
+      if (raw !== undefined && raw.toLowerCase() !== hex) coerced += 1
+      picker(mode, key).value = hex
     })
+    if (coerced > 0) toast(`有 ${coerced} 个颜色值不是 #rrggbb 写法，已按 6 位 hex 换算显示`, false)
     applyLive()
   }
 

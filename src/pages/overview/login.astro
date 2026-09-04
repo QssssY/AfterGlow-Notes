@@ -84,11 +84,18 @@ const ghRepoDefault = import.meta.env.PUBLIC_GITHUB_REPO ?? ''
 </AdminLayout>
 
 <script>
-  import { API, getToken, ghMode, report, setToken } from '~/scripts/admin'
+  import { API, getToken, ghMode, logout, report, setToken } from '~/scripts/admin'
   import { ghSaveAuth, ghVerify } from '~/scripts/gh-cms'
 
-  // 已登录就直接进去（凭证若已失效，里面的第一个请求会把人送回来）
-  if (getToken()) location.replace('/overview')
+  // ?logout=1：从「退出」按钮跳过来 —— 在这里作废服务端会话并清本地凭证（AdminLayout 的
+  // 注释讲了为什么不在点击时清），然后把参数摘掉，免得刷新页面再登出一次
+  if (new URLSearchParams(location.search).get('logout') === '1') {
+    history.replaceState(null, '', location.pathname)
+    logout().catch(() => {})
+  } else if (getToken()) {
+    // 已登录就直接进去（凭证若已失效，里面的第一个请求会把人送回来）
+    location.replace('/overview')
+  }
 
   if (ghMode) {
     const form = document.querySelector<HTMLFormElement>('[data-login-gh]')!

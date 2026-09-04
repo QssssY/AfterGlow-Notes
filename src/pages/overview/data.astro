@@ -44,7 +44,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
 </AdminLayout>
 
 <script>
-  import { $, api, esc, ghMode, report, siteAssetUrl, toast, today } from '~/scripts/admin'
+  import { $, api, ApiError, esc, ghMode, report, siteAssetUrl, toast, today } from '~/scripts/admin'
   import { copyText } from '~/scripts/clipboard'
   // 语种清单与自称：单一真源在 locales.ts —— fork 加一门语言，这里自动多一颗切换钮
   import { localeMeta, prefixedLocales, type Locale } from '~/i18n/locales'
@@ -286,7 +286,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     },
     playlist: {
       label: '正在听',
-      desc: '首页播放器与听歌页（/music）共用的歌单，按顺序播、到底循环。勾选一首「首次加载默认播放」，用户第一次点击播放时就从它开始（浏览器不会无手势自动播放）。音频先用下方工具上传，再把地址填进来。至少留一首。',
+      desc: '首页播放器与听歌页（/my-music）共用的歌单，按顺序播、到底循环。勾选一首「首次加载默认播放」，用户第一次点击播放时就从它开始（浏览器不会无手势自动播放）。音频先用下方工具上传，再把地址填进来。至少留一首。',
       kind: 'array',
       minItems: 1,
       upload: 'music',
@@ -296,6 +296,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         { key: 'default', label: '首次加载默认播放', input: 'checkbox' },
         { key: 'src', label: '音频地址', hint: '/music/xxx.mp3' },
         { key: 'lrc', label: '歌词地址（可空）', optional: true, hint: '/music/xxx.lrc，没有就不显示歌词' },
+        {
+          key: 'cover',
+          label: '专辑封面（可空）',
+          optional: true,
+          hint: '/music/xxx.jpg，听歌页 CD 盘面上转的就是它；pnpm covers 会批量抓',
+        },
         {
           key: 'offset',
           label: '歌词偏移·秒（可空）',
@@ -682,16 +688,26 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   // 站点图片存在 Astro 资产目录（无公开 URL），走管理台预览接口 fetch 转 blob；
   // 站标本来就在 public/，直接引（带时间戳防缓存住旧图）
   function setTileImg(pic: HTMLElement, url: string) {
+    // 换图前把上一张的 blob URL 释放掉：站点图预览每次都是新 blob，不 revoke 就一直占内存
+    const prev = pic.querySelector('img')?.src
+    if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev)
     pic.innerHTML = `<img src="${url}" alt="">`
   }
-  async function loadTilePreviews() {
+  // 五张瓦片并行拉（服务端 no-store，每次都回源；串行要等五个往返）；
+  // 请求发出后表单可能已经切到别的页签，回来时瓦片不在了就作废
+  function loadTilePreviews() {
     for (const pic of editor.querySelectorAll<HTMLElement>('[data-pic]')) {
       if (pic.dataset.pickind === 'favicon') {
         setTileImg(pic, `/favicon.svg?t=${Date.now()}`)
         continue
       }
-      const url = await siteAssetUrl(pic.dataset.pic!).catch(() => null)
-      if (url) setTileImg(pic, url)
+      siteAssetUrl(pic.dataset.pic!)
+        .then((url) => {
+          if (!url) return
+          if (pic.isConnected) setTileImg(pic, url)
+          else URL.revokeObjectURL(url)
+        })
+        .catch(() => {})
     }
   }
 
@@ -901,7 +917,9 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     try {
       const res = await api<{ path: string }>('/api/overview/upload', { method: 'POST', body: fd })
       // 对应的预览瓦片立即换上新图（直接用本地文件，不再回源）
-      const pic = editor.querySelector<HTMLElement>(`[data-pic="${avName}"]`)
+      // 名字来自用户填的域名/仓库名，进选择器前转义 —— 带引号的怪名字会让 querySelector
+      // 抛 SyntaxError，被同一个 try 兜住，上传明明成功了却 toast 报错
+      const pic = editor.querySelector<HTMLElement>(`[data-pic="${CSS.escape(avName)}"]`)
       if (pic) setTileImg(pic, URL.createObjectURL(file))
       toast(`图片已存进 ${res.path} —— dev 站热更新，正式站要重新构建`)
     } catch (err) {
@@ -914,12 +932,23 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
   // ---- 存取 ----
 
   function cleaned(): unknown {
+    // 从原条目整份拷起，再对 spec 认识的字段做收敛 —— spec 之外的键原样保留。
+    // 曾经是按 spec 白名单重建：歌单的 cover（fetch-covers 入库、听歌页 CD 盘面用）
+    // 没进 spec，在「正在听」页签改一个歌词偏移再保存，24 首歌的封面全被静默剥掉。
+    // 表单只会写 spec 里的键（input 走 data-k），所以条目上的未知键一定来自文件本身，
+    // 保留它们不会把 UI 临时状态写进 JSON
     const strip = (item: Item, fields: Field[]) => {
-      const out: Item = {}
+      const out: Item = { ...item }
       for (const f of fields) {
-        if (f.virtual) continue
+        if (f.virtual) {
+          delete out[f.key]
+          continue
+        }
         const v = item[f.key]
-        if (f.optional && (v == null || (typeof v === 'string' && v.trim() === ''))) continue
+        if (f.optional && (v == null || (typeof v === 'string' && v.trim() === ''))) {
+          delete out[f.key]
+          continue
+        }
         out[f.key] = typeof v === 'string' ? v.trim() : v
       }
       return out
@@ -933,13 +962,22 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
     return top
   }
 
+  // 请求代际：连点两个页签时先发的应答可能后到 —— current 已经是 B、value 却被填成
+  // A 的数据，再用 B 的 spec 渲染；顺手一存就把 A 的条目写进 B 的文件（数组对数组时
+  // 服务端校验全过）。GitHub 直连模式每个 GET 都是一次几百毫秒的往返，很容易乱序。
+  // 应答回来先核对代际，不是最新那次就整个丢掉
+  let loadGen = 0
+
   async function load(name: string) {
+    const gen = ++loadGen
     current = name
     itemPage = 1 // 换页签回到第一页
     // 这一组没有可翻字段时把语种拨回中文（theme/playlist 页签不该停在译文态）
     if (curLocale && !specTranslatable(name)) curLocale = ''
     if (curLocale === '') {
-      value = await api(`/api/overview/data/${name}`)
+      const next = await api(`/api/overview/data/${name}`)
+      if (gen !== loadGen) return
+      value = next
       dirty = false
       render()
     } else {
@@ -948,6 +986,7 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         api(`/api/overview/data/${name}`),
         api(`/api/overview/data/${name}?locale=${curLocale}`),
       ])
+      if (gen !== loadGen) return
       value = base
       distributeTr(patch)
       dirty = false
@@ -1015,27 +1054,43 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
    * 旧版数据服务不认 ?locale= —— GET 会把基准当译文端上来，保存又写回基准文件，
    * 等于拿半份译文覆盖整份中文数据。用 ?locale=zh 探一次：新服务必答 400
    * （zh 被显式拒绝），旧服务无视参数答 200 —— 答 200 就说明服务是旧的，不放行。
-   * GitHub 直连模式的合同层和页面一起发版，永远是新的，探测天然通过（抛错分支）。
+   * 只有这两种应答能下结论：连不上 / 5xx 什么都说明不了，既不放行也不缓存，
+   * 原样抛给调用方去报错（早先 catch 一律当「新服务」——探测那一瞬断网就形同虚设）。
+   * GitHub 直连模式的合同层和页面一起发版，永远是新的，不必探。
    */
   let localeApiOk: boolean | null = null
   async function ensureLocaleApi(): Promise<boolean> {
+    if (ghMode) return true
     if (localeApiOk !== null) return localeApiOk
     try {
       await api(`/api/overview/data/site?locale=zh`)
       localeApiOk = false // 居然成功了 = 旧服务在无视 locale 参数
-    } catch {
-      localeApiOk = true
+      return false
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 400) {
+        localeApiOk = true
+        return true
+      }
+      throw err
     }
-    return localeApiOk
   }
 
   langRow.addEventListener('click', async (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-loc]')
     if (!btn || btn.dataset.loc === curLocale) return
     if (dirty && !confirm('这一组还有没保存的修改，切换语言会丢掉。继续？')) return
-    if (btn.dataset.loc !== '' && !(await ensureLocaleApi().catch(() => false))) {
-      toast('数据服务还是旧版本，不认识译文接口 —— 先重新编译并重启 server/ 再来改译文', false)
-      return
+    if (btn.dataset.loc !== '') {
+      let ok = false
+      try {
+        ok = await ensureLocaleApi()
+      } catch (err) {
+        report(err)
+        return
+      }
+      if (!ok) {
+        toast('数据服务还是旧版本，不认识译文接口 —— 先重新编译并重启 server/ 再来改译文', false)
+        return
+      }
     }
     curLocale = btn.dataset.loc as '' | Locale
     load(current).catch(report)

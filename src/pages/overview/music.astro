@@ -139,12 +139,18 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       <button type="button" class="ad-btn-ghost" data-ms-add="${i}">加入</button>
     </div>`
 
+  // 在途守卫：连按回车 / 连点「加载更多」会把两批结果都 push 进 msHits、页码多跳一页，
+  // 中途换音源还会混源 —— 一次只跑一个请求
+  let msBusy = false
+
   async function loadMusicPage(reset: boolean) {
     const kw = msKw.value.trim()
     if (!kw) {
       toast('搜什么呢？先输入歌名或歌手', false)
       return
     }
+    if (msBusy) return
+    msBusy = true
     if (reset) {
       msPage = 1
       msHits = []
@@ -174,6 +180,8 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       msMore.hidden = true
       msMore.textContent = '加载更多'
       report(err)
+    } finally {
+      msBusy = false
     }
   }
 
@@ -196,6 +204,9 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       const original = btn.textContent
       btn.textContent = '下载中…'
       btn.setAttribute('disabled', '')
+      // 加进内存后保存失败要撤回来：否则条目留在 playlist 里、列表却没重画，
+      // 用户再点一次就是第二份幻影条目，下次任何成功保存把两份一起写进文件
+      let added = false
       try {
         const { track, note } = await api<{
           track: { title: string; artist: string; src: string; lrc?: string }
@@ -204,6 +215,12 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
           method: 'POST',
           body: { source: hit.source, id: hit.id, title: hit.title, artist: hit.artist },
         })
+        // 同一首（同音频地址）已在歌单里：服务端刚把文件覆盖了一遍，歌单不再加第二条
+        if (playlist.some((t) => t.src === track.src)) {
+          toast(`「${track.title}」已经在歌单里了（音频文件已刷新）`)
+          btn.textContent = '已在歌单'
+          return
+        }
         const entry: Track = {
           title: track.title,
           artist: track.artist,
@@ -212,12 +229,14 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
         }
         if (track.lrc) entry.lrc = track.lrc
         playlist.unshift(entry) // 加到最上面
+        added = true
         await savePlaylist() // 立即落 playlist.json（这页没有单独的「保存」步骤）
         plPage = 1 // 新歌在顶部 —— 跳回第一页正好看见它
         renderPlaylist()
         toast(`已加到歌单顶部「${track.title}」${track.lrc ? '（含歌词）' : ''}${note ? ` —— ${note}` : ''}`, !note)
         btn.textContent = '已加入 ✓'
       } catch (err) {
+        if (added) playlist.shift()
         report(err)
         btn.textContent = original
         btn.removeAttribute('disabled')
@@ -248,12 +267,14 @@ import AdminLayout from '~/layouts/AdminLayout.astro'
       }
       const removed = playlist[i]!
       playlist.splice(i, 1)
+      // 先重画再保存：保存在途时 DOM 若还是旧列表，按钮上的下标已和 playlist 错位 ——
+      // 双击「移除」会把下一首也删掉，此时点别的行删的也是错的那首
+      renderPlaylist()
       try {
         await savePlaylist()
-        renderPlaylist()
         toast(`已移除「${removed.title}」（音频文件仍留在磁盘上）`)
       } catch (err) {
-        playlist.splice(i, 0, removed) // 保存失败回滚
+        playlist.splice(Math.min(i, playlist.length), 0, removed) // 保存失败回滚
         renderPlaylist()
         report(err)
       }
