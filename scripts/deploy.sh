@@ -22,10 +22,10 @@ PUBLIC_API_BASE=same-origin npm run build
 echo "==> 同步仓库快照到 $ROOT/blog（管理台数据页签 / 友链巡检要读；git 跟踪的文件 = 无音乐无秘密）"
 # 服务器上用管理台改过的内容（src/data、src/content）会被这一步盖掉 —— 那些改动没回流 git
 # 就等于丢了。覆盖前把比上次部署更新的文件备份到 blog.local/<时间>/ 并大声提醒，
-# 回来后拿它们回流仓库再重发。上次部署时间以 .deploy-stamp 文件的 mtime 为准
+# 回来后拿它们回流仓库再重发。上次同步时间以 blog/.blog-synced 的 mtime 为准（别与 pull-deploy 的 $ROOT/.deploy-stamp 搞混，那个记的是 Release 版本）
 ssh "$HOST" "mkdir -p $ROOT/blog
-  if [ -f $ROOT/blog/.deploy-stamp ]; then
-    changed=\$(find $ROOT/blog/src -type f -newer $ROOT/blog/.deploy-stamp 2>/dev/null)
+  if [ -f $ROOT/blog/.blog-synced ]; then
+    changed=\$(find $ROOT/blog/src -type f -newer $ROOT/blog/.blog-synced 2>/dev/null)
     if [ -n \"\$changed\" ]; then
       keep=$ROOT/blog.local/\$(date +%Y%m%d-%H%M%S)
       echo \"  ⚠ 服务器上有管理台改过、尚未回流 git 的文件，覆盖前已备份到 \$keep：\"
@@ -35,7 +35,7 @@ ssh "$HOST" "mkdir -p $ROOT/blog
       done
     fi
   fi"
-git ls-files -z | tar --null -T - -czf - | ssh "$HOST" "tar -xzf - -C $ROOT/blog && touch $ROOT/blog/.deploy-stamp"
+git ls-files -z | tar --null -T - -czf - | ssh "$HOST" "tar -xzf - -C $ROOT/blog && touch $ROOT/blog/.blog-synced"
 
 echo "==> 同步新增歌曲（只补服务器没有的；服务器上删除请手动）"
 if [ -d public/music ]; then

@@ -39,9 +39,9 @@ set -e
 mkdir -p $ROOT/blog
 # 管理台在服务器上改过的内容（src/data、src/content）会被下面的解包盖掉 —— 这条链路每晚
 # 定时跑一轮，没回流 git 的改动活不过一天。覆盖前把比上次部署更新的文件备份到
-# blog.local/<时间>/，日志里点名；站长看到就拿备份回流仓库。上次部署时间看 .deploy-stamp 的 mtime
-if [ -f $ROOT/blog/.deploy-stamp ]; then
-  changed=$(find $ROOT/blog/src -type f -newer $ROOT/blog/.deploy-stamp 2>/dev/null || true)
+# blog.local/<时间>/，日志里点名；站长看到就拿备份回流仓库。上次同步时间看 blog/.blog-synced 的 mtime（与上面记 Release 版本的 $STAMP 是两回事）
+if [ -f $ROOT/blog/.blog-synced ]; then
+  changed=$(find $ROOT/blog/src -type f -newer $ROOT/blog/.blog-synced 2>/dev/null || true)
   if [ -n "$changed" ]; then
     keep=$ROOT/blog.local/$(date +%Y%m%d-%H%M%S)
     echo "[$(date '+%F %T')] ⚠ 服务器上有管理台改过、尚未回流 git 的文件，覆盖前已备份到 $keep："
@@ -53,7 +53,7 @@ if [ -f $ROOT/blog/.deploy-stamp ]; then
   fi
 fi
 tar -xzf /tmp/pull-blog.tgz -C $ROOT/blog
-touch $ROOT/blog/.deploy-stamp
+touch $ROOT/blog/.blog-synced
 rm -rf $ROOT/dist.new && mkdir -p $ROOT/dist.new
 tar -xzf /tmp/pull-dist.tgz -C $ROOT/dist.new
 rm -rf $ROOT/dist.prev
