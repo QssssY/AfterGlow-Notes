@@ -25,15 +25,21 @@ if [ ! -f /tmp/pull-release ] || [ "$(cat /tmp/pull-release)" != "$updated" ]; t
   rm -f /tmp/pull-blog.tgz /tmp/pull-dist.tgz
   echo "$updated" > /tmp/pull-release
 fi
-# 资产下载走 objects.githubusercontent.com —— 跨境拥塞重灾区，
-# 掐硬超时，失败不挣扎：下一轮 timer 自然重试。
+# 资产下载走 objects.githubusercontent.com —— 跨境拥塞重灾区。
 #
-# ⚠️ curl 报错不等于文件没下全：-C - 对**已经下全**的文件会向服务器要一个越界 Range，
+# ⚠️ 硬超时（原来是 --max-time 240）在这条线路上是个死结：实测有效速率约 16KB/s，
+# 6.6MB 的 dist.tgz 要 ~7 分钟，240 秒**结构上**下不完；而 `-C -` 对 GitHub 资产的
+# 签名重定向并不真的续传（服务器不给 206 就从头覆盖），于是每轮涨到 ~3.5MB 就归零，
+# 永远到不了终点。改成 nginx send_timeout 那种语义：不设总时长上限，但连续 60 秒
+# 慢过 8KB/s 就判它死了 —— 慢而通的链路给足时间，真断了立刻放手。1800 秒兜底。
+#
+# ⚠️ curl 报错也不等于文件没下全：-C - 对**已经下全**的文件会要一个越界 Range，
 # 得到 416 并以退出码 22 收场。一轮里前一个资产下完、后一个没下动时就是这个局面 ——
 # 而 /tmp/pull-release 一致又不清残留，于是那一版永远装不上（实测卡了 693 轮、跨了几天，
 # 一直被当成「跨境拥塞」）。所以 curl 失败后先让文件自证：是个完整 tar.gz 就当它成功。
 dl() {
-  curl -fsSL -C - --max-time 240 --retry 5 --retry-all-errors -o "$2" "$1" && return 0
+  curl -fsSL -C - --speed-limit 8192 --speed-time 60 --max-time 1800 \
+    --retry 5 --retry-all-errors -o "$2" "$1" && return 0
   tar -tzf "$2" >/dev/null 2>&1
 }
 # 两个都要下：别用 `! dl a || ! dl b`——第一个失败就短路，第二个这一轮根本不会尝试
